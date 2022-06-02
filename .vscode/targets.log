@@ -1,3 +1,4 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # GNU Make 3.81
 # Copyright (C) 2006  Free Software Foundation, Inc.
 # This is free software; see the source for copying conditions.
@@ -5,8 +6,11 @@
 # PARTICULAR PURPOSE.
 
 # This program built for i386-apple-darwin11.3.0
+ 
+make: *** No rule to make target `all'.  Stop.
 
-# Make data base, printed on Tue May 31 19:44:09 2022
+
+# Make data base, printed on Thu Jun  2 22:03:32 2022
 
 # Variables
 
@@ -33,17 +37,24 @@ _ = /usr/bin/make
 # makefile (from `Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
 VSCODE_VERBOSE_LOGGING = true
 # environment
 __CFBundleIdentifier = com.microsoft.VSCode
 # environment
-VSCODE_IPC_HOOK_EXTHOST = /var/folders/6v/1yksv1d91pldqvj70_mq2tgr0000gn/T/vscode-ipc-af007b06-cbbd-4a35-86ae-11f8a6a21a67.sock
+ 
+VSCODE_IPC_HOOK_EXTHOST = /var/folders/6v/1yksv1d91pldqvj70_mq2tgr0000gn/T/vscode-ipc-d3246cbc-0bdb-4ad8-85e4-88833f865fce.sock
 # environment
 VSCODE_CWD = /
+# environment
+GOPROXY = https://proxy.golang.org,direct
 # environment
 PATH = /usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:Downloads/tools/mirror:Downloads/tools/vscode:/usr/local/go/bin:/Users/orion/.fzf/bin
 # environment
 LSCOLORS = Gxfxcxdxbxegedabagacad
+# environment
+GOPATH = /Users/orion/go
 # environment
 VSCODE_LOG_STACK = false
 # environment
@@ -61,7 +72,7 @@ PWD = /Users/orion/Work/Orion/Momentum
 # environment
 ORIGINAL_XDG_CURRENT_DESKTOP = undefined
 # environment
-VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+GOMODCACHE = /Users/orion/go/pkg/mod
 # environment
 HOME = /Users/orion
 # default
@@ -141,7 +152,7 @@ LANG = C
 # environment
 VSCODE_PID = 96505
 # variable set hash-table stats:
-# Load=65/1024=6%, Rehash=0, Collisions=1/88=1%
+# Load=68/1024=7%, Rehash=0, Collisions=2/91=2%
 
 # Pattern-specific Variable Values
 
@@ -149,9 +160,9 @@ VSCODE_PID = 96505
 
 # Directories
 
-# . (device 16777231, inode 11100717): 11 files, no impossibilities.
+# . (device 16777231, inode 11100717): 12 files, no impossibilities.
 
-# 11 files, no impossibilities in 1 directories.
+# 12 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -177,11 +188,19 @@ all:
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-05-26 22:06:05
+#  Last modified 2022-05-31 22:01:46
 #  File has been updated.
 #  Successfully updated.
 # variable set hash-table stats:
 # Load=0/32=0%, Rehash=0, Collisions=0/0=0%
+
+test:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  commands to execute (from `Makefile', line 5):
+	go test ./...
+	
 
 # Not a target:
 .DEFAULT:
@@ -198,7 +217,7 @@ run:
 	
 
 # files hash-table stats:
-# Load=5/1024=0%, Rehash=0, Collisions=0/17=0%
+# Load=6/1024=1%, Rehash=0, Collisions=0/18=0%
 # VPATH Search Paths
 
 # No `vpath' search paths.
@@ -210,8 +229,6 @@ run:
 # strcache size: total = 4096 / max = 4096 / min = 4096 / avg = 4096
 # strcache free: total = 4087 / max = 4087 / min = 4087 / avg = 4087
 
-# Finished Make data base on Tue May 31 19:44:09 2022
+# Finished Make data base on Thu Jun  2 22:03:32 2022
 
  
-make: *** No rule to make target `all'.  Stop.
-
