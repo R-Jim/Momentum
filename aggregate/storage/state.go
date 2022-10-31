@@ -1,6 +1,6 @@
 package storage
 
-import "github.com/R-jim/Momentum/common"
+import "github.com/R-jim/Momentum/aggregate/common"
 
 type Type string
 

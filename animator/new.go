@@ -1,7 +1,7 @@
 package animator
 
 import (
-	"github.com/R-jim/Momentum/domain/jet"
+	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 

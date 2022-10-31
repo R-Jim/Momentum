@@ -1,6 +1,6 @@
 package jet
 
-import "github.com/R-jim/Momentum/common"
+import "github.com/R-jim/Momentum/aggregate/common"
 
 type PositionState struct {
 	X int

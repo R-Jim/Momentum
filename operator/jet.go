@@ -3,9 +3,9 @@ package operator
 import (
 	"fmt"
 
+	"github.com/R-jim/Momentum/aggregate/jet"
+	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
-	"github.com/R-jim/Momentum/domain/jet"
-	"github.com/R-jim/Momentum/domain/storage"
 )
 
 type jetOperator struct {

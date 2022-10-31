@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/R-jim/Momentum/domain/jet"
-	"github.com/R-jim/Momentum/domain/storage"
+	"github.com/R-jim/Momentum/aggregate/jet"
+	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )

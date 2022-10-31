@@ -1,26 +1,24 @@
-package jet
+package storage
 
-import "github.com/R-jim/Momentum/common"
+import "github.com/R-jim/Momentum/aggregate/common"
 
 type impl struct {
-	eventsSet map[string][]Event
+	events map[string][]Event
 }
 type Store interface {
 	getEventsByID(id string) ([]Event, error)
 	// WARNING: action strictly used by AGGREGATOR ONLY
 	appendEvent(Event) error
-	GetEvents() map[string][]Event
 }
 
 func NewStore() Store {
 	return impl{
-		eventsSet: make(map[string][]Event),
+		events: make(map[string][]Event),
 	}
 }
 
 func (i impl) getEventsByID(id string) ([]Event, error) {
-	events := i.eventsSet[id] // Shallow clone
-	return events, nil
+	return i.events[id], nil
 }
 
 // WARNING: action strictly used by AGGREGATOR ONLY
@@ -29,17 +27,12 @@ func (i impl) appendEvent(e Event) error {
 		return common.ErrEventNotValid
 	}
 
-	events := i.eventsSet[e.ID]
+	events := i.events[e.ID]
 	if events == nil {
 		events = []Event{}
 	}
 
-	i.eventsSet[e.ID] = append(events, e)
+	i.events[e.ID] = append(events, e)
 
 	return nil
-}
-
-func (i impl) GetEvents() map[string][]Event {
-	events := i.eventsSet // Shallow clone
-	return events
 }

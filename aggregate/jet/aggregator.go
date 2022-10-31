@@ -3,7 +3,7 @@ package jet
 import (
 	"fmt"
 
-	"github.com/R-jim/Momentum/common"
+	"github.com/R-jim/Momentum/aggregate/common"
 )
 
 type aggregateImpl struct {

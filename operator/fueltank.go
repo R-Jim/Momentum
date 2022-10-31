@@ -1,7 +1,7 @@
 package operator
 
 import (
-	"github.com/R-jim/Momentum/domain/storage"
+	"github.com/R-jim/Momentum/aggregate/storage"
 )
 
 type fuelTankOperator struct {

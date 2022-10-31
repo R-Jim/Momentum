@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/asset"
-	"github.com/R-jim/Momentum/domain/jet"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
