@@ -6,9 +6,9 @@ import (
 	_ "image/png"
 	"log"
 
-	"github.com/R-jim/Momentum/fueltank"
-	"github.com/R-jim/Momentum/info"
-	"github.com/R-jim/Momentum/jet"
+	"github.com/R-jim/Momentum/animator"
+	"github.com/R-jim/Momentum/domain/jet"
+	"github.com/R-jim/Momentum/domain/storage"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -16,26 +16,11 @@ import (
 )
 
 var (
-	// playerImage *ebiten.Image
-	// player      *entity.Core
-
-	fuelTankStore      fueltank.Store
-	fuelTankAggregator fueltank.Aggregator
-
 	opt operator.Operator
+	ani animator.Animator
 
 	fuelTankID, jetID string
 )
-
-func initOperator() {
-	fuelTankStore = fueltank.NewStore()
-	fuelTankAggregator = fueltank.NewAggregator(fuelTankStore)
-
-	jetStore := jet.NewStore()
-	jetAggregator := jet.NewAggregator(jetStore)
-
-	opt = operator.New(jetAggregator, fuelTankAggregator)
-}
 
 // for testing
 func initEntities() {
@@ -62,14 +47,23 @@ func initEntities() {
 }
 
 func init() {
-	initOperator()
-	initEntities()
-	// img, _, err := image.Decode(bytes.NewReader(assets.Player_png))
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// playerImage = ebiten.NewImageFromImage(img)
+	fuelTankStore := storage.NewStore()
+	jetStore := jet.NewStore()
 
+	fuelTankAggregator := storage.NewAggregator(fuelTankStore)
+	jetAggregator := jet.NewAggregator(jetStore)
+
+	ani = animator.New(jetStore)
+
+	opt = operator.New(
+		operator.OperatorAggregator{
+			JetAggregator:      jetAggregator,
+			FuelTankAggregator: fuelTankAggregator,
+		},
+		ani,
+	)
+
+	initEntities()
 	// player = &entity.Core{
 	// 	Position: valueobject.Position{
 	// 		X: 10,
@@ -82,7 +76,8 @@ func init() {
 	// }
 }
 
-type Game struct{}
+type Game struct {
+}
 
 func (g *Game) Update() error {
 	operations := []func() error{}
@@ -109,6 +104,12 @@ func userInput() []func() error {
 			return opt.Jet.Landing(jetID)
 		})
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyK) {
+		fmt.Println("[Landing]")
+		operations = append(operations, func() error {
+			return opt.Jet.Takeoff(jetID)
+		})
+	}
 	return operations
 }
 
@@ -125,7 +126,7 @@ func runConcurrently(operations []func() error) {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	// g.drawPlayer(screen)
+	ani.Draw(screen)
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
@@ -148,13 +149,3 @@ func main() {
 // 	op.GeoM.Translate(float64(player.Position.X), float64(player.Position.Y))
 // 	screen.DrawImage(playerImage, op)
 // }
-
-//GameData
-type GameData struct {
-}
-
-//Entity
-type Entity struct {
-	Info     info.Info
-	GameData GameData
-}

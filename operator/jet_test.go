@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/R-jim/Momentum/fueltank"
-	"github.com/R-jim/Momentum/jet"
+	"github.com/R-jim/Momentum/domain/jet"
+	"github.com/R-jim/Momentum/domain/storage"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/sync/errgroup"
 )
@@ -15,25 +15,25 @@ func TestImpl_Fly(t *testing.T) {
 	jetID := "jet_1"
 	fuelTankID := "fuel_tank_1"
 
-	fuelTankInitEvent := fueltank.NewInitEvent(fuelTankID)
+	fuelTankInitEvent := storage.NewInitEvent(fuelTankID)
 	jetInitEvent := jet.NewInitEvent(jetID)
 	jetChangeFuelTankEvent := jet.NewChangeFuelTankEvent(jetID, fuelTankID)
-	fuelTankRefillEvent := fueltank.NewRefillEvent(fuelTankID, 10)
+	fuelTankRefillEvent := storage.NewRefillEvent(fuelTankID, 10)
 	jetTakeOffEvent := jet.NewTakeOffEvent(jetID)
 
 	type arg struct {
-		givenFuelTankEvents      []fueltank.Event
+		givenFuelTankEvents      []storage.Event
 		givenJetEvents           []jet.Event
 		givenFuelConsumeQuantity int
 		givenToPosition          jet.PositionState
-		expFuelState             fueltank.State
+		expFuelState             storage.State
 		expJetPositionState      jet.PositionState
 		expErr                   error
 	}
 
 	tcs := map[string]arg{
 		"success": {
-			givenFuelTankEvents: []fueltank.Event{
+			givenFuelTankEvents: []storage.Event{
 				fuelTankInitEvent,
 				fuelTankRefillEvent,
 			},
@@ -47,7 +47,7 @@ func TestImpl_Fly(t *testing.T) {
 				X: 1,
 				Y: 1,
 			},
-			expFuelState: fueltank.State{
+			expFuelState: storage.State{
 				Quantity: 9,
 			},
 			expJetPositionState: jet.PositionState{
@@ -56,7 +56,7 @@ func TestImpl_Fly(t *testing.T) {
 			},
 		},
 		"failure, fuel consume exceed": {
-			givenFuelTankEvents: []fueltank.Event{
+			givenFuelTankEvents: []storage.Event{
 				fuelTankInitEvent,
 			},
 			givenJetEvents: []jet.Event{
@@ -69,7 +69,7 @@ func TestImpl_Fly(t *testing.T) {
 				X: 1,
 				Y: 1,
 			},
-			expFuelState: fueltank.State{
+			expFuelState: storage.State{
 				Quantity: 0,
 			},
 			expJetPositionState: jet.PositionState{
@@ -79,7 +79,7 @@ func TestImpl_Fly(t *testing.T) {
 			expErr: errors.New("[FUEL_TANK_CONSUMED] aggregate fail"),
 		},
 		"failure, jet landed": {
-			givenFuelTankEvents: []fueltank.Event{
+			givenFuelTankEvents: []storage.Event{
 				fuelTankInitEvent,
 				fuelTankRefillEvent,
 			},
@@ -92,7 +92,7 @@ func TestImpl_Fly(t *testing.T) {
 				X: 1,
 				Y: 1,
 			},
-			expFuelState: fueltank.State{
+			expFuelState: storage.State{
 				Quantity: 10,
 			},
 			expJetPositionState: jet.PositionState{
@@ -107,10 +107,10 @@ func TestImpl_Fly(t *testing.T) {
 		t.Run(desc, func(t *testing.T) {
 			// GIVEN
 			jetStore := jet.NewStore()
-			fuelTankStore := fueltank.NewStore()
+			fuelTankStore := storage.NewStore()
 
 			jetAggregator := jet.NewAggregator(jetStore)
-			fuelTankAggregator := fueltank.NewAggregator(fuelTankStore)
+			fuelTankAggregator := storage.NewAggregator(fuelTankStore)
 
 			for _, fuelTankEvent := range tc.givenFuelTankEvents {
 				err := fuelTankAggregator.Aggregate(fuelTankEvent)
@@ -136,7 +136,7 @@ func TestImpl_Fly(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			fuelTankState, err := fueltank.GetState(fuelTankStore, fuelTankID)
+			fuelTankState, err := storage.GetState(fuelTankStore, fuelTankID)
 			require.NoError(t, err)
 			assertFuelState(t, tc.expFuelState, fuelTankState)
 
@@ -151,24 +151,24 @@ func Test_Concurrency(t *testing.T) {
 	jetID := "jet_1"
 	fuelTankID := "fuel_tank_1"
 
-	fuelTankInitEvent := fueltank.NewInitEvent(fuelTankID)
+	fuelTankInitEvent := storage.NewInitEvent(fuelTankID)
 	jetInitEvent := jet.NewInitEvent(jetID)
 	jetChangeFuelTankEvent := jet.NewChangeFuelTankEvent(jetID, fuelTankID)
-	fuelTankRefillEvent := fueltank.NewRefillEvent(fuelTankID, 10)
+	fuelTankRefillEvent := storage.NewRefillEvent(fuelTankID, 10)
 	jetTakeOffEvent := jet.NewTakeOffEvent(jetID)
 
 	type arg struct {
-		givenFuelTankEvents      []fueltank.Event
+		givenFuelTankEvents      []storage.Event
 		givenJetEvents           []jet.Event
 		givenFuelConsumeQuantity int
 		givenToPosition          jet.PositionState
-		expFuelState             fueltank.State
+		expFuelState             storage.State
 		expJetPositionState      jet.PositionState
 	}
 
 	tcs := map[string]arg{
 		"success": {
-			givenFuelTankEvents: []fueltank.Event{
+			givenFuelTankEvents: []storage.Event{
 				fuelTankInitEvent,
 				fuelTankRefillEvent,
 			},
@@ -182,7 +182,7 @@ func Test_Concurrency(t *testing.T) {
 				X: 1,
 				Y: 1,
 			},
-			expFuelState: fueltank.State{
+			expFuelState: storage.State{
 				Quantity: 8,
 			},
 			expJetPositionState: jet.PositionState{
@@ -196,10 +196,10 @@ func Test_Concurrency(t *testing.T) {
 		t.Run(desc, func(t *testing.T) {
 			// GIVEN
 			jetStore := jet.NewStore()
-			fuelTankStore := fueltank.NewStore()
+			fuelTankStore := storage.NewStore()
 
 			jetAggregator := jet.NewAggregator(jetStore)
-			fuelTankAggregator := fueltank.NewAggregator(fuelTankStore)
+			fuelTankAggregator := storage.NewAggregator(fuelTankStore)
 
 			for _, fuelTankEvent := range tc.givenFuelTankEvents {
 				err := fuelTankAggregator.Aggregate(fuelTankEvent)
@@ -243,7 +243,7 @@ func Test_Concurrency(t *testing.T) {
 			// THEN
 			g.Wait()
 
-			fuelTankState, err := fueltank.GetState(fuelTankStore, fuelTankID)
+			fuelTankState, err := storage.GetState(fuelTankStore, fuelTankID)
 			require.NoError(t, err)
 			assertFuelState(t, tc.expFuelState, fuelTankState)
 
@@ -254,7 +254,7 @@ func Test_Concurrency(t *testing.T) {
 	}
 }
 
-func assertFuelState(t *testing.T, expFuelState, result fueltank.State) {
+func assertFuelState(t *testing.T, expFuelState, result storage.State) {
 	// require.Equal(t, expFuelState.ID, result.ID) // WARNING: should not be used
 	require.Equal(t, expFuelState.Quantity, result.Quantity)
 }

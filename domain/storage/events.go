@@ -1,4 +1,4 @@
-package fueltank
+package storage
 
 type Data interface{}
 

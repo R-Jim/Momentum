@@ -1,23 +1,31 @@
 package operator
 
 import (
-	"github.com/R-jim/Momentum/fueltank"
-	"github.com/R-jim/Momentum/jet"
+	"github.com/R-jim/Momentum/animator"
+	"github.com/R-jim/Momentum/domain/jet"
+	"github.com/R-jim/Momentum/domain/storage"
 )
+
+type OperatorAggregator struct {
+	JetAggregator      jet.Aggregator
+	FuelTankAggregator storage.Aggregator
+}
 
 type Operator struct {
 	Jet      jetOperator
 	FuelTank fuelTankOperator
 }
 
-func New(jetAggregator jet.Aggregator, fuelTankAggregator fueltank.Aggregator) Operator {
+func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 	return Operator{
 		Jet: jetOperator{
-			jetAggregator:      jetAggregator,
-			fuelTankAggregator: fuelTankAggregator,
+			jetAggregator:      aggregator.JetAggregator,
+			fuelTankAggregator: aggregator.FuelTankAggregator,
+
+			animator: animator,
 		},
 		FuelTank: fuelTankOperator{
-			fuelTankAggregator: fuelTankAggregator,
+			fuelTankAggregator: aggregator.FuelTankAggregator,
 		},
 	}
 }

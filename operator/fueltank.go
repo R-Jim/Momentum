@@ -1,15 +1,15 @@
 package operator
 
 import (
-	"github.com/R-jim/Momentum/fueltank"
+	"github.com/R-jim/Momentum/domain/storage"
 )
 
 type fuelTankOperator struct {
-	fuelTankAggregator fueltank.Aggregator
+	fuelTankAggregator storage.Aggregator
 }
 
 func (ft fuelTankOperator) Init(fuelTankID string) error {
-	fuelTankInitEvent := fueltank.NewInitEvent(fuelTankID)
+	fuelTankInitEvent := storage.NewInitEvent(fuelTankID)
 	err := ft.fuelTankAggregator.Aggregate(fuelTankInitEvent)
 	if err != nil {
 		return err
@@ -18,7 +18,7 @@ func (ft fuelTankOperator) Init(fuelTankID string) error {
 }
 
 func (ft fuelTankOperator) Refill(fuelTankID string, quantity int) error {
-	fuelTankRefillEvent := fueltank.NewRefillEvent(fuelTankID, quantity)
+	fuelTankRefillEvent := storage.NewRefillEvent(fuelTankID, quantity)
 	err := ft.fuelTankAggregator.Aggregate(fuelTankRefillEvent)
 	if err != nil {
 		return err

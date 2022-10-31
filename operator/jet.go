@@ -3,13 +3,16 @@ package operator
 import (
 	"fmt"
 
-	"github.com/R-jim/Momentum/fueltank"
-	"github.com/R-jim/Momentum/jet"
+	"github.com/R-jim/Momentum/animator"
+	"github.com/R-jim/Momentum/domain/jet"
+	"github.com/R-jim/Momentum/domain/storage"
 )
 
 type jetOperator struct {
 	jetAggregator      jet.Aggregator
-	fuelTankAggregator fueltank.Aggregator
+	fuelTankAggregator storage.Aggregator
+
+	animator animator.Animator
 }
 
 func (j jetOperator) Init(jetID string, fuelTankID string) error {
@@ -30,7 +33,7 @@ func (j jetOperator) Init(jetID string, fuelTankID string) error {
 }
 
 func (j jetOperator) Fly(jetID string, jetFuelTankID string, fuelConsumed int, toPosition jet.PositionState) error {
-	jetFuelTankConsumeEvent := fueltank.NewConsumeEvent(jetFuelTankID, fuelConsumed)
+	jetFuelTankConsumeEvent := storage.NewConsumeEvent(jetFuelTankID, fuelConsumed)
 	err := j.fuelTankAggregator.Aggregate(jetFuelTankConsumeEvent)
 	if err != nil {
 		return err
@@ -39,7 +42,7 @@ func (j jetOperator) Fly(jetID string, jetFuelTankID string, fuelConsumed int, t
 	jetFlyEvent := jet.NewFlyEvent(jetID, toPosition)
 	err = j.jetAggregator.Aggregate(jetFlyEvent)
 	if err != nil {
-		jetFuelTankRefillEvent := fueltank.NewRefillEvent(jetFuelTankID, fuelConsumed)
+		jetFuelTankRefillEvent := storage.NewRefillEvent(jetFuelTankID, fuelConsumed)
 		newErr := j.fuelTankAggregator.Aggregate(jetFuelTankRefillEvent)
 		if newErr != nil {
 			fmt.Printf("[%v] rollback failed, err: %v.\n", jetFuelTankRefillEvent.Effect, newErr)
@@ -47,12 +50,25 @@ func (j jetOperator) Fly(jetID string, jetFuelTankID string, fuelConsumed int, t
 		}
 		return err
 	}
+
+	if j.animator != nil {
+		j.animator.AppendEvent(jetFlyEvent)
+	}
 	return nil
 }
 
 func (j jetOperator) Landing(jetID string) error {
 	landingEvent := jet.NewLandingEvent(jetID)
 	err := j.jetAggregator.Aggregate(landingEvent)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (j jetOperator) Takeoff(jetID string) error {
+	takeOffEvent := jet.NewTakeOffEvent(jetID)
+	err := j.jetAggregator.Aggregate(takeOffEvent)
 	if err != nil {
 		return err
 	}

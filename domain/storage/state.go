@@ -1,9 +1,20 @@
-package fueltank
+package storage
 
 import "github.com/R-jim/Momentum/common"
 
+type Type string
+
+var (
+	FuelType Type = "fuel"
+)
+
+func (t Type) IsValid() bool {
+	return t == FuelType
+}
+
 type State struct {
 	ID       string
+	Type     Type
 	Quantity int
 }
 
@@ -13,7 +24,10 @@ func toState(events []Event) State {
 	for _, event := range events {
 		switch event.Effect {
 		case InitEffect:
+			storageType, _ := event.Data.(Type)
+
 			state.ID = event.ID
+			state.Type = storageType
 			state.Quantity = 0
 
 		case RefillEffect:

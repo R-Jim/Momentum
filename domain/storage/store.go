@@ -1,4 +1,4 @@
-package jet
+package storage
 
 import "github.com/R-jim/Momentum/common"
 

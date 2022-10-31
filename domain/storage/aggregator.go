@@ -1,4 +1,4 @@
-package fueltank
+package storage
 
 import (
 	"fmt"
