@@ -9,6 +9,7 @@ import (
 	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
+	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	opt operator.Operator
-	ani animator.Animator
+	opt     operator.Operator
+	ani     animator.Animator
+	jetAuto automaton.JetAutomaton
 
 	fuelTankID, jetID string
 )
@@ -29,25 +31,25 @@ func initEntities() {
 
 	err := opt.FuelTank.Init(fuelTankID)
 	if err != nil {
-		// TODO: log error
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
 	err = opt.Jet.Init(jetID, fuelTankID)
 	if err != nil {
-		// TODO: log error
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
-	err = opt.FuelTank.Refill(fuelTankID, 15)
+	err = opt.FuelTank.Refill(fuelTankID, 150)
 	if err != nil {
-		// TODO: log error
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 }
 
 func init() {
-	fuelTankStore := storage.NewStore()
+	storageStore := storage.NewStore()
 	jetStore := jet.NewStore()
 
-	fuelTankAggregator := storage.NewAggregator(fuelTankStore)
+	fuelTankAggregator := storage.NewAggregator(storageStore)
 	jetAggregator := jet.NewAggregator(jetStore)
 
 	ani = animator.New(jetStore)
@@ -60,6 +62,7 @@ func init() {
 		ani,
 	)
 
+	jetAuto = automaton.NewJetAutomaton(jetStore, storageStore, opt)
 	initEntities()
 }
 
@@ -67,6 +70,11 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
+	err := jetAuto.Auto(jetID)
+	if err != nil {
+		fmt.Printf("[ERROR]Update: %v\n", err.Error())
+	}
+
 	operations := []func() error{}
 	operations = append(operations, userInput()...)
 	go runConcurrently(operations)

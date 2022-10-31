@@ -20,9 +20,7 @@ var (
 )
 
 type CombatState struct {
-	ID string
-	// IsAttacking bool
-	// IsLanded    bool
+	ID       string
 	Status   status
 	TargetID string
 }
@@ -108,10 +106,26 @@ func toInventoryState(events []Event) InventoryState {
 
 	for _, event := range events {
 		switch event.Effect {
-		case FlyEffect:
+		case InitEffect:
 			inventory, _ := event.Data.(InventoryState)
 			state.FuelTankID = inventory.FuelTankID
+		case FuelTankChangedEffect:
+			fuelTankID, _ := event.Data.(string)
+			state.FuelTankID = fuelTankID
 		}
 	}
 	return state
+}
+
+func GetInventoryState(store Store, id string) (InventoryState, error) {
+	events, err := store.getEventsByID(id)
+	if err != nil {
+		return InventoryState{}, err
+	}
+
+	if len(events) == 0 {
+		return InventoryState{}, common.ErrEntityNotFound
+	}
+
+	return toInventoryState(events), nil
 }
