@@ -41,9 +41,6 @@ func initEntities() {
 	if err != nil {
 		// TODO: log error
 	}
-
-	// TEST REROLL BACK
-	// jetOperator.Landing(jetID)
 }
 
 func init() {
@@ -64,16 +61,6 @@ func init() {
 	)
 
 	initEntities()
-	// player = &entity.Core{
-	// 	Position: valueobject.Position{
-	// 		X: 10,
-	// 		Y: 10,
-	// 	},
-	// 	Momentum: valueobject.Momentum{
-	// 		X: 100,
-	// 		Y: 200,
-	// 	},
-	// }
 }
 
 type Game struct {
@@ -143,9 +130,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-// func (g *Game) drawPlayer(screen *ebiten.Image) {
-// 	op := &ebiten.DrawImageOptions{}
-// 	op.GeoM.Translate(float64(player.Position.X), float64(player.Position.Y))
-// 	screen.DrawImage(playerImage, op)
-// }
