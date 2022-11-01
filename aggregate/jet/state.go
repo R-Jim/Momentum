@@ -11,17 +11,18 @@ type InventoryState struct {
 	FuelTankID string
 }
 
-type status int
+type Status int
 
 var (
-	LandedStatus   status = 1
-	FlyingStatus   status = 2
-	EngagingStatus status = 3
+	IdleStatus     Status = 1
+	LandedStatus   Status = 2
+	FlyingStatus   Status = 3
+	EngagingStatus Status = 4
 )
 
 type CombatState struct {
 	ID       string
-	Status   status
+	Status   Status
 	TargetID string
 }
 
@@ -32,7 +33,7 @@ func toCombatState(events []Event) CombatState {
 		switch event.Effect {
 		case InitEffect:
 			state.ID = event.ID
-			state.Status = LandedStatus
+			state.Status = IdleStatus
 
 		case AttackEffect:
 			targetID, _ := event.Data.(string)

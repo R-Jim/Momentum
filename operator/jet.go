@@ -46,7 +46,6 @@ func (j jetOperator) Fly(jetID string, jetFuelTankID string, fuelConsumed int, t
 		newErr := j.fuelTankAggregator.Aggregate(jetFuelTankRefillEvent)
 		if newErr != nil {
 			fmt.Printf("[%v] rollback failed, err: %v.\n", jetFuelTankRefillEvent.Effect, newErr)
-			return err
 		}
 		return err
 	}

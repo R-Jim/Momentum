@@ -130,8 +130,7 @@ func TestImpl_Fly(t *testing.T) {
 			err := jetOperator.Fly(jetID, fuelTankID, tc.givenFuelConsumeQuantity, tc.givenToPosition)
 			// THEN
 			if tc.expErr != nil {
-				require.NotNil(t, err)
-				require.EqualError(t, tc.expErr, err.Error())
+				require.EqualError(t, err, tc.expErr.Error())
 			} else {
 				require.NoError(t, err)
 			}

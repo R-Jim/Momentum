@@ -1,4 +1,4 @@
-package jet
+package carrier
 
 import (
 	"fmt"
@@ -45,49 +45,27 @@ func (i aggregateImpl) aggregate(event Event) error {
 	switch event.Effect {
 	case InitEffect:
 		currentState := toCombatState(events)
-		if currentState.TargetID != "" || currentState.Status != 0 {
+		if len(currentState.Jets) != 0 || currentState.Status != 0 {
 			return common.ErrAggregateFail
 		}
 
-	case CancelAttackEffect:
+	case LaunchJetEffect:
 		currentState := toCombatState(events)
-		if currentState.TargetID != "" {
+
+		jetID, _ := event.Data.(string)
+
+		if currentState.Jets.indexOf(jetID) == -1 {
+			return common.ErrAggregateFail
+		}
+	case HouseJetEffect:
+		currentState := toCombatState(events)
+
+		jetID, _ := event.Data.(string)
+
+		if currentState.Jets.indexOf(jetID) > -1 {
 			return common.ErrAggregateFail
 		}
 
-	case EngageEffect:
-		currentState := toCombatState(events)
-		if currentState.Status != FlyingStatus {
-			return common.ErrAggregateFail
-		}
-	case DisengageEffect:
-		currentState := toCombatState(events)
-		if currentState.Status != EngagingStatus {
-			return common.ErrAggregateFail
-		}
-
-	case LandingEffect:
-		currentState := toCombatState(events)
-		if currentState.Status != FlyingStatus && currentState.Status != IdleStatus {
-			return common.ErrAggregateFail
-		}
-	case TakeOffEffect:
-		currentState := toCombatState(events)
-		if currentState.Status != LandedStatus && currentState.Status != IdleStatus {
-			return common.ErrAggregateFail
-		}
-
-	case FlyEffect:
-		currentState := toCombatState(events)
-		if currentState.Status != FlyingStatus {
-			return common.ErrAggregateFail
-		}
-
-	case FuelTankChangedEffect:
-		currentState := toCombatState(events)
-		if currentState.Status != LandedStatus && currentState.Status != IdleStatus {
-			return common.ErrAggregateFail
-		}
 	default:
 		return common.ErrEffectNotSupported
 	}
