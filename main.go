@@ -6,6 +6,7 @@ import (
 	_ "image/png"
 	"log"
 
+	"github.com/R-jim/Momentum/aggregate/carrier"
 	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
@@ -21,25 +22,56 @@ var (
 	ani     animator.Animator
 	jetAuto automaton.JetAutomaton
 
-	fuelTankID, jetID string
+	carrierID, fuelTank1ID, fuelTank2ID, jet1ID, jet2ID string
 )
 
 // for testing
 func initEntities() {
-	fuelTankID = "fuel_tank_1"
-	jetID = "jet_1"
+	carrierID = "carrier_1"
 
-	err := opt.FuelTank.Init(fuelTankID)
+	fuelTank1ID = "fuel_tank_1"
+	fuelTank2ID = "fuel_tank_2"
+
+	jet1ID = "jet_1"
+	jet2ID = "jet_2"
+
+	err := opt.FuelTank.Init(fuelTank1ID)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+	err = opt.FuelTank.Init(fuelTank2ID)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
-	err = opt.Jet.Init(jetID, fuelTankID)
+	err = opt.Jet.Init(jet1ID, fuelTank1ID)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+	err = opt.Jet.Init(jet2ID, fuelTank2ID)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
-	err = opt.FuelTank.Refill(fuelTankID, 150)
+	err = opt.FuelTank.Refill(fuelTank1ID, 150)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+	err = opt.FuelTank.Refill(fuelTank2ID, 150)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+
+	err = opt.Carrier.Init(carrierID)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+
+	err = opt.Carrier.HouseJet(carrierID, jet1ID)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+	err = opt.Carrier.HouseJet(carrierID, jet2ID)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
@@ -48,9 +80,11 @@ func initEntities() {
 func init() {
 	storageStore := storage.NewStore()
 	jetStore := jet.NewStore()
+	carrierStore := carrier.NewStore()
 
 	fuelTankAggregator := storage.NewAggregator(storageStore)
 	jetAggregator := jet.NewAggregator(jetStore)
+	carrierAggregator := carrier.NewAggregator(carrierStore)
 
 	ani = animator.New(jetStore)
 
@@ -58,6 +92,7 @@ func init() {
 		operator.OperatorAggregator{
 			JetAggregator:      jetAggregator,
 			FuelTankAggregator: fuelTankAggregator,
+			CarrierAggregator:  carrierAggregator,
 		},
 		ani,
 	)
@@ -70,7 +105,7 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	err := jetAuto.Auto(jetID)
+	err := jetAuto.Auto(jet1ID)
 	if err != nil {
 		fmt.Printf("[ERROR]Update: %v\n", err.Error())
 	}
@@ -86,7 +121,7 @@ func userInput() []func() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyF) {
 		fmt.Println("[Fly]")
 		operations = append(operations, func() error {
-			return opt.Jet.Fly(jetID, fuelTankID, 5, jet.PositionState{
+			return opt.Jet.Fly(jet1ID, fuelTank1ID, 5, jet.PositionState{
 				X: 1,
 				Y: 1,
 			})
@@ -96,13 +131,13 @@ func userInput() []func() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
 		fmt.Println("[Landing]")
 		operations = append(operations, func() error {
-			return opt.Jet.Landing(jetID)
+			return opt.Jet.Landing(jet1ID)
 		})
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyK) {
-		fmt.Println("[Landing]")
+		fmt.Println("[Launch Jet]")
 		operations = append(operations, func() error {
-			return opt.Jet.Takeoff(jetID)
+			return opt.Carrier.LaunchJet(carrierID, jet1ID)
 		})
 	}
 	return operations
