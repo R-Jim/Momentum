@@ -1,10 +1,16 @@
 package jet
 
-import "github.com/R-jim/Momentum/aggregate/common"
+import (
+	"math"
+
+	"github.com/R-jim/Momentum/aggregate/common"
+)
 
 type PositionState struct {
-	X int
-	Y int
+	X          float64
+	Y          float64
+	HeadPivotX float64
+	HeadPivotY float64
 }
 
 type InventoryState struct {
@@ -20,10 +26,15 @@ var (
 	EngagingStatus Status = 4
 )
 
+type Target struct {
+	ID   string
+	Type string
+}
+
 type CombatState struct {
-	ID       string
-	Status   Status
-	TargetID string
+	ID     string
+	Status Status
+	Target *Target
 }
 
 func toCombatState(events []Event) CombatState {
@@ -36,12 +47,12 @@ func toCombatState(events []Event) CombatState {
 			state.Status = IdleStatus
 
 		case AttackEffect:
-			targetID, _ := event.Data.(string)
+			target, _ := event.Data.(Target)
 			state.ID = event.ID
-			state.TargetID = targetID
+			state.Target = &target
 		case CancelAttackEffect:
 			state.ID = event.ID
-			state.TargetID = ""
+			state.Target = nil
 
 		case EngageEffect:
 			state.ID = event.ID
@@ -78,12 +89,18 @@ func GetCombatState(store Store, id string) (CombatState, error) {
 func toPositionState(events []Event) PositionState {
 	state := PositionState{}
 
+	var lastX, lastY float64
 	for _, event := range events {
 		switch event.Effect {
 		case FlyEffect:
 			position, _ := event.Data.(PositionState)
 			state.X = position.X
 			state.Y = position.Y
+
+			state.HeadPivotX, state.HeadPivotY = getSteps(lastX, lastY, state.X, state.Y)
+
+			lastX = state.X
+			lastY = state.Y
 		}
 	}
 	return state
@@ -129,4 +146,32 @@ func GetInventoryState(store Store, id string) (InventoryState, error) {
 	}
 
 	return toInventoryState(events), nil
+}
+
+func getDistances(startX, startY, desX, desY float64) (distanceX, distanceY, distanceSqrt float64) {
+	distanceX = math.Abs(desX - startX)
+	distanceY = math.Abs(desY - startY)
+
+	if distanceX == 0 && distanceY == 0 {
+		return 0, 0, 0
+	} else if distanceX == 0 {
+		distanceSqrt = distanceY
+	} else if distanceY == 0 {
+		distanceSqrt = distanceX
+	} else {
+		distanceSqrt = math.RoundToEven(math.Sqrt(math.Pow(distanceX, 2)+math.Pow(distanceX, 2))*100) / 100
+	}
+
+	return distanceX, distanceY, distanceSqrt
+}
+
+func getSteps(startX, startY, desX, desY float64) (stepX, stepY float64) {
+	distanceX, distanceY, distanceSqrt := getDistances(startX, startY, desX, desY)
+	if distanceX == 0 && distanceY == 0 && distanceSqrt == 0 {
+		return 0.5, 0.5
+	}
+
+	stepX = math.RoundToEven(distanceX/distanceSqrt*100) / 100
+	stepY = math.RoundToEven(distanceY/distanceSqrt*100) / 100
+	return stepX, stepY
 }

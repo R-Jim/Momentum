@@ -65,7 +65,7 @@ func (ja JetAnimator) animateEvent(screen *ebiten.Image, id string) error {
 
 	if stateImage != nil {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(positionState.X+jetImage.Bounds().Dx()+5), float64(positionState.Y))
+		op.GeoM.Translate(positionState.X+float64(jetImage.Bounds().Dx()+5), positionState.Y)
 		screen.DrawImage(stateImage, op)
 	}
 
@@ -89,12 +89,12 @@ func (ja JetAnimator) animateState(screen *ebiten.Image, id string) error {
 	positionState, _ := jet.GetPositionState(ja.store, id)
 
 	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(float64(positionState.X), float64(positionState.Y))
+	op.GeoM.Translate(positionState.X, positionState.Y)
 	screen.DrawImage(jetImage, op)
 
 	if stateImage != nil {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(float64(positionState.X+jetImage.Bounds().Dx()+5), float64(positionState.Y))
+		op.GeoM.Translate(positionState.X+float64(jetImage.Bounds().Dx()+5), positionState.Y)
 		screen.DrawImage(stateImage, op)
 	}
 	return nil

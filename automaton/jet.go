@@ -48,19 +48,32 @@ func (i impl) autoFly(id string) error {
 		return err
 	}
 
-	if combatState.Status != jet.FlyingStatus || fuelStorage.Quantity <= 0 || combatState.TargetID != "" {
+	if combatState.Status != jet.FlyingStatus || fuelStorage.Quantity <= 0 || combatState.Target != nil {
 		return nil
 	}
 	fmt.Printf("[AUTO_FLY] %v\n", id)
+	return i.autoPatrol(id)
+}
 
-	// TODO: get calculated position
+func (i impl) autoPatrol(id string) error {
+	radius := float64(50)
+	targetX := float64(200)
+	targetY := float64(200)
+
 	positionState, err := jet.GetPositionState(i.jetStore, id)
 	if err != nil {
 		return err
 	}
 
+	x, y := getNextStepXY(positionState, targetX, targetY, radius, 2)
+	inventoryState, err := jet.GetInventoryState(i.jetStore, id)
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("[AUTO_PATROL] %v:%v\n", x, y)
 	return i.operator.Jet.Fly(id, inventoryState.FuelTankID, 1, jet.PositionState{
-		X: positionState.X + 1,
-		Y: positionState.Y + 1,
+		X: x,
+		Y: y,
 	})
 }

@@ -45,13 +45,13 @@ func (i aggregateImpl) aggregate(event Event) error {
 	switch event.Effect {
 	case InitEffect:
 		currentState := toCombatState(events)
-		if currentState.TargetID != "" || currentState.Status != 0 {
+		if currentState.Target != nil || currentState.Status != 0 {
 			return common.ErrAggregateFail
 		}
 
 	case CancelAttackEffect:
 		currentState := toCombatState(events)
-		if currentState.TargetID != "" {
+		if currentState.Target != nil {
 			return common.ErrAggregateFail
 		}
 

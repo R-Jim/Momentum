@@ -53,11 +53,23 @@ func initEntities() {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
-	err = opt.FuelTank.Refill(fuelTank1ID, 150)
+	err = opt.FuelTank.Refill(fuelTank1ID, 1050)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 	err = opt.FuelTank.Refill(fuelTank2ID, 150)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+
+	err = opt.Jet.Takeoff(jet1ID)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+	err = opt.Jet.Fly(jet1ID, fuelTank1ID, 0, jet.PositionState{
+		X: float64(100),
+		Y: float64(100),
+	})
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
