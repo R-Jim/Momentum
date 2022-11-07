@@ -1,16 +1,14 @@
 package jet
 
 import (
-	"math"
-
 	"github.com/R-jim/Momentum/aggregate/common"
+	"github.com/R-jim/Momentum/util"
 )
 
 type PositionState struct {
 	X          float64
 	Y          float64
-	HeadPivotX float64
-	HeadPivotY float64
+	HeadDegree float64
 }
 
 type InventoryState struct {
@@ -97,7 +95,7 @@ func toPositionState(events []Event) PositionState {
 			state.X = position.X
 			state.Y = position.Y
 
-			state.HeadPivotX, state.HeadPivotY = getSteps(lastX, lastY, state.X, state.Y)
+			state.HeadDegree = util.GetDegree(lastX, lastY, state.X, state.Y)
 
 			lastX = state.X
 			lastY = state.Y
@@ -146,32 +144,4 @@ func GetInventoryState(store Store, id string) (InventoryState, error) {
 	}
 
 	return toInventoryState(events), nil
-}
-
-func getDistances(startX, startY, desX, desY float64) (distanceX, distanceY, distanceSqrt float64) {
-	distanceX = math.Abs(desX - startX)
-	distanceY = math.Abs(desY - startY)
-
-	if distanceX == 0 && distanceY == 0 {
-		return 0, 0, 0
-	} else if distanceX == 0 {
-		distanceSqrt = distanceY
-	} else if distanceY == 0 {
-		distanceSqrt = distanceX
-	} else {
-		distanceSqrt = math.RoundToEven(math.Sqrt(math.Pow(distanceX, 2)+math.Pow(distanceX, 2))*100) / 100
-	}
-
-	return distanceX, distanceY, distanceSqrt
-}
-
-func getSteps(startX, startY, desX, desY float64) (stepX, stepY float64) {
-	distanceX, distanceY, distanceSqrt := getDistances(startX, startY, desX, desY)
-	if distanceX == 0 && distanceY == 0 && distanceSqrt == 0 {
-		return 0.5, 0.5
-	}
-
-	stepX = math.RoundToEven(distanceX/distanceSqrt*100) / 100
-	stepY = math.RoundToEven(distanceY/distanceSqrt*100) / 100
-	return stepX, stepY
 }

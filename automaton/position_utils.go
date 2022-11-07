@@ -4,77 +4,55 @@ import (
 	"math"
 
 	"github.com/R-jim/Momentum/aggregate/jet"
+	"github.com/R-jim/Momentum/util"
 )
 
-func getNextStep(start, destination, step float64) float64 {
-	if start > destination {
-		tmp := start
-		start = destination - 1
-		destination = tmp
-
-	}
-
-	if start+step > destination {
-		return destination
-	}
-	return start + step
-}
-
-func getDistances(startX, startY, desX, desY float64) (distanceX, distanceY, distanceSqrt float64) {
-	distanceX = math.Abs(desX - startX)
-	distanceY = math.Abs(desY - startY)
-
-	if distanceX == 0 && distanceY == 0 {
-		return 0, 0, 0
-	} else if distanceX == 0 {
-		distanceSqrt = distanceY
-	} else if distanceY == 0 {
-		distanceSqrt = distanceX
-	} else {
-		distanceSqrt = math.RoundToEven(math.Sqrt(math.Pow(distanceX, 2)+math.Pow(distanceX, 2))*100) / 100
-	}
-
-	return distanceX, distanceY, distanceSqrt
-}
-
-func getSteps(startX, startY, desX, desY float64) (stepX, stepY float64) {
-	distanceX, distanceY, distanceSqrt := getDistances(startX, startY, desX, desY)
-	if distanceX == 0 && distanceY == 0 && distanceSqrt == 0 {
-		return 0.5, 0.5
-	}
-
-	stepX = math.RoundToEven(distanceX/distanceSqrt*100) / 100
-	stepY = math.RoundToEven(distanceY/distanceSqrt*100) / 100
-	return stepX, stepY
-}
-
 func getNextStepXY(positionState jet.PositionState, desX, desY, desRad, step float64) (x, y float64) {
-	stepX, stepY := getSteps(positionState.X, positionState.Y, desX, desY)
-	stepX *= step
-	stepY *= step
+	maxTurnDegree := float64(60)
 
-	x = getNextStep(positionState.X, desX, stepX)
-	y = getNextStep(positionState.Y, desY, stepY)
+	radius := math.RoundToEven((step / 2) / math.Sin(maxTurnDegree/2*math.Pi/180))
+	maxRadius := radius - step
+	if maxRadius < desRad {
+		maxRadius = desRad
+	}
+	_, _, distance := util.GetDistances(positionState.X, positionState.Y, desX, desY)
 
-	_, _, distanceSqrt := getDistances(x, y, desX, desY)
-
-	if distanceSqrt < desRad {
-		var farthestPos pos
-		var farthestDistance float64
-		for _, position := range getPositions(positionState, step) {
-			_, _, dis := getDistances(position.x, position.y, desX, desY)
-			if dis-step >= desRad {
-				return position.x, position.y
-			}
-			if dis > farthestDistance {
-				farthestPos = position
-				farthestDistance = dis
+	positions := getPositions(positionState, maxTurnDegree, step)
+	if distance >= maxRadius {
+		var nearestPos pos
+		var nearestDistance float64
+		for _, position := range positions {
+			_, _, dis := util.GetDistances(position.x, position.y, desX, desY)
+			if nearestDistance == 0 {
+				nearestPos = position
+				nearestDistance = dis
+			} else if dis < nearestDistance && dis >= maxRadius {
+				nearestPos = position
+				nearestDistance = dis
 			}
 		}
-		return farthestPos.x, farthestPos.y
+
+		if nearestDistance >= maxRadius {
+			return nearestPos.x, nearestPos.y
+		}
 	}
 
-	return x, y
+	var farthestPos pos
+	var farthestDistance float64
+	for _, position := range positions {
+		_, _, dis := util.GetDistances(position.x, position.y, desX, desY)
+		if dis >= maxRadius && dis < farthestDistance {
+			farthestPos = position
+			farthestDistance = dis
+			continue
+		}
+		if dis > farthestDistance {
+			farthestPos = position
+			farthestDistance = dis
+		}
+	}
+	return farthestPos.x, farthestPos.y
+
 }
 
 type pos struct {
@@ -82,20 +60,26 @@ type pos struct {
 	y float64
 }
 
-// Assume [0,0] POI varies in 0, 45 degree
-var (
-	varies = []float64{0, 60, -60}
-)
+func getPositions(positionState jet.PositionState, maxTurnDegree, step float64) []pos {
+	degreeStep := float64(60)
 
-func getPositions(positionState jet.PositionState, step float64) []pos {
-	result := make([]pos, 0, len(varies))
-	for _, v := range varies {
-		d := math.Atan(positionState.HeadPivotY/positionState.HeadPivotX) * 180 / math.Pi
-
-		result = append(result, pos{
-			x: positionState.X + step*math.Cos(d+v),
-			y: positionState.Y + step*math.Sin(d+v),
-		})
+	result := make([]pos, 0)
+	for i := maxTurnDegree; i >= float64(0); i -= degreeStep {
+		if i == 0 {
+			result = append(result, pos{
+				x: math.RoundToEven((positionState.X+step*util.CosDegree(positionState.HeadDegree))*100) / 100,
+				y: math.RoundToEven((positionState.Y+step*util.SinDegree(positionState.HeadDegree))*100) / 100,
+			})
+		} else {
+			result = append(result, pos{
+				x: math.RoundToEven((positionState.X+step*util.CosDegree(positionState.HeadDegree+i))*100) / 100,
+				y: math.RoundToEven((positionState.Y+step*util.SinDegree(positionState.HeadDegree+i))*100) / 100,
+			})
+			result = append(result, pos{
+				x: math.RoundToEven((positionState.X+step*util.CosDegree(positionState.HeadDegree+i*-1))*100) / 100,
+				y: math.RoundToEven((positionState.Y+step*util.SinDegree(positionState.HeadDegree+i*-1))*100) / 100,
+			})
+		}
 	}
 	return result
 }

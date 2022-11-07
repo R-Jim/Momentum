@@ -33,7 +33,7 @@ func initEntities() {
 	fuelTank2ID = "fuel_tank_2"
 
 	jet1ID = "jet_1"
-	jet2ID = "jet_2"
+	// jet2ID = "jet_2"
 
 	err := opt.FuelTank.Init(fuelTank1ID)
 	if err != nil {
@@ -48,27 +48,27 @@ func initEntities() {
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
-	err = opt.Jet.Init(jet2ID, fuelTank2ID)
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
+	// err = opt.Jet.Init(jet2ID, fuelTank2ID)
+	// if err != nil {
+	// 	fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	// }
 
 	err = opt.FuelTank.Refill(fuelTank1ID, 1050)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
-	err = opt.FuelTank.Refill(fuelTank2ID, 150)
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
+	// err = opt.FuelTank.Refill(fuelTank2ID, 150)
+	// if err != nil {
+	// 	fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	// }
 
 	err = opt.Jet.Takeoff(jet1ID)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 	err = opt.Jet.Fly(jet1ID, fuelTank1ID, 0, jet.PositionState{
-		X: float64(100),
-		Y: float64(100),
+		X: float64(50),
+		Y: float64(50),
 	})
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
@@ -83,10 +83,10 @@ func initEntities() {
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
-	err = opt.Carrier.HouseJet(carrierID, jet2ID)
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
+	// err = opt.Carrier.HouseJet(carrierID, jet2ID)
+	// if err != nil {
+	// 	fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	// }
 }
 
 func init() {

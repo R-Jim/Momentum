@@ -56,9 +56,9 @@ func (i impl) autoFly(id string) error {
 }
 
 func (i impl) autoPatrol(id string) error {
-	radius := float64(50)
-	targetX := float64(200)
-	targetY := float64(200)
+	radius := float64(40)
+	targetX := float64(150)
+	targetY := float64(150)
 
 	positionState, err := jet.GetPositionState(i.jetStore, id)
 	if err != nil {
