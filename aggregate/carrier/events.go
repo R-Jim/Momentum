@@ -52,10 +52,14 @@ func NewHouseJetEvent(id string, jetID string) Event {
 	}
 }
 
-func NewMoveEvent(id string) Event {
+func NewMoveEvent(id string, x, y float64) Event {
 	return Event{
 		ID:     id,
 		Effect: MoveEffect,
+		Data: PositionState{
+			X: x,
+			Y: y,
+		},
 	}
 }
 
