@@ -87,11 +87,17 @@ func (ja JetAnimator) animateState(screen *ebiten.Image, id string) error {
 	}
 
 	positionState, _ := jet.GetPositionState(ja.store, id)
+	{
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(positionState.X, positionState.Y)
 
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(positionState.X, positionState.Y)
-	screen.DrawImage(jetImage, op)
+		// Reset RGB (not Alpha) 0 forcibly
+		op.ColorM.Scale(0, 0, 0, 1)
+		op.ColorM.Translate(float64(0), float64(1), float64(.3), 0)
 
+		ji := ebiten.NewImageFromImage(jetImage)
+		screen.DrawImage(ji, op)
+	}
 	if stateImage != nil {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(positionState.X+float64(jetImage.Bounds().Dx()+5), positionState.Y)
