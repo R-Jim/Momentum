@@ -45,7 +45,7 @@ func (i aggregateImpl) aggregate(event Event) error {
 	switch event.Effect {
 	case InitEffect:
 		newState := toState(append(events, event))
-		if newState.ID != "" {
+		if newState.ID == "" {
 			return common.ErrAggregateFail
 		}
 

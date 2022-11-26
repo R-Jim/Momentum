@@ -16,6 +16,7 @@ type State struct {
 	ID       string
 	Health   Health
 	WeaponID string
+	TargetID string
 }
 
 func toState(events []Event) State {

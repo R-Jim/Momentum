@@ -3,13 +3,24 @@ package artifact
 import "github.com/R-jim/Momentum/aggregate/common"
 
 type Type string
+type Status string
 
 var (
 	MockType Type = "mock"
+
+	PlantedStatus      Status = "planted"
+	TransportingStatus Status = "transporting"
+	HarvestedStatus    Status = "harvested"
 )
 
 func (t Type) IsValid() bool {
 	return t == MockType
+}
+
+func (s Status) IsValid() bool {
+	return s == PlantedStatus ||
+		s == TransportingStatus ||
+		s == HarvestedStatus
 }
 
 type PositionState struct {
@@ -18,8 +29,11 @@ type PositionState struct {
 }
 
 type State struct {
-	ID   string
-	Type Type
+	ID     string
+	Status Status
+	Type   Type
+
+	SpikeIDs []string
 }
 
 func toState(events []Event) State {

@@ -7,11 +7,14 @@ type Effect string
 var (
 	InitEffect Effect = "ARTIFACT_INITIALED"
 
+	SpawnSpikeEffect Effect = "ARTIFACT_SPIKE_SPAWNED"
+
 	MoveEffect Effect = "ARTIFACT_MOVED"
 )
 
 func (e Effect) IsValid() bool {
 	return e == InitEffect ||
+		e == SpawnSpikeEffect ||
 		e == MoveEffect
 }
 
@@ -25,6 +28,25 @@ func NewInitEvent(id string) Event {
 	return Event{
 		ID:     id,
 		Effect: InitEffect,
+	}
+}
+
+type spikeSpawnData struct {
+	spikeID       string
+	positionState PositionState
+}
+
+func NewSpawnSpikeEffect(id string, spikeID string, x, y float64) Event {
+	return Event{
+		ID:     id,
+		Effect: SpawnSpikeEffect,
+		Data: spikeSpawnData{
+			spikeID: spikeID,
+			positionState: PositionState{
+				X: x,
+				Y: y,
+			},
+		},
 	}
 }
 

@@ -13,8 +13,9 @@ type Health struct {
 }
 
 type State struct {
-	ID     string
-	Health Health
+	ID         string
+	Health     Health
+	ArtifactID string
 }
 
 func toState(events []Event) State {
@@ -23,10 +24,11 @@ func toState(events []Event) State {
 	for _, event := range events {
 		switch event.Effect {
 		case InitEffect:
-			health, _ := event.Data.(Health)
+			parsedState, _ := event.Data.(State)
 
 			state.ID = event.ID
-			state.Health = health
+			state.Health = parsedState.Health
+			state.ArtifactID = parsedState.ArtifactID
 		case DamageEffect:
 			damage, _ := event.Data.(int)
 

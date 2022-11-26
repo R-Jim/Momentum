@@ -12,10 +12,16 @@ var (
 	MoveEffect Effect = "KNIGHT_MOVED"
 
 	ChangeWeaponEffect Effect = "KNIGHT_WEAPON_CHANGED"
+
+	ChangeTargetEffect Effect = "KNIGHT_TARGET_CHANGED"
 )
 
 func (e Effect) IsValid() bool {
 	return e == InitEffect ||
+		e == DamageEffect ||
+		e == StrikeEffect ||
+		e == ChangeWeaponEffect ||
+		e == ChangeTargetEffect ||
 		e == MoveEffect
 }
 
@@ -64,5 +70,13 @@ func NewChangeWeaponEvent(id string, weaponID string) Event {
 		ID:     id,
 		Effect: ChangeWeaponEffect,
 		Data:   weaponID,
+	}
+}
+
+func NewChangeTargetEvent(id string, targetID string) Event {
+	return Event{
+		ID:     id,
+		Effect: ChangeTargetEffect,
+		Data:   targetID,
 	}
 }
