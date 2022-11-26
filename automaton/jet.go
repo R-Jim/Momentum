@@ -12,7 +12,7 @@ type JetAutomaton interface {
 	Auto(id string) error
 }
 
-type impl struct {
+type jetImpl struct {
 	jetStore     jet.Store
 	storageStore storage.Store
 
@@ -20,7 +20,7 @@ type impl struct {
 }
 
 func NewJetAutomaton(jetStore jet.Store, storageStore storage.Store, operator operator.Operator) JetAutomaton {
-	return impl{
+	return jetImpl{
 		jetStore:     jetStore,
 		storageStore: storageStore,
 
@@ -28,11 +28,11 @@ func NewJetAutomaton(jetStore jet.Store, storageStore storage.Store, operator op
 	}
 }
 
-func (i impl) Auto(id string) error {
+func (i jetImpl) Auto(id string) error {
 	return i.autoFly(id)
 }
 
-func (i impl) autoFly(id string) error {
+func (i jetImpl) autoFly(id string) error {
 	combatState, err := jet.GetCombatState(i.jetStore, id)
 	if err != nil {
 		return err
@@ -55,7 +55,7 @@ func (i impl) autoFly(id string) error {
 	return i.autoPatrol(id)
 }
 
-func (i impl) autoPatrol(id string) error {
+func (i jetImpl) autoPatrol(id string) error {
 	radius := float64(40)
 	targetX := float64(150)
 	targetY := float64(150)
