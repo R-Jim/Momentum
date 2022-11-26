@@ -1,8 +1,10 @@
 package operator
 
 import (
+	"github.com/R-jim/Momentum/aggregate/artifact"
 	"github.com/R-jim/Momentum/aggregate/carrier"
 	"github.com/R-jim/Momentum/aggregate/jet"
+	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
 )
@@ -11,12 +13,15 @@ type OperatorAggregator struct {
 	JetAggregator      jet.Aggregator
 	FuelTankAggregator storage.Aggregator
 	CarrierAggregator  carrier.Aggregator
+	SpikeAggregator    spike.Aggregator
+	ArtifactAggregator artifact.Aggregator
 }
 
 type Operator struct {
 	Jet      jetOperator
 	FuelTank fuelTankOperator
 	Carrier  carrierOperator
+	Spike    spikeOperator
 }
 
 func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
@@ -35,6 +40,11 @@ func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 			jetOperator:       jetOperator,
 			carrierAggregator: aggregator.CarrierAggregator,
 			animator:          animator,
+		},
+		Spike: spikeOperator{
+			artifactAggregator: aggregator.ArtifactAggregator,
+			spikeAggregator:    aggregator.SpikeAggregator,
+			animator:           animator,
 		},
 	}
 }
