@@ -48,6 +48,21 @@ func (i aggregateImpl) aggregate(event Event) error {
 		if newState.ID == "" {
 			return common.ErrAggregateFail
 		}
+	case DamageEffect:
+		currentState := toState(events)
+		if currentState.Health.Value <= 0 {
+			return common.ErrAggregateFail
+		}
+	case StrikeEffect:
+		currentState := toState(events)
+		if currentState.Health.Value <= 0 {
+			return common.ErrAggregateFail
+		}
+	case MoveEffect:
+		currentState := toState(events)
+		if currentState.Health.Value <= 0 {
+			return common.ErrAggregateFail
+		}
 
 	default:
 		return common.ErrEffectNotSupported

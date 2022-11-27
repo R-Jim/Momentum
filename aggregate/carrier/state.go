@@ -20,9 +20,15 @@ var (
 
 type JetIDs []string
 
+type Health struct {
+	Max   int
+	Value int
+}
+
 type CombatState struct {
 	ID     string
 	Status status
+	Health Health
 	Jets   JetIDs
 }
 
