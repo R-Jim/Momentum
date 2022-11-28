@@ -32,3 +32,14 @@ func (j spikeOperator) Move(spikeID string, toPosition spike.PositionState) erro
 	j.animator.AppendEvent(spikeMoveEvent)
 	return nil
 }
+
+func (j spikeOperator) Strike(spikeID string, targetID string) error {
+	spikeStrikeEvent := spike.NewStrikeEvent(spikeID, targetID)
+	err := j.spikeAggregator.Aggregate(spikeStrikeEvent)
+	if err != nil {
+		return err
+	}
+
+	j.animator.AppendEvent(spikeStrikeEvent)
+	return nil
+}
