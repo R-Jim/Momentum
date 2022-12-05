@@ -32,6 +32,7 @@ type State struct {
 	ID     string
 	Status Status
 	Type   Type
+	Energy int
 
 	SpikeIDs []string
 }
@@ -46,6 +47,11 @@ func toState(events []Event) State {
 
 			state.ID = event.ID
 			state.Type = artifactType
+			state.Status = PlantedStatus
+			state.Energy = 100
+
+		case SpawnSpikeEffect:
+			state.Energy -= 10
 		}
 	}
 

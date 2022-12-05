@@ -45,10 +45,20 @@ func (i aggregateImpl) aggregate(event Event) error {
 	switch event.Effect {
 	case InitEffect:
 		newState := toState(append(events, event))
-		if newState.ID != "" {
+		if newState.ID == "" {
 			return common.ErrAggregateFail
 		}
 
+	case SpawnSpikeEffect:
+		currentState := toState(events)
+		if currentState.Energy < 10 && currentState.Status != PlantedStatus {
+			return common.ErrAggregateFail
+		}
+	case MoveEffect:
+		currentState := toState(events)
+		if currentState.Status != PlantedStatus {
+			return common.ErrAggregateFail
+		}
 	default:
 		return common.ErrEffectNotSupported
 	}
