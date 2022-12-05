@@ -3,48 +3,39 @@ package animator
 import (
 	"errors"
 	"fmt"
-	"math/rand"
 
-	"github.com/R-jim/Momentum/aggregate/spike"
+	"github.com/R-jim/Momentum/aggregate/artifact"
 	"github.com/R-jim/Momentum/asset"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
-/*
-TODO:
-enemy has HP
-number of enemies to render, radius base on HP
-*/
-
 var (
-	normalImage *ebiten.Image
-	duckImage   *ebiten.Image
+	idleImage *ebiten.Image
 )
 
-type SpikeAnimator struct {
-	store         spike.Store
-	pendingEvents map[string][]spike.Event
+type ArtifactAnimator struct {
+	store         artifact.Store
+	pendingEvents map[string][]artifact.Event
 }
 
-func initSpikeAnimation() error {
-	normalImage = getAssetImage(asset.Spike_png)
-	duckImage = getAssetImage(asset.SpikeDuck_png)
+func initArtifactAnimation() error {
+	idleImage = getAssetImage(asset.Artifact_png)
 	return nil
 }
 
-func (sa SpikeAnimator) AppendEvent(event spike.Event) {
-	events := sa.pendingEvents[event.ID]
+func (aa ArtifactAnimator) AppendEvent(event artifact.Event) {
+	events := aa.pendingEvents[event.ID]
 	if events == nil {
-		events = []spike.Event{}
+		events = []artifact.Event{}
 	}
-	sa.pendingEvents[event.ID] = append(events, event)
+	aa.pendingEvents[event.ID] = append(events, event)
 }
 
-func (sa SpikeAnimator) resetEventQueue(id string) {
-	sa.pendingEvents[id] = []spike.Event{}
+func (aa ArtifactAnimator) resetEventQueue(id string) {
+	aa.pendingEvents[id] = []artifact.Event{}
 }
 
-func (sa SpikeAnimator) animateEvent(screen *ebiten.Image, id string) error {
+func (aa ArtifactAnimator) animateEvent(screen *ebiten.Image, id string) error {
 	// if len(ja.pendingEvents) == 0 {
 	// 	return ErrNoPendingEvents
 	// }
@@ -72,10 +63,10 @@ func (sa SpikeAnimator) animateEvent(screen *ebiten.Image, id string) error {
 	return nil
 }
 
-func (sa SpikeAnimator) animateState(screen *ebiten.Image, id string) error {
+func (aa ArtifactAnimator) animateState(screen *ebiten.Image, id string) error {
 	// currentState, _ := spike.GetState(ja.store, id)
 	var stateImage *ebiten.Image
-
+	stateImage = idleImage
 	// switch currentState.Status {
 	// case jet.FlyingStatus:
 	// case jet.LandedStatus:
@@ -86,15 +77,7 @@ func (sa SpikeAnimator) animateState(screen *ebiten.Image, id string) error {
 	// 	return fmt.Errorf("[JetAnimator][ERROR][%v] err: %v", currentState.Status, ErrStateNotSupported.Error())
 	// }
 
-	positionState, _ := spike.GetPositionState(sa.store, id)
-
-	frameIndex := rand.Intn(2)
-	switch frameIndex {
-	case 1:
-		stateImage = duckImage
-	default:
-		stateImage = normalImage
-	}
+	positionState, _ := artifact.GetPositionState(aa.store, id)
 
 	if stateImage != nil {
 		op := &ebiten.DrawImageOptions{}
@@ -104,17 +87,17 @@ func (sa SpikeAnimator) animateState(screen *ebiten.Image, id string) error {
 	return nil
 }
 
-func (sa SpikeAnimator) drawSpike(screen *ebiten.Image, id string) {
-	if err := sa.animateEvent(screen, id); err != nil {
+func (aa ArtifactAnimator) drawArtifact(screen *ebiten.Image, id string) {
+	if err := aa.animateEvent(screen, id); err != nil {
 		if !errors.Is(err, ErrNoPendingEvents) {
 			fmt.Println(err)
 		}
 	}
-	sa.animateState(screen, id)
+	aa.animateState(screen, id)
 }
 
-func (sa SpikeAnimator) Draw(screen *ebiten.Image) {
-	for id := range sa.store.GetEvents() {
-		sa.drawSpike(screen, id)
+func (aa ArtifactAnimator) Draw(screen *ebiten.Image) {
+	for id := range aa.store.GetEvents() {
+		aa.drawArtifact(screen, id)
 	}
 }

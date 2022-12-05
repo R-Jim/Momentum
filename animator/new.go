@@ -1,6 +1,7 @@
 package animator
 
 import (
+	"github.com/R-jim/Momentum/aggregate/artifact"
 	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -12,18 +13,21 @@ type Animator interface {
 }
 
 type impl struct {
-	JetAnimator   JetAnimator
-	SpikeAnimator SpikeAnimator
+	JetAnimator      JetAnimator
+	SpikeAnimator    SpikeAnimator
+	ArtifactAnimator ArtifactAnimator
 }
 
 type AnimatorStores struct {
-	JetStore   jet.Store
-	SpikeStore spike.Store
+	JetStore      jet.Store
+	SpikeStore    spike.Store
+	ArtifactStore artifact.Store
 }
 
 func New(stores AnimatorStores) Animator {
 	initJetAnimation()
 	initSpikeAnimation()
+	initArtifactAnimation()
 	return impl{
 		JetAnimator: JetAnimator{
 			store:         stores.JetStore,
@@ -33,12 +37,17 @@ func New(stores AnimatorStores) Animator {
 			store:         stores.SpikeStore,
 			pendingEvents: map[string][]spike.Event{},
 		},
+		ArtifactAnimator: ArtifactAnimator{
+			store:         stores.ArtifactStore,
+			pendingEvents: map[string][]artifact.Event{},
+		},
 	}
 }
 
 func (i impl) Draw(screen *ebiten.Image) {
 	i.JetAnimator.Draw(screen)
 	i.SpikeAnimator.Draw(screen)
+	i.ArtifactAnimator.Draw(screen)
 }
 
 func (i impl) AppendEvent(event interface{}) error {
