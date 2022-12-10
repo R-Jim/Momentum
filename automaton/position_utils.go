@@ -17,7 +17,7 @@ func getNextStepXY(positionState jet.PositionState, desX, desY, desRad, step flo
 	}
 	_, _, distance := util.GetDistances(positionState.X, positionState.Y, desX, desY)
 
-	positions := getPositions(positionState, maxTurnDegree, step)
+	positions := getJetPositions(positionState, maxTurnDegree, step)
 	if distance >= maxRadius {
 		var nearestPos pos
 		var nearestDistance float64
@@ -60,24 +60,26 @@ type pos struct {
 	y float64
 }
 
-func getPositions(positionState jet.PositionState, maxTurnDegree, step float64) []pos {
+func getJetPositions(positionState jet.PositionState, maxTurnDegree, step float64) []pos {
 	degreeStep := float64(60)
-
+	return getPositions(positionState.X, positionState.Y, positionState.HeadDegree, maxTurnDegree, degreeStep, step)
+}
+func getPositions(x, y, pivotDegree, maxTurnDegree, degreeStep, step float64) []pos {
 	result := make([]pos, 0)
 	for i := maxTurnDegree; i >= float64(0); i -= degreeStep {
 		if i == 0 {
 			result = append(result, pos{
-				x: math.RoundToEven((positionState.X+step*util.CosDegree(positionState.HeadDegree))*100) / 100,
-				y: math.RoundToEven((positionState.Y+step*util.SinDegree(positionState.HeadDegree))*100) / 100,
+				x: math.RoundToEven((x+step*util.CosDegree(pivotDegree))*100) / 100,
+				y: math.RoundToEven((y+step*util.SinDegree(pivotDegree))*100) / 100,
 			})
 		} else {
 			result = append(result, pos{
-				x: math.RoundToEven((positionState.X+step*util.CosDegree(positionState.HeadDegree+i))*100) / 100,
-				y: math.RoundToEven((positionState.Y+step*util.SinDegree(positionState.HeadDegree+i))*100) / 100,
+				x: math.RoundToEven((x+step*util.CosDegree(pivotDegree+i))*100) / 100,
+				y: math.RoundToEven((y+step*util.SinDegree(pivotDegree+i))*100) / 100,
 			})
 			result = append(result, pos{
-				x: math.RoundToEven((positionState.X+step*util.CosDegree(positionState.HeadDegree+i*-1))*100) / 100,
-				y: math.RoundToEven((positionState.Y+step*util.SinDegree(positionState.HeadDegree+i*-1))*100) / 100,
+				x: math.RoundToEven((x+step*util.CosDegree(pivotDegree+i*-1))*100) / 100,
+				y: math.RoundToEven((y+step*util.SinDegree(pivotDegree+i*-1))*100) / 100,
 			})
 		}
 	}

@@ -6,28 +6,39 @@ import (
 	_ "image/png"
 	"log"
 
+	"github.com/R-jim/Momentum/aggregate/artifact"
 	"github.com/R-jim/Momentum/aggregate/carrier"
 	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
+	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/sync/errgroup"
 )
 
 var (
-	opt operator.Operator
-	ani animator.Animator
+	opt          operator.Operator
+	ani          animator.Animator
+	artifactAuto automaton.ArtifactAutomaton
 
-	spikeID string
+	artifactID string
 )
 
 // for testing
 func initEntities() {
-	spikeID = "spike_1"
+	artifactID = "artifact_1"
 
-	err := opt.Spike.Init(spikeID, "artifact")
+	err := opt.Artifact.Init(artifactID)
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+
+	err = opt.Artifact.Move(artifactID, artifact.PositionState{
+		X: 100,
+		Y: 100,
+	})
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
@@ -38,15 +49,18 @@ func init() {
 	jetStore := jet.NewStore()
 	carrierStore := carrier.NewStore()
 	spikeStore := spike.NewStore()
+	artifactStore := artifact.NewStore()
 
 	fuelTankAggregator := storage.NewAggregator(storageStore)
 	jetAggregator := jet.NewAggregator(jetStore)
 	carrierAggregator := carrier.NewAggregator(carrierStore)
 	spikeAggregator := spike.NewAggregator(spikeStore)
+	artifactAggregator := artifact.NewAggregator(artifactStore)
 
 	ani = animator.New(animator.AnimatorStores{
-		JetStore:   jetStore,
-		SpikeStore: spikeStore,
+		JetStore:      jetStore,
+		SpikeStore:    spikeStore,
+		ArtifactStore: artifactStore,
 	})
 
 	opt = operator.New(
@@ -55,9 +69,12 @@ func init() {
 			FuelTankAggregator: fuelTankAggregator,
 			CarrierAggregator:  carrierAggregator,
 			SpikeAggregator:    spikeAggregator,
+			ArtifactAggregator: artifactAggregator,
 		},
 		ani,
 	)
+
+	artifactAuto = automaton.NewArtifactAutomaton(artifactStore, opt)
 
 	initEntities()
 }
@@ -66,6 +83,11 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
+	err := artifactAuto.Auto(artifactID)
+	if err != nil {
+		return err
+	}
+
 	operations := []func() error{}
 	operations = append(operations, userInput()...)
 	go runConcurrently(operations)

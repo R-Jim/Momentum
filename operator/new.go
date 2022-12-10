@@ -22,6 +22,7 @@ type Operator struct {
 	FuelTank fuelTankOperator
 	Carrier  carrierOperator
 	Spike    spikeOperator
+	Artifact artifactOperator
 }
 
 func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
@@ -42,6 +43,11 @@ func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 			animator:          animator,
 		},
 		Spike: spikeOperator{
+			artifactAggregator: aggregator.ArtifactAggregator,
+			spikeAggregator:    aggregator.SpikeAggregator,
+			animator:           animator,
+		},
+		Artifact: artifactOperator{
 			artifactAggregator: aggregator.ArtifactAggregator,
 			spikeAggregator:    aggregator.SpikeAggregator,
 			animator:           animator,
