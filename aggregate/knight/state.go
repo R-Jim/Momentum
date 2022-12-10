@@ -13,10 +13,11 @@ type Health struct {
 }
 
 type State struct {
-	ID       string
-	Health   Health
-	WeaponID string
-	TargetID string
+	ID                  string
+	Health              Health
+	WeaponID            string
+	TargetID            string
+	HarvestedArtifactID string
 }
 
 func toState(events []Event) State {
@@ -36,6 +37,11 @@ func toState(events []Event) State {
 			state.Health.Value -= damage
 
 		case ChangeWeaponEffect:
+		case GatherArtifactEffect:
+			artifactID, _ := event.Data.(string)
+			state.HarvestedArtifactID = artifactID
+		case DropArtifactEFfect:
+			state.HarvestedArtifactID = ""
 		}
 	}
 
