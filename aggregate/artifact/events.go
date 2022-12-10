@@ -69,7 +69,7 @@ func NewMoveEffect(id string, x, y float64) Event {
 func NewGatherEffect(id string, gatherID string) Event {
 	return Event{
 		ID:     id,
-		Effect: MoveEffect,
+		Effect: GatherEffect,
 		Data:   gatherID,
 	}
 }
@@ -77,7 +77,7 @@ func NewGatherEffect(id string, gatherID string) Event {
 func NewDropEffect(id string, x, y float64) Event {
 	return Event{
 		ID:     id,
-		Effect: MoveEffect,
+		Effect: DropEFfect,
 		Data: PositionState{
 			X: x,
 			Y: y,
