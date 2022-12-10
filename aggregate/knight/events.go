@@ -14,6 +14,9 @@ var (
 	ChangeWeaponEffect Effect = "KNIGHT_WEAPON_CHANGED"
 
 	ChangeTargetEffect Effect = "KNIGHT_TARGET_CHANGED"
+
+	GatherArtifactEffect Effect = "KNIGHT_ARTIFACT_GATHERED"
+	DropArtifactEFfect   Effect = "KNIGHT_ARTIFACT_DROPPED"
 )
 
 func (e Effect) IsValid() bool {
@@ -22,7 +25,9 @@ func (e Effect) IsValid() bool {
 		e == StrikeEffect ||
 		e == ChangeWeaponEffect ||
 		e == ChangeTargetEffect ||
-		e == MoveEffect
+		e == MoveEffect ||
+		e == GatherArtifactEffect ||
+		e == DropArtifactEFfect
 }
 
 type Event struct {
@@ -78,5 +83,20 @@ func NewChangeTargetEvent(id string, targetID string) Event {
 		ID:     id,
 		Effect: ChangeTargetEffect,
 		Data:   targetID,
+	}
+}
+
+func NewGatherArtifactEvent(id string, artifactID string) Event {
+	return Event{
+		ID:     id,
+		Effect: GatherArtifactEffect,
+		Data:   artifactID,
+	}
+}
+
+func NewDropArtifactEFfect(id string) Event {
+	return Event{
+		ID:     id,
+		Effect: DropArtifactEFfect,
 	}
 }

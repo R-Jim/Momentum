@@ -49,6 +49,17 @@ func (i aggregateImpl) aggregate(event Event) error {
 			return common.ErrAggregateFail
 		}
 
+	case GatherArtifactEffect:
+		currentState := toState(events)
+		if currentState.HarvestedArtifactID != "" {
+			return common.ErrAggregateFail
+		}
+	case DropArtifactEFfect:
+		currentState := toState(events)
+		if currentState.HarvestedArtifactID == "" {
+			return common.ErrAggregateFail
+		}
+
 	default:
 		return common.ErrEffectNotSupported
 	}
