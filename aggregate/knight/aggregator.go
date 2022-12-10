@@ -54,6 +54,9 @@ func (i aggregateImpl) aggregate(event Event) error {
 		if currentState.HarvestedArtifactID != "" {
 			return common.ErrAggregateFail
 		}
+		if currentState.Health.Value <= 0 {
+			return common.ErrAggregateFail
+		}
 	case DropArtifactEFfect:
 		currentState := toState(events)
 		if currentState.HarvestedArtifactID == "" {
