@@ -10,12 +10,17 @@ var (
 	SpawnSpikeEffect Effect = "ARTIFACT_SPIKE_SPAWNED"
 
 	MoveEffect Effect = "ARTIFACT_MOVED"
+
+	GatherEffect Effect = "ARTIFACT_GATHERED"
+	DropEFfect   Effect = "ARTIFACT_DROPPED"
 )
 
 func (e Effect) IsValid() bool {
 	return e == InitEffect ||
 		e == SpawnSpikeEffect ||
-		e == MoveEffect
+		e == MoveEffect ||
+		e == GatherEffect ||
+		e == DropEFfect
 }
 
 type Event struct {
@@ -51,6 +56,25 @@ func NewSpawnSpikeEffect(id string, spikeID string, x, y float64) Event {
 }
 
 func NewMoveEffect(id string, x, y float64) Event {
+	return Event{
+		ID:     id,
+		Effect: MoveEffect,
+		Data: PositionState{
+			X: x,
+			Y: y,
+		},
+	}
+}
+
+func NewGatherEffect(id string, gatherID string) Event {
+	return Event{
+		ID:     id,
+		Effect: MoveEffect,
+		Data:   gatherID,
+	}
+}
+
+func NewDropEffect(id string, x, y float64) Event {
 	return Event{
 		ID:     id,
 		Effect: MoveEffect,
