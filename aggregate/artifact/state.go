@@ -8,9 +8,8 @@ type Status string
 var (
 	MockType Type = "mock"
 
-	PlantedStatus      Status = "planted"
-	TransportingStatus Status = "transporting"
-	HarvestedStatus    Status = "harvested"
+	PlantedStatus   Status = "PLANTED"
+	HarvestedStatus Status = "HARVESTED"
 )
 
 func (t Type) IsValid() bool {
@@ -19,7 +18,6 @@ func (t Type) IsValid() bool {
 
 func (s Status) IsValid() bool {
 	return s == PlantedStatus ||
-		s == TransportingStatus ||
 		s == HarvestedStatus
 }
 
@@ -29,10 +27,11 @@ type PositionState struct {
 }
 
 type State struct {
-	ID     string
-	Status Status
-	Type   Type
-	Energy int
+	ID       string
+	Status   Status
+	Type     Type
+	Energy   int
+	GatherID string
 
 	SpikeIDs []string
 }
@@ -52,6 +51,14 @@ func toState(events []Event) State {
 
 		case SpawnSpikeEffect:
 			state.Energy -= 10
+
+		case GatherEffect:
+			gatherID, _ := event.Data.(string)
+			state.Status = HarvestedStatus
+			state.GatherID = gatherID
+		case DropEFfect:
+			state.Status = PlantedStatus
+			state.GatherID = ""
 		}
 	}
 
@@ -76,7 +83,7 @@ func toPositionState(events []Event) PositionState {
 
 	for _, event := range events {
 		switch event.Effect {
-		case MoveEffect:
+		case MoveEffect, DropEFfect:
 			position, _ := event.Data.(PositionState)
 			state.X = position.X
 			state.Y = position.Y

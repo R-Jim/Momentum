@@ -59,6 +59,18 @@ func (i aggregateImpl) aggregate(event Event) error {
 		if currentState.Status != PlantedStatus {
 			return common.ErrAggregateFail
 		}
+
+	case GatherEffect:
+		currentState := toState(events)
+		if currentState.Status != PlantedStatus {
+			return common.ErrAggregateFail
+		}
+	case DropEFfect:
+		currentState := toState(events)
+		if currentState.Status != HarvestedStatus {
+			return common.ErrAggregateFail
+		}
+
 	default:
 		return common.ErrEffectNotSupported
 	}
