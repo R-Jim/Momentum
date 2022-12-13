@@ -9,7 +9,6 @@ import (
 	"github.com/R-jim/Momentum/aggregate/artifact"
 	"github.com/R-jim/Momentum/aggregate/carrier"
 	"github.com/R-jim/Momentum/aggregate/jet"
-	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
@@ -20,23 +19,23 @@ import (
 )
 
 var (
-	opt        operator.Operator
-	ani        animator.Animator
-	knightAuto automaton.KnightAutomaton
+	opt          operator.Operator
+	ani          animator.Animator
+	artifactAuto automaton.ArtifactAutomaton
 
-	knightID string
+	artifactID string
 )
 
 // for testing
 func initEntities() {
-	knightID = "knight_1"
+	artifactID = "artifact_1"
 
-	err := opt.Knight.Init(knightID, knight.Health{Max: 50, Value: 50})
+	err := opt.Artifact.Init(artifactID)
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
-	err = opt.Knight.Move(knightID, knight.PositionState{
+	err = opt.Artifact.Move(artifactID, artifact.PositionState{
 		X: 100,
 		Y: 100,
 	})
@@ -51,14 +50,12 @@ func init() {
 	carrierStore := carrier.NewStore()
 	spikeStore := spike.NewStore()
 	artifactStore := artifact.NewStore()
-	knightStore := knight.NewStore()
 
 	fuelTankAggregator := storage.NewAggregator(storageStore)
 	jetAggregator := jet.NewAggregator(jetStore)
 	carrierAggregator := carrier.NewAggregator(carrierStore)
 	spikeAggregator := spike.NewAggregator(spikeStore)
 	artifactAggregator := artifact.NewAggregator(artifactStore)
-	knightAggregator := knight.NewAggregator(knightStore)
 
 	ani = animator.New(animator.AnimatorStores{
 		JetStore:      jetStore,
@@ -73,12 +70,11 @@ func init() {
 			CarrierAggregator:  carrierAggregator,
 			SpikeAggregator:    spikeAggregator,
 			ArtifactAggregator: artifactAggregator,
-			KnightAggregator:   knightAggregator,
 		},
 		ani,
 	)
 
-	knightAuto = automaton.NewKnightAutomaton(knightStore, opt)
+	artifactAuto = automaton.NewArtifactAutomaton(artifactStore, opt)
 
 	initEntities()
 }
@@ -87,7 +83,7 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	err := knightAuto.Auto(knightID)
+	err := artifactAuto.Auto(artifactID)
 	if err != nil {
 		return err
 	}
