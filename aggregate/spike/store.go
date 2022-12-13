@@ -10,6 +10,7 @@ type Store interface {
 	// WARNING: action strictly used by AGGREGATOR ONLY
 	appendEvent(Event) error
 	GetEvents() map[string][]Event
+	GetEntityIDs() []string
 }
 
 func NewStore() Store {
@@ -41,4 +42,12 @@ func (i impl) appendEvent(e Event) error {
 func (i impl) GetEvents() map[string][]Event {
 	events := i.eventsSet // Shallow clone
 	return events
+}
+
+func (i impl) GetEntityIDs() []string {
+	ids := []string{}
+	for key := range i.eventsSet {
+		ids = append(ids, key)
+	}
+	return ids
 }

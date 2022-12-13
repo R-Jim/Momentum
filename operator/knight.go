@@ -45,3 +45,14 @@ func (k knightOperator) ChangeTarget(knightID string, target knight.Target) erro
 	}
 	return nil
 }
+
+func (k knightOperator) Strike(spikeID string, targetID string) error {
+	knightStrikeEvent := knight.NewStrikeEvent(spikeID, targetID)
+	err := k.knightAggregator.Aggregate(knightStrikeEvent)
+	if err != nil {
+		return err
+	}
+
+	k.animator.AppendEvent(knightStrikeEvent)
+	return nil
+}
