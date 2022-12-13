@@ -3,21 +3,18 @@ package automaton
 import (
 	"math"
 
-	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/util"
 )
 
-func getNextStepXY(positionState jet.PositionState, desX, desY, desRad, step float64) (x, y float64) {
-	maxTurnDegree := float64(60)
-
+func getNextStepXY(x, y, pivotDegree, desX, desY, desRad, step, maxTurnDegree float64) (resultX, resultY float64) {
 	radius := math.RoundToEven((step / 2) / math.Sin(maxTurnDegree/2*math.Pi/180))
 	maxRadius := radius - step
 	if maxRadius < desRad {
 		maxRadius = desRad
 	}
-	_, _, distance := util.GetDistances(positionState.X, positionState.Y, desX, desY)
+	_, _, distance := util.GetDistances(x, y, desX, desY)
 
-	positions := getJetPositions(positionState, maxTurnDegree, step)
+	positions := getPositions(x, y, pivotDegree, maxTurnDegree, float64(60), step)
 	if distance >= maxRadius {
 		var nearestPos pos
 		var nearestDistance float64
@@ -52,7 +49,6 @@ func getNextStepXY(positionState jet.PositionState, desX, desY, desRad, step flo
 		}
 	}
 	return farthestPos.x, farthestPos.y
-
 }
 
 type pos struct {
@@ -60,10 +56,6 @@ type pos struct {
 	y float64
 }
 
-func getJetPositions(positionState jet.PositionState, maxTurnDegree, step float64) []pos {
-	degreeStep := float64(60)
-	return getPositions(positionState.X, positionState.Y, positionState.HeadDegree, maxTurnDegree, degreeStep, step)
-}
 func getPositions(x, y, pivotDegree, maxTurnDegree, degreeStep, step float64) []pos {
 	result := make([]pos, 0)
 	for i := maxTurnDegree; i >= float64(0); i -= degreeStep {

@@ -97,6 +97,10 @@ func (aa ArtifactAnimator) drawArtifact(screen *ebiten.Image, id string) {
 }
 
 func (aa ArtifactAnimator) Draw(screen *ebiten.Image) {
+	if aa.store == nil {
+		return
+	}
+
 	for id := range aa.store.GetEvents() {
 		aa.drawArtifact(screen, id)
 	}

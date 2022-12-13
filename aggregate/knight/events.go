@@ -36,10 +36,11 @@ type Event struct {
 	Data   Data
 }
 
-func NewInitEvent(id string) Event {
+func NewInitEvent(id string, health Health) Event {
 	return Event{
 		ID:     id,
 		Effect: InitEffect,
+		Data:   health,
 	}
 }
 
@@ -59,7 +60,7 @@ func NewStrikeEvent(id string, weaponID string) Event {
 	}
 }
 
-func NewMoveEffect(id string, x, y float64) Event {
+func NewMoveEvent(id string, x, y float64) Event {
 	return Event{
 		ID:     id,
 		Effect: MoveEffect,
@@ -78,11 +79,11 @@ func NewChangeWeaponEvent(id string, weaponID string) Event {
 	}
 }
 
-func NewChangeTargetEvent(id string, targetID string) Event {
+func NewChangeTargetEvent(id string, target Target) Event {
 	return Event{
 		ID:     id,
 		Effect: ChangeTargetEffect,
-		Data:   targetID,
+		Data:   target,
 	}
 }
 
@@ -94,7 +95,7 @@ func NewGatherArtifactEvent(id string, artifactID string) Event {
 	}
 }
 
-func NewDropArtifactEFfect(id string) Event {
+func NewDropArtifactEvent(id string) Event {
 	return Event{
 		ID:     id,
 		Effect: DropArtifactEFfect,
