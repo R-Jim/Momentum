@@ -114,6 +114,10 @@ func (sa SpikeAnimator) drawSpike(screen *ebiten.Image, id string) {
 }
 
 func (sa SpikeAnimator) Draw(screen *ebiten.Image) {
+	if sa.store == nil {
+		return
+	}
+
 	for id := range sa.store.GetEvents() {
 		sa.drawSpike(screen, id)
 	}
