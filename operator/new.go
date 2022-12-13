@@ -4,6 +4,7 @@ import (
 	"github.com/R-jim/Momentum/aggregate/artifact"
 	"github.com/R-jim/Momentum/aggregate/carrier"
 	"github.com/R-jim/Momentum/aggregate/jet"
+	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
@@ -15,6 +16,7 @@ type OperatorAggregator struct {
 	CarrierAggregator  carrier.Aggregator
 	SpikeAggregator    spike.Aggregator
 	ArtifactAggregator artifact.Aggregator
+	KnightAggregator   knight.Aggregator
 }
 
 type Operator struct {
@@ -23,6 +25,7 @@ type Operator struct {
 	Carrier  carrierOperator
 	Spike    spikeOperator
 	Artifact artifactOperator
+	Knight   knightOperator
 }
 
 func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
@@ -51,6 +54,10 @@ func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 			artifactAggregator: aggregator.ArtifactAggregator,
 			spikeAggregator:    aggregator.SpikeAggregator,
 			animator:           animator,
+		},
+		Knight: knightOperator{
+			knightAggregator: aggregator.KnightAggregator,
+			animator:         nil,
 		},
 	}
 }
