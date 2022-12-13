@@ -4,7 +4,9 @@ import (
 	"fmt"
 
 	"github.com/R-jim/Momentum/aggregate/knight"
+	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/operator"
+	"github.com/R-jim/Momentum/util"
 )
 
 /*
@@ -21,6 +23,7 @@ type KnightAutomaton interface {
 
 type knightImpl struct {
 	knightStore knight.Store
+	spikeStore  spike.Store
 
 	operator operator.Operator
 }
@@ -34,6 +37,10 @@ func NewKnightAutomaton(knightStore knight.Store, operator operator.Operator) Kn
 }
 
 func (i knightImpl) Auto(id string) error {
+	err := i.autoStrike(id)
+	if err != nil {
+		return err
+	}
 	return i.autoPatrol(id)
 }
 
@@ -73,4 +80,41 @@ func (i knightImpl) autoPatrol(id string) error {
 		X: x,
 		Y: y,
 	})
+}
+
+func (i knightImpl) autoStrike(id string) error {
+	positionState, err := knight.GetPositionState(i.knightStore, id)
+	if err != nil {
+		return err
+	}
+
+	targetSpikeIDs := []string{}
+
+	for _, spikeID := range i.spikeStore.GetEntityIDs() {
+		spikeCombatState, err := spike.GetState(i.spikeStore, spikeID)
+		if err != nil {
+			return err
+		}
+		if spikeCombatState.Health.Value <= 0 {
+			continue
+		}
+
+		spikePositionState, err := spike.GetPositionState(i.spikeStore, spikeID)
+		if err != nil {
+			return err
+		}
+		_, _, distance := util.GetDistances(positionState.X, positionState.Y, spikePositionState.X, spikePositionState.Y)
+		if distance <= 1 {
+			targetSpikeIDs = append(targetSpikeIDs, spikeID)
+		}
+	}
+
+	for _, targetSpikeID := range targetSpikeIDs {
+		err = i.operator.Knight.Strike(id, targetSpikeID)
+		if err != nil {
+			return err
+		}
+		//TODO: spike take damage
+	}
+	return nil
 }

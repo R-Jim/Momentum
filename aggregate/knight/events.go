@@ -52,11 +52,11 @@ func NewDamageEvent(id string, damage int) Event {
 	}
 }
 
-func NewStrikeEvent(id string, weaponID string) Event {
+func NewStrikeEvent(id string, targetID string) Event {
 	return Event{
 		ID:     id,
 		Effect: StrikeEffect,
-		Data:   weaponID,
+		Data:   targetID,
 	}
 }
 
