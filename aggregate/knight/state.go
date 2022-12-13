@@ -12,11 +12,23 @@ type Health struct {
 	Value int
 }
 
+type TargetType string
+
+const (
+	WaitPointTargetType TargetType = "wait_point"
+)
+
+type Target struct {
+	ID       string
+	Type     TargetType
+	Position PositionState
+}
+
 type State struct {
 	ID                  string
 	Health              Health
 	WeaponID            string
-	TargetID            string
+	Target              Target
 	HarvestedArtifactID string
 }
 
@@ -35,6 +47,10 @@ func toState(events []Event) State {
 
 			state.ID = event.ID
 			state.Health.Value -= damage
+
+		case ChangeTargetEffect:
+			target, _ := event.Data.(Target)
+			state.Target = target
 
 		case ChangeWeaponEffect:
 		case GatherArtifactEffect:
