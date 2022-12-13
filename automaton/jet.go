@@ -65,7 +65,7 @@ func (i jetImpl) autoPatrol(id string) error {
 		return err
 	}
 
-	x, y := getNextStepXY(positionState, targetX, targetY, radius, 2)
+	x, y := getNextStepXY(positionState.X, positionState.Y, positionState.HeadDegree, targetX, targetY, radius, 2, float64(60))
 	inventoryState, err := jet.GetInventoryState(i.jetStore, id)
 	if err != nil {
 		return err
