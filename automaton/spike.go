@@ -46,7 +46,7 @@ func (i spikeImpl) AutoStrike(id string) error {
 	}
 
 	targetKnightIDs := []string{}
-	targetCarrierIDs := []string{}
+	// targetCarrierIDs := []string{}
 
 	for _, knightID := range i.knightStore.GetEntityIDs() {
 		knightCombatState, err := knight.GetState(i.knightStore, knightID)
@@ -67,38 +67,36 @@ func (i spikeImpl) AutoStrike(id string) error {
 		}
 	}
 
-	for _, carrierID := range i.carrierStore.GetEntityIDs() {
-		carrierCombatState, err := carrier.GetCombatState(i.carrierStore, carrierID)
-		if err != nil {
-			return err
-		}
-		if carrierCombatState.Health.Value <= 0 {
-			continue
-		}
+	// for _, carrierID := range i.carrierStore.GetEntityIDs() {
+	// 	carrierCombatState, err := carrier.GetCombatState(i.carrierStore, carrierID)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if carrierCombatState.Health.Value <= 0 {
+	// 		continue
+	// 	}
 
-		carrierPositionState, err := carrier.GetPositionState(i.carrierStore, carrierID)
-		if err != nil {
-			return err
-		}
-		_, _, distance := util.GetDistances(positionState.X, positionState.Y, carrierPositionState.X, carrierPositionState.Y)
-		if distance <= 1 {
-			targetCarrierIDs = append(targetCarrierIDs, carrierID)
-		}
-	}
+	// 	carrierPositionState, err := carrier.GetPositionState(i.carrierStore, carrierID)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	_, _, distance := util.GetDistances(positionState.X, positionState.Y, carrierPositionState.X, carrierPositionState.Y)
+	// 	if distance <= 1 {
+	// 		targetCarrierIDs = append(targetCarrierIDs, carrierID)
+	// 	}
+	// }
 
 	for _, targetKnightID := range targetKnightIDs {
-		err = i.operator.Spike.Strike(id, targetKnightID)
+		err = i.operator.Spike.StrikeKnight(id, targetKnightID)
 		if err != nil {
 			return err
 		}
-		//TODO: knight take damage
 	}
-	for _, targetCarrierID := range targetCarrierIDs {
-		err = i.operator.Spike.Strike(id, targetCarrierID)
-		if err != nil {
-			return err
-		}
-		//TODO: carrier take damage
-	}
+	// for _, targetCarrierID := range targetCarrierIDs {
+	// 	err = i.operator.Spike.StrikeKnight(id, targetCarrierID)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
 	return nil
 }
