@@ -28,9 +28,10 @@ type knightImpl struct {
 	operator operator.Operator
 }
 
-func NewKnightAutomaton(knightStore knight.Store, operator operator.Operator) KnightAutomaton {
+func NewKnightAutomaton(knightStore knight.Store, spikeStore spike.Store, operator operator.Operator) KnightAutomaton {
 	return knightImpl{
 		knightStore: knightStore,
+		spikeStore:  spikeStore,
 
 		operator: operator,
 	}
