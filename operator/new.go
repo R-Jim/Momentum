@@ -57,7 +57,7 @@ func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 		},
 		Knight: knightOperator{
 			knightAggregator: aggregator.KnightAggregator,
-			animator:         nil,
+			animator:         animator,
 		},
 	}
 }

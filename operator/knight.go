@@ -60,7 +60,9 @@ func (k knightOperator) StrikeSpike(spikeID string, targetSpikeID string) error 
 		return err
 	}
 
-	k.animator.AppendEvent(knightStrikeEvent)
-	k.animator.AppendEvent(spikeDamageEvent)
+	if k.animator != nil {
+		k.animator.AppendEvent(knightStrikeEvent)
+		k.animator.AppendEvent(spikeDamageEvent)
+	}
 	return nil
 }

@@ -64,6 +64,7 @@ func init() {
 		JetStore:      jetStore,
 		SpikeStore:    spikeStore,
 		ArtifactStore: artifactStore,
+		KnightStore:   knightStore,
 	})
 
 	opt = operator.New(
@@ -78,7 +79,7 @@ func init() {
 		ani,
 	)
 
-	knightAuto = automaton.NewKnightAutomaton(knightStore, opt)
+	knightAuto = automaton.NewKnightAutomaton(knightStore, spikeStore, opt)
 
 	initEntities()
 }
