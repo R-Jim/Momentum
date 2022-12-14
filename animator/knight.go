@@ -42,29 +42,29 @@ func (ja KnightAnimator) resetEventQueue(id string) {
 }
 
 func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
-	// if len(ja.pendingEvents) == 0 {
-	// 	return ErrNoPendingEvents
-	// }
-	// var stateImage *ebiten.Image
+	if len(ja.pendingEvents) == 0 {
+		return ErrNoPendingEvents
+	}
+	var stateImage *ebiten.Image
 
-	// for _, event := range ja.pendingEvents[id] {
-	// 	switch event.Effect {
-	// 	case Knight.FlyEffect:
-	// 		stateImage = flyingImage
+	for _, event := range ja.pendingEvents[id] {
+		switch event.Effect {
+		case knight.MoveEffect:
+			stateImage = flyingImage
+		case knight.ChangeTargetEffect:
+		default:
+			return fmt.Errorf("[KnightAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
+		}
+	}
+	ja.resetEventQueue(id)
 
-	// 	default:
-	// 		return fmt.Errorf("[KnightAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
-	// 	}
-	// }
-	// ja.resetEventQueue(id)
+	positionState, _ := knight.GetPositionState(ja.store, id)
 
-	// positionState, _ := Knight.GetPositionState(ja.store, id)
-
-	// if stateImage != nil {
-	// 	op := &ebiten.DrawImageOptions{}
-	// 	op.GeoM.Translate(positionState.X+float64(knightImage.Bounds().Dx()+5), positionState.Y)
-	// 	screen.DrawImage(stateImage, op)
-	// }
+	if stateImage != nil {
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(positionState.X+float64(knightImage.Bounds().Dx()+5), positionState.Y)
+		screen.DrawImage(stateImage, op)
+	}
 
 	return nil
 }
