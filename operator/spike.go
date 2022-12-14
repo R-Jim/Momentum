@@ -2,6 +2,7 @@ package operator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/artifact"
+	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/animator"
 )
@@ -9,6 +10,7 @@ import (
 type spikeOperator struct {
 	spikeAggregator    spike.Aggregator
 	artifactAggregator artifact.Aggregator
+	knightAggregator   knight.Aggregator
 
 	animator animator.Animator
 }
@@ -33,13 +35,20 @@ func (j spikeOperator) Move(spikeID string, toPosition spike.PositionState) erro
 	return nil
 }
 
-func (j spikeOperator) Strike(spikeID string, targetID string) error {
-	spikeStrikeEvent := spike.NewStrikeEvent(spikeID, targetID)
+func (j spikeOperator) StrikeKnight(spikeID string, targetKnightID string) error {
+	spikeStrikeEvent := spike.NewStrikeEvent(spikeID, targetKnightID)
 	err := j.spikeAggregator.Aggregate(spikeStrikeEvent)
 	if err != nil {
 		return err
 	}
 
+	knightDamageEvent := knight.NewDamageEvent(targetKnightID, 5)
+	err = j.knightAggregator.Aggregate(knightDamageEvent)
+	if err != nil {
+		return err
+	}
+
 	j.animator.AppendEvent(spikeStrikeEvent)
+	j.animator.AppendEvent(knightDamageEvent)
 	return nil
 }

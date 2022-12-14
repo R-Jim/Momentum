@@ -110,11 +110,10 @@ func (i knightImpl) autoStrike(id string) error {
 	}
 
 	for _, targetSpikeID := range targetSpikeIDs {
-		err = i.operator.Knight.Strike(id, targetSpikeID)
+		err = i.operator.Knight.StrikeSpike(id, targetSpikeID)
 		if err != nil {
 			return err
 		}
-		//TODO: spike take damage
 	}
 	return nil
 }
