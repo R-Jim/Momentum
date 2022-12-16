@@ -15,7 +15,6 @@ import (
 	"github.com/R-jim/Momentum/animator"
 	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/operator"
-	"github.com/R-jim/Momentum/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 	"golang.org/x/sync/errgroup"
 )
@@ -89,14 +88,14 @@ type Game struct {
 }
 
 func (g *Game) Update() error {
-	// err := knightAuto.Auto(knightID)
-	// if err != nil {
-	// 	return err
-	// }
+	err := knightAuto.Auto(knightID)
+	if err != nil {
+		return err
+	}
 
-	// operations := []func() error{}
-	// operations = append(operations, userInput()...)
-	// go runConcurrently(operations)
+	operations := []func() error{}
+	operations = append(operations, userInput()...)
+	go runConcurrently(operations)
 	return nil
 }
 
@@ -127,7 +126,6 @@ func runConcurrently(operations []func() error) {
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	ui.DrawBackground(screen)
 	ani.Draw(screen)
 }
 
