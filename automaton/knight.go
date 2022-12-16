@@ -5,6 +5,7 @@ import (
 
 	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/aggregate/spike"
+	"github.com/R-jim/Momentum/info"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/R-jim/Momentum/util"
 )
@@ -46,7 +47,7 @@ func (i knightImpl) Auto(id string) error {
 }
 
 func (i knightImpl) autoPatrol(id string) error {
-	radius := float64(40)
+	radius := float64(1)
 
 	combatState, err := knight.GetState(i.knightStore, id)
 	if err != nil {
@@ -84,6 +85,14 @@ func (i knightImpl) autoPatrol(id string) error {
 }
 
 func (i knightImpl) autoStrike(id string) error {
+	combatState, err := knight.GetState(i.knightStore, id)
+	if err != nil {
+		return err
+	}
+	if combatState.Health.Value <= 0 {
+		return nil
+	}
+
 	positionState, err := knight.GetPositionState(i.knightStore, id)
 	if err != nil {
 		return err
@@ -105,7 +114,7 @@ func (i knightImpl) autoStrike(id string) error {
 			return err
 		}
 		_, _, distance := util.GetDistances(positionState.X, positionState.Y, spikePositionState.X, spikePositionState.Y)
-		if distance <= 1 {
+		if distance <= info.MELEE_RANGE {
 			targetSpikeIDs = append(targetSpikeIDs, spikeID)
 		}
 	}

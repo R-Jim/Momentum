@@ -4,6 +4,7 @@ import (
 	"github.com/R-jim/Momentum/aggregate/carrier"
 	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/aggregate/spike"
+	"github.com/R-jim/Momentum/info"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/R-jim/Momentum/util"
 )
@@ -40,6 +41,14 @@ func (i spikeImpl) Auto(id string) error {
 }
 
 func (i spikeImpl) AutoStrike(id string) error {
+	combatState, err := spike.GetState(i.spikeStore, id)
+	if err != nil {
+		return err
+	}
+	if combatState.Health.Value <= 0 {
+		return nil
+	}
+
 	positionState, err := spike.GetPositionState(i.spikeStore, id)
 	if err != nil {
 		return err
@@ -62,7 +71,7 @@ func (i spikeImpl) AutoStrike(id string) error {
 			return err
 		}
 		_, _, distance := util.GetDistances(positionState.X, positionState.Y, knightPositionState.X, knightPositionState.Y)
-		if distance <= 1 {
+		if distance <= info.MELEE_RANGE {
 			targetKnightIDs = append(targetKnightIDs, knightID)
 		}
 	}

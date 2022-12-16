@@ -74,6 +74,7 @@ func (i aggregateImpl) aggregate(event Event) error {
 			return common.ErrAggregateFail
 		}
 	case ChangeTargetEffect:
+	case DamageEffect:
 	default:
 		return common.ErrEffectNotSupported
 	}

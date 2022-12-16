@@ -52,6 +52,8 @@ func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
 		case knight.MoveEffect:
 			stateImage = flyingImage
 		case knight.ChangeTargetEffect:
+		case knight.DamageEffect:
+		case knight.StrikeEffect:
 		default:
 			return fmt.Errorf("[KnightAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
 		}

@@ -48,6 +48,7 @@ func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 		Spike: spikeOperator{
 			artifactAggregator: aggregator.ArtifactAggregator,
 			spikeAggregator:    aggregator.SpikeAggregator,
+			knightAggregator:   aggregator.KnightAggregator,
 			animator:           animator,
 		},
 		Artifact: artifactOperator{
@@ -57,6 +58,7 @@ func New(aggregator OperatorAggregator, animator animator.Animator) Operator {
 		},
 		Knight: knightOperator{
 			knightAggregator: aggregator.KnightAggregator,
+			spikeAggregator:  aggregator.SpikeAggregator,
 			animator:         animator,
 		},
 	}
