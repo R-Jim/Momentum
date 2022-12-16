@@ -88,8 +88,8 @@ func (ja KnightAnimator) animateState(screen *ebiten.Image, id string) error {
 		op.GeoM.Translate(positionState.X, positionState.Y)
 
 		// Reset RGB (not Alpha) 0 forcibly
-		op.ColorM.Scale(0, 0, 0, 1)
-		op.ColorM.Translate(float64(0), float64(1), float64(.3), 0)
+		// op.ColorM.Scale(0, 0, 0, 1)
+		// op.ColorM.Translate(float64(0), float64(1), float64(.3), 0)
 
 		ji := ebiten.NewImageFromImage(knightImage)
 		screen.DrawImage(ji, op)
