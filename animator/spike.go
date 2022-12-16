@@ -96,6 +96,11 @@ func (sa SpikeAnimator) animateState(screen *ebiten.Image, id string) error {
 		stateImage = normalImage
 	}
 
+	combatState, _ := spike.GetState(sa.store, id)
+	if combatState.Health.Value <= 0 {
+		return nil
+	}
+
 	if stateImage != nil {
 		op := &ebiten.DrawImageOptions{}
 		op.GeoM.Translate(positionState.X, positionState.Y)

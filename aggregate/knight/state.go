@@ -16,6 +16,7 @@ type TargetType string
 
 const (
 	WaitPointTargetType TargetType = "wait_point"
+	SpikeTargetType     TargetType = "spike"
 )
 
 type Target struct {
