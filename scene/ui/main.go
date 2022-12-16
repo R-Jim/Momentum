@@ -13,24 +13,16 @@ import (
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
-	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/R-jim/Momentum/ui"
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"golang.org/x/sync/errgroup"
 )
 
 var (
-	opt        operator.Operator
-	ani        animator.Animator
-	knightAuto automaton.KnightAutomaton
-	spikeAuto  automaton.SpikeAutomaton
-
+	opt      operator.Operator
+	ani      animator.Animator
 	knightID string
-	spikeID  string
-
-	isPaused bool
 )
 
 // for testing
@@ -43,33 +35,8 @@ func initEntities() {
 	}
 
 	err = opt.Knight.Move(knightID, knight.PositionState{
-		X: 150,
-		Y: 100,
-	})
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
-
-	spikeID = "spike_1"
-	err = opt.Spike.Init(spikeID, "")
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
-
-	err = opt.Spike.Move(spikeID, spike.PositionState{
 		X: 100,
 		Y: 100,
-	})
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
-
-	err = opt.Knight.ChangeTarget(knightID, knight.Target{
-		ID: spikeID,
-		Position: knight.PositionState{
-			X: 100,
-			Y: 100,
-		},
 	})
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
@@ -110,33 +77,13 @@ func init() {
 		ani,
 	)
 
-	knightAuto = automaton.NewKnightAutomaton(knightStore, spikeStore, opt)
-	spikeAuto = automaton.NewSpikeAutomaton(carrierStore, knightStore, spikeStore, opt)
 	initEntities()
-
-	isPaused = true
 }
 
 type Game struct {
 }
 
 func (g *Game) Update() error {
-	if inpututil.IsKeyJustPressed(ebiten.KeyP) {
-		isPaused = false
-	}
-	if isPaused {
-		return nil
-	}
-	err := knightAuto.Auto(knightID)
-	if err != nil {
-		return err
-	}
-	err = spikeAuto.Auto(spikeID)
-	if err != nil {
-		return err
-	}
-
-	isPaused = true
 	// operations := []func() error{}
 	// operations = append(operations, userInput()...)
 	// go runConcurrently(operations)
@@ -179,7 +126,7 @@ func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeigh
 }
 
 func main() {
-	ebiten.SetWindowSize(800, 600)
+	ebiten.SetWindowSize(1000, 800)
 	ebiten.SetWindowTitle("Momentum")
 
 	game := &Game{}
