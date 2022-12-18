@@ -47,7 +47,7 @@ func (i knightImpl) Auto(id string) error {
 }
 
 func (i knightImpl) autoPatrol(id string) error {
-	radius := float64(1)
+	radius := float64(4)
 
 	combatState, err := knight.GetState(i.knightStore, id)
 	if err != nil {

@@ -45,29 +45,45 @@ func (sa SpikeAnimator) resetEventQueue(id string) {
 }
 
 func (sa SpikeAnimator) animateEvent(screen *ebiten.Image, id string) error {
-	// if len(ja.pendingEvents) == 0 {
-	// 	return ErrNoPendingEvents
-	// }
-	// var stateImage *ebiten.Image
+	if len(sa.pendingEvents) == 0 {
+		return ErrNoPendingEvents
+	}
+	var stateImage *ebiten.Image
+	var deathImage *ebiten.Image
 
-	// for _, event := range ja.pendingEvents[id] {
-	// 	switch event.Effect {
-	// 	case jet.FlyEffect:
-	// 		stateImage = flyingImage
+	for _, event := range sa.pendingEvents[id] {
+		switch event.Effect {
+		case spike.MoveEffect:
+		case spike.DamageEffect:
+			stateImage = HitEffectImage
+			currentState, err := spike.GetState(sa.store, id)
+			if err != nil {
+				return err
+			}
+			damageValue, _ := event.Data.(int)
+			if currentState.Health.Value > 0 && currentState.Health.Value-damageValue <= 0 {
+				deathImage = DeathEffectImage
+			}
 
-	// 	default:
-	// 		return fmt.Errorf("[JetAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
-	// 	}
-	// }
-	// ja.resetEventQueue(id)
+		case spike.StrikeEffect:
 
-	// positionState, _ := jet.GetPositionState(ja.store, id)
+		default:
+			return fmt.Errorf("[SpikeAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
+		}
+		positionState, _ := spike.GetPositionState(sa.store, id)
 
-	// if stateImage != nil {
-	// 	op := &ebiten.DrawImageOptions{}
-	// 	op.GeoM.Translate(positionState.X+float64(jetImage.Bounds().Dx()+5), positionState.Y)
-	// 	screen.DrawImage(stateImage, op)
-	// }
+		if stateImage != nil {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(positionState.X, positionState.Y)
+			screen.DrawImage(stateImage, op)
+		}
+		if deathImage != nil {
+			op := &ebiten.DrawImageOptions{}
+			op.GeoM.Translate(positionState.X, positionState.Y)
+			screen.DrawImage(deathImage, op)
+		}
+	}
+	sa.resetEventQueue(id)
 
 	return nil
 }

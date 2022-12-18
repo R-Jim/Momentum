@@ -50,9 +50,9 @@ func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
 	for _, event := range ja.pendingEvents[id] {
 		switch event.Effect {
 		case knight.MoveEffect:
-			stateImage = flyingImage
 		case knight.ChangeTargetEffect:
 		case knight.DamageEffect:
+			stateImage = HitEffectImage
 		case knight.StrikeEffect:
 		default:
 			return fmt.Errorf("[KnightAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
@@ -64,7 +64,7 @@ func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
 
 	if stateImage != nil {
 		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(positionState.X+float64(knightImage.Bounds().Dx()+5), positionState.Y)
+		op.GeoM.Translate(positionState.X, positionState.Y)
 		screen.DrawImage(stateImage, op)
 	}
 
