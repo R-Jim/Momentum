@@ -28,6 +28,7 @@ type AnimatorStores struct {
 }
 
 func New(stores AnimatorStores) Animator {
+	initCommonImages()
 	initJetAnimation()
 	initSpikeAnimation()
 	initArtifactAnimation()

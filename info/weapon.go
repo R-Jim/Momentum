@@ -1,5 +1,5 @@
 package info
 
 const (
-	MELEE_RANGE = 2
+	MELEE_RANGE = 5
 )

@@ -30,7 +30,8 @@ var (
 	knightID string
 	spikeID  string
 
-	isPaused bool
+	isPaused  bool
+	turnCount int
 )
 
 // for testing
@@ -127,13 +128,17 @@ func (g *Game) Update() error {
 	if isPaused {
 		return nil
 	}
-	err := knightAuto.Auto(knightID)
-	if err != nil {
-		return err
-	}
-	err = spikeAuto.Auto(spikeID)
-	if err != nil {
-		return err
+	{
+		fmt.Printf("\n--------- Turn %v ----------\n", turnCount)
+		err := knightAuto.Auto(knightID)
+		if err != nil {
+			return err
+		}
+		err = spikeAuto.Auto(spikeID)
+		if err != nil {
+			return err
+		}
+		turnCount++
 	}
 
 	isPaused = true
