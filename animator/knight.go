@@ -45,14 +45,14 @@ func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
 	if len(ja.pendingEvents) == 0 {
 		return ErrNoPendingEvents
 	}
-	var stateImage *ebiten.Image
+	var effectImage *ebiten.Image
 
 	for _, event := range ja.pendingEvents[id] {
 		switch event.Effect {
 		case knight.MoveEffect:
 		case knight.ChangeTargetEffect:
 		case knight.DamageEffect:
-			stateImage = HitEffectImage
+			effectImage = HitEffectImage
 		case knight.StrikeEffect:
 		default:
 			return fmt.Errorf("[KnightAnimator][ERROR][%v] err: %v", event.Effect, ErrEffectNotSupported.Error())
@@ -62,10 +62,8 @@ func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
 
 	positionState, _ := knight.GetPositionState(ja.store, id)
 
-	if stateImage != nil {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(positionState.X, positionState.Y)
-		screen.DrawImage(stateImage, op)
+	if effectImage != nil {
+		centerAndRenderImage(screen, effectImage, positionState.X, positionState.Y)
 	}
 
 	return nil
@@ -73,7 +71,7 @@ func (ja KnightAnimator) animateEvent(screen *ebiten.Image, id string) error {
 
 func (ja KnightAnimator) animateState(screen *ebiten.Image, id string) error {
 	// currentState, _ := knight.GetState(ja.store, id)
-	var stateImage *ebiten.Image
+	// var stateImage *ebiten.Image
 	// switch currentState.Status {
 	// // case knight.FlyingStatus:
 	// // case knight.LandedStatus:
@@ -86,21 +84,14 @@ func (ja KnightAnimator) animateState(screen *ebiten.Image, id string) error {
 
 	positionState, _ := knight.GetPositionState(ja.store, id)
 	{
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(positionState.X, positionState.Y)
-
 		// Reset RGB (not Alpha) 0 forcibly
 		// op.ColorM.Scale(0, 0, 0, 1)
 		// op.ColorM.Translate(float64(0), float64(1), float64(.3), 0)
-
-		ji := ebiten.NewImageFromImage(knightImage)
-		screen.DrawImage(ji, op)
+		centerAndRenderImage(screen, knightImage, positionState.X, positionState.Y)
 	}
-	if stateImage != nil {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(positionState.X+float64(knightImage.Bounds().Dx()+5), positionState.Y)
-		screen.DrawImage(stateImage, op)
-	}
+	// if stateImage != nil {
+	// 	centerAndRenderImage(screen, stateImage, positionState.X, positionState.Y)
+	// }
 	return nil
 }
 

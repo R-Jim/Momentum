@@ -48,14 +48,14 @@ func (sa SpikeAnimator) animateEvent(screen *ebiten.Image, id string) error {
 	if len(sa.pendingEvents) == 0 {
 		return ErrNoPendingEvents
 	}
-	var stateImage *ebiten.Image
+	var effectImage *ebiten.Image
 	var deathImage *ebiten.Image
 
 	for _, event := range sa.pendingEvents[id] {
 		switch event.Effect {
 		case spike.MoveEffect:
 		case spike.DamageEffect:
-			stateImage = HitEffectImage
+			effectImage = HitEffectImage
 			currentState, err := spike.GetState(sa.store, id)
 			if err != nil {
 				return err
@@ -72,15 +72,11 @@ func (sa SpikeAnimator) animateEvent(screen *ebiten.Image, id string) error {
 		}
 		positionState, _ := spike.GetPositionState(sa.store, id)
 
-		if stateImage != nil {
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(positionState.X, positionState.Y)
-			screen.DrawImage(stateImage, op)
+		if effectImage != nil {
+			centerAndRenderImage(screen, effectImage, positionState.X, positionState.Y)
 		}
 		if deathImage != nil {
-			op := &ebiten.DrawImageOptions{}
-			op.GeoM.Translate(positionState.X, positionState.Y)
-			screen.DrawImage(deathImage, op)
+			centerAndRenderImage(screen, deathImage, positionState.X, positionState.Y)
 		}
 	}
 	sa.resetEventQueue(id)
@@ -118,9 +114,7 @@ func (sa SpikeAnimator) animateState(screen *ebiten.Image, id string) error {
 	}
 
 	if stateImage != nil {
-		op := &ebiten.DrawImageOptions{}
-		op.GeoM.Translate(positionState.X, positionState.Y)
-		screen.DrawImage(stateImage, op)
+		centerAndRenderImage(screen, stateImage, positionState.X, positionState.Y)
 	}
 	return nil
 }

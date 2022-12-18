@@ -15,3 +15,12 @@ func getAssetImage(asset []byte) *ebiten.Image {
 	}
 	return ebiten.NewImageFromImage(img)
 }
+
+func centerAndRenderImage(screen *ebiten.Image, image *ebiten.Image, x, y float64) {
+	imageHalfSizeX := float64(image.Bounds().Dx()) / 2
+	imageHalfSizeY := float64(image.Bounds().Dy()) / 2
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(x-imageHalfSizeX, y-imageHalfSizeY)
+	screen.DrawImage(image, op)
+}
