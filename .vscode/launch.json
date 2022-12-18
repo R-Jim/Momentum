@@ -10,6 +10,13 @@
             "request": "launch",
             "mode": "auto",
             "program": "main.go"
+        },
+        {
+            "name": "Launch ui scene",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "./scene/ui/main.go"
         }
     ]
 }

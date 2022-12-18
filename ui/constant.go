@@ -27,4 +27,11 @@ var (
 		B: 255,
 		A: 1,
 	}
+
+	MAIN_TEXT color.RGBA = color.RGBA{
+		R: 29,
+		G: 32,
+		B: 84,
+		A: 255,
+	}
 )

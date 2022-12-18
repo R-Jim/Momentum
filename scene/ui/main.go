@@ -16,7 +16,23 @@ import (
 	"github.com/R-jim/Momentum/operator"
 	"github.com/R-jim/Momentum/ui"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/examples/resources/fonts"
+	"github.com/hajimehoshi/ebiten/v2/inpututil"
 	"golang.org/x/sync/errgroup"
+)
+
+type modeIndex int
+
+const (
+	startModeIndex modeIndex = 1
+	playModeIndex  modeIndex = 2
+	pauseModeIndex modeIndex = 3
+)
+
+const (
+	screenWidth  = 640
+	screenHeight = 480
+	fontSize     = 24
 )
 
 var (
@@ -43,7 +59,7 @@ func initEntities() {
 	}
 }
 
-func init() {
+func (g *Game) init() {
 	storageStore := storage.NewStore()
 	jetStore := jet.NewStore()
 	carrierStore := carrier.NewStore()
@@ -78,15 +94,29 @@ func init() {
 	)
 
 	initEntities()
+	g.mode = startModeIndex
+	g.ui = ui.New(fonts.PressStart2P_ttf, fontSize)
 }
 
 type Game struct {
+	mode modeIndex
+	ui   ui.UI
 }
 
 func (g *Game) Update() error {
 	// operations := []func() error{}
 	// operations = append(operations, userInput()...)
 	// go runConcurrently(operations)
+	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+		switch g.mode {
+		case startModeIndex:
+			g.mode = playModeIndex
+		case playModeIndex:
+			g.mode = pauseModeIndex
+		case pauseModeIndex:
+			g.mode = playModeIndex
+		}
+	}
 	return nil
 }
 
@@ -118,19 +148,33 @@ func runConcurrently(operations []func() error) {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	ui.DrawBackground(screen)
-	ani.Draw(screen)
+	var titleTexts string
+	var text string
+	switch g.mode {
+	case startModeIndex:
+		titleTexts = "PROJECT NAME HERE"
+		text = "PRESS SPACE TO START"
+	case playModeIndex, pauseModeIndex:
+		if g.mode == pauseModeIndex {
+			text = "PAUSED"
+		}
+		ani.Draw(screen)
+	}
+
+	g.ui.DrawTitle(screen, []string{titleTexts}, (screenWidth-len(titleTexts)*int(g.ui.TitleFontSize))/2, 0, false)
+	g.ui.DrawMsg(screen, []string{text}, (screenWidth-len(text)*int(g.ui.FontSize))/2, screenHeight, true)
 }
 
-func (g *Game) Layout(outsideWidth, outsideHeight int) (screenWidth, screenHeight int) {
-	return 400, 400
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return screenWidth, screenHeight
 }
 
 func main() {
-	ebiten.SetWindowSize(1000, 800)
+	ebiten.SetWindowSize(screenWidth, screenHeight)
 	ebiten.SetWindowTitle("Momentum")
 
 	game := &Game{}
-
+	game.init()
 	if err := ebiten.RunGame(game); err != nil {
 		log.Fatal(err)
 	}
