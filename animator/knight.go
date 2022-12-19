@@ -8,10 +8,18 @@ when knight trigger WEAPON_USED event, check for weapon range, is projectile inc
 import (
 	"errors"
 	"fmt"
+	"image/color"
 
 	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/asset"
+	"github.com/R-jim/Momentum/ui"
 	"github.com/hajimehoshi/ebiten/v2"
+)
+
+const (
+	statusPanelWidth  = 100
+	statusPanelHeight = 70
+	statusPanelMargin = 1
 )
 
 var (
@@ -108,4 +116,39 @@ func (ja KnightAnimator) Draw(screen *ebiten.Image) {
 	for id := range ja.store.GetEvents() {
 		ja.drawKnight(screen, id)
 	}
+}
+
+func (ja KnightAnimator) DrawStatus(ui ui.UI, screen *ebiten.Image, screenWidth, screenHeight float64) {
+	statusContainerWidth := len(ja.store.GetEntityIDs())*statusPanelWidth + statusPanelMargin*(len(ja.store.GetEntityIDs())+1)
+	statusContainerHeight := statusPanelHeight + statusPanelMargin*2
+	statusContainer := ebiten.NewImage(statusContainerWidth, statusContainerHeight)
+	statusContainer.Fill(color.Black)
+
+	statusPanel := ebiten.NewImage(statusPanelWidth, statusPanelHeight)
+	statusPanel.Fill(color.White)
+
+	for i, id := range ja.store.GetEntityIDs() {
+		statusPanel := ebiten.NewImageFromImage(statusPanel)
+
+		op := &ebiten.DrawImageOptions{}
+		x := i*statusPanelWidth + (i+1)*statusPanelMargin
+		y := statusPanelMargin
+		op.GeoM.Translate(float64(x), float64(y))
+
+		combatState, _ := knight.GetState(ja.store, id)
+		textPadding := float64(5)
+		statuses := []string{
+			combatState.ID,
+			fmt.Sprintf("HP: %v/%v", combatState.Health.Value, combatState.Health.Max),
+		}
+
+		for i, status := range statuses {
+			textX := (statusPanelWidth - float64(len(status))*ui.SmallFontSize) / 2
+			textY := i*int(ui.SmallFontSize) + i*int(textPadding)
+			ui.DrawSmallMsg(statusPanel, []string{status}, int(textX), int(textY), false)
+
+		}
+		statusContainer.DrawImage(statusPanel, op)
+	}
+	centerAndRenderImage(screen, statusContainer, screenWidth/2, float64(screenHeight-statusPanelHeight-10))
 }

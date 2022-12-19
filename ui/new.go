@@ -24,7 +24,7 @@ func New(fontStyle []byte, fontSize float64) UI {
 	}
 
 	titleFontSize := fontSize * 1.5
-	smallFontSize := fontSize / 1.5
+	smallFontSize := fontSize / 3
 
 	const dpi = 72
 	titleFont, err := opentype.NewFace(tt, &opentype.FaceOptions{

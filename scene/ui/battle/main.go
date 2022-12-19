@@ -13,7 +13,6 @@ import (
 	"github.com/R-jim/Momentum/aggregate/spike"
 	"github.com/R-jim/Momentum/aggregate/storage"
 	"github.com/R-jim/Momentum/animator"
-	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/R-jim/Momentum/ui"
 	"github.com/hajimehoshi/ebiten/v2"
@@ -37,13 +36,9 @@ const (
 )
 
 var (
-	opt        operator.Operator
-	ani        animator.Animator
-	knightAuto automaton.KnightAutomaton
-	spikeAuto  automaton.SpikeAutomaton
-
+	opt      operator.Operator
+	ani      animator.Animator
 	knightID string
-	spikeID  string
 )
 
 // for testing
@@ -56,20 +51,6 @@ func initEntities() {
 	}
 
 	err = opt.Knight.Move(knightID, knight.PositionState{
-		X: 200,
-		Y: 150,
-	})
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
-
-	spikeID = "spike_1"
-	err = opt.Spike.Init(spikeID, "")
-	if err != nil {
-		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
-	}
-
-	err = opt.Spike.Move(spikeID, spike.PositionState{
 		X: 100,
 		Y: 100,
 	})
@@ -77,12 +58,13 @@ func initEntities() {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
 	}
 
-	err = opt.Knight.ChangeTarget(knightID, knight.Target{
-		ID: spikeID,
-		Position: knight.PositionState{
-			X: 100,
-			Y: 100,
-		},
+	err = opt.Knight.Init("knight_2", knight.Health{Max: 20, Value: 20})
+	if err != nil {
+		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
+	}
+	err = opt.Knight.Move("knight_2", knight.PositionState{
+		X: 120,
+		Y: 140,
 	})
 	if err != nil {
 		fmt.Printf("[ERROR]initEntities: %v\n", err.Error())
@@ -123,21 +105,20 @@ func (g *Game) init() {
 		ani,
 	)
 
-	knightAuto = automaton.NewKnightAutomaton(knightStore, spikeStore, opt)
-	spikeAuto = automaton.NewSpikeAutomaton(carrierStore, knightStore, spikeStore, opt)
 	initEntities()
-
-	g.mode = startModeIndex
+	g.mode = playModeIndex
 	g.ui = ui.New(fonts.PressStart2P_ttf, fontSize)
 }
 
 type Game struct {
-	mode      modeIndex
-	ui        ui.UI
-	turnCount int
+	mode modeIndex
+	ui   ui.UI
 }
 
 func (g *Game) Update() error {
+	// operations := []func() error{}
+	// operations = append(operations, userInput()...)
+	// go runConcurrently(operations)
 	if inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 		switch g.mode {
 		case startModeIndex:
@@ -148,25 +129,6 @@ func (g *Game) Update() error {
 			g.mode = playModeIndex
 		}
 	}
-	if g.mode != playModeIndex {
-		return nil
-	}
-	{
-		fmt.Printf("\n--------- Turn %v ----------\n", g.turnCount)
-		err := knightAuto.Auto(knightID)
-		if err != nil {
-			return err
-		}
-		err = spikeAuto.Auto(spikeID)
-		if err != nil {
-			return err
-		}
-		g.turnCount++
-	}
-
-	// operations := []func() error{}
-	// operations = append(operations, userInput()...)
-	// go runConcurrently(operations)
 	return nil
 }
 

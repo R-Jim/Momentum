@@ -5,12 +5,15 @@ import (
 	"github.com/R-jim/Momentum/aggregate/jet"
 	"github.com/R-jim/Momentum/aggregate/knight"
 	"github.com/R-jim/Momentum/aggregate/spike"
+	"github.com/R-jim/Momentum/ui"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type Animator interface {
 	Draw(screen *ebiten.Image)
 	AppendEvent(event interface{}) error
+
+	DrawStatus(ui ui.UI, screen *ebiten.Image, screenWidth, screenHeight float64)
 }
 
 type impl struct {
@@ -84,4 +87,8 @@ func (i impl) AppendEvent(event interface{}) error {
 	}
 
 	return ErrCanNotAppendUnsupportedEvent
+}
+
+func (i impl) DrawStatus(ui ui.UI, screen *ebiten.Image, screenWidth, screenHeight float64) {
+	i.KnightAnimator.DrawStatus(ui, screen, screenWidth, screenHeight)
 }
