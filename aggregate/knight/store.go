@@ -1,6 +1,12 @@
 package knight
 
-import "github.com/R-jim/Momentum/aggregate/common"
+import (
+	"sort"
+	"strconv"
+	"strings"
+
+	"github.com/R-jim/Momentum/aggregate/common"
+)
 
 type impl struct {
 	eventsSet map[string][]Event
@@ -49,5 +55,10 @@ func (i impl) GetEntityIDs() []string {
 	for key := range i.eventsSet {
 		ids = append(ids, key)
 	}
+	sort.Slice(ids, func(i, j int) bool {
+		idI, _ := strconv.Atoi(strings.TrimPrefix(ids[i], "knight_"))
+		idJ, _ := strconv.Atoi(strings.TrimPrefix(ids[j], "knight_"))
+		return idI > idJ
+	})
 	return ids
 }
