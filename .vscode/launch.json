@@ -16,7 +16,7 @@
             "type": "go",
             "request": "launch",
             "mode": "auto",
-            "program": "./scene/ui/battle/main.go"
+            "program": "./cmd/server/main.go"
         }
     ]
 }
