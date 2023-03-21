@@ -9,6 +9,10 @@ type Pos struct {
 	y float64
 }
 
+func NewPos(x, y float64) Pos {
+	return Pos{x, y}
+}
+
 func GetNextStepXY(posStart Pos, pivotDegree float64, posEnd Pos, desRad, step, maxTurnDegree float64) (resultX, resultY float64) {
 	radius := math.RoundToEven((step / 2) / math.Sin(maxTurnDegree/2*math.Pi/180))
 	maxRadius := radius - step
