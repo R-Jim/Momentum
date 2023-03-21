@@ -11,7 +11,7 @@ type Aggregator interface {
 }
 
 func aggregate(store *store.Store, aggregateSet map[event.Effect]func([]event.Event, event.Event) error, event event.Event) error {
-	events, err := (*store).GetEventsByID(event.ID)
+	events, err := (*store).GetEventsByEntityID(event.EntityID)
 	if err != nil {
 		return err
 	}

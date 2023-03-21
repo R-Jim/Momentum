@@ -9,7 +9,7 @@ type impl struct {
 	eventsSet map[uuid.UUID][]event.Event
 }
 type Store interface {
-	GetEventsByID(id uuid.UUID) ([]event.Event, error)
+	GetEventsByEntityID(id uuid.UUID) ([]event.Event, error)
 	// WARNING: action strictly used by AGGREGATOR ONLY
 	AppendEvent(event.Event) error
 	GetEvents() map[uuid.UUID][]event.Event
@@ -21,17 +21,17 @@ func NewStore() Store {
 	}
 }
 
-func (i impl) GetEventsByID(id uuid.UUID) ([]event.Event, error) {
+func (i impl) GetEventsByEntityID(id uuid.UUID) ([]event.Event, error) {
 	return i.eventsSet[id], nil
 }
 
 func (i impl) AppendEvent(e event.Event) error {
-	events := i.eventsSet[e.ID]
+	events := i.eventsSet[e.EntityID]
 	if events == nil {
 		events = []event.Event{}
 	}
 
-	i.eventsSet[e.ID] = append(events, e)
+	i.eventsSet[e.EntityID] = append(events, e)
 
 	return nil
 }
