@@ -96,9 +96,9 @@ func (i mioAggregateImpl) GetStore() *store.Store {
 
 func (i mioAggregateImpl) Aggregate(event event.Event) error {
 	if err := aggregate(i.store, i.aggregateSet, event); err != nil {
-		return fmt.Errorf("[SAMPLE_AGGREGATE][%v] %v", event.Effect, err)
+		return fmt.Errorf("[MIO_AGGREGATE][%v] %v", event.Effect, err)
 	}
-	fmt.Printf("[SAMPLE_AGGREGATE][%v] aggregated.\n", event.Effect)
+	fmt.Printf("[MIO_AGGREGATE][%v] aggregated.\n", event.Effect)
 	return nil
 }
 
