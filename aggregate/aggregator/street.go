@@ -36,8 +36,8 @@ func (i streetAggregateImpl) Aggregate(event event.Event) error {
 	return nil
 }
 
-func GetStreetState(events []event.Event) (MioState, error) {
-	state := MioState{}
+func GetStreetState(events []event.Event) (StreetState, error) {
+	state := StreetState{}
 
 	for _, e := range events {
 		switch e.Effect {
