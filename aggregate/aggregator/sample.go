@@ -1,33 +1,30 @@
 package aggregator
 
 import (
-	"fmt"
-
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
 )
 
 const (
-	SampleEffect event.Effect = "SAMPLE_EFFECTED"
+	SampleEffect event.Effect = "SAMPLE_EFFECT"
 )
 
 type SampleState struct {
 	ID uuid.UUID
 }
 
-type sampleAggregateImpl struct {
-	store        *store.Store
-	aggregateSet map[event.Effect]func([]event.Event, event.Event) error
-}
-
 func NewSampleAggregator(store *store.Store) Aggregator {
-	return sampleAggregateImpl{
+	return aggregateImpl{
+		name:  "SAMPLE",
 		store: store,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"SAMPLE_EFFECTED"
 			SampleEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
-				state := GetSampleState(append(currentEvents, inputEvent))
+				state, err := GetSampleState(append(currentEvents, inputEvent))
+				if err != nil {
+					return err
+				}
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
@@ -37,26 +34,14 @@ func NewSampleAggregator(store *store.Store) Aggregator {
 	}
 }
 
-func (i sampleAggregateImpl) GetStore() *store.Store {
-	return i.store
-}
-
-func (i sampleAggregateImpl) Aggregate(event event.Event) error {
-	if err := aggregate(i.store, i.aggregateSet, event); err != nil {
-		return fmt.Errorf("[SAMPLE_AGGREGATE][%v] %v", event.Effect, err)
-	}
-	fmt.Printf("[SAMPLE_AGGREGATE][%v] aggregated.\n", event.Effect)
-	return nil
-}
-
-func GetSampleState(events []event.Event) SampleState {
+func GetSampleState(events []event.Event) (SampleState, error) {
 	state := SampleState{}
 
-	for _, event := range events {
-		switch event.Effect {
+	return composeState(state, events, func(ss SampleState, e event.Event) (SampleState, error) {
+		switch e.Effect {
 		case SampleEffect:
-			state.ID = event.ID
+			state.ID = e.ID
 		}
-	}
-	return state
+		return ss, nil
+	})
 }
