@@ -6,10 +6,12 @@ import (
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
+	pkgerrors "github.com/pkg/errors"
 )
 
 type StreetState struct {
-	ID uuid.UUID
+	ID        uuid.UUID
+	EntityMap map[uuid.UUID]bool
 }
 
 type streetAggregateImpl struct {
@@ -19,8 +21,25 @@ type streetAggregateImpl struct {
 
 func NewStreetAggregator(store *store.Store) Aggregator {
 	return mioAggregateImpl{
-		store:        store,
-		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{},
+		store: store,
+		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
+			//"STREET_ENTITY_ENTER"
+			event.StreetEntityEnterEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetStreetState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				_, ok := inputEvent.Data.(uuid.UUID)
+				if !ok {
+					return pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", event.StreetEntityEnterEffect))
+				}
+
+				return nil
+			},
+		},
 	}
 }
 
@@ -41,6 +60,12 @@ func GetStreetState(events []event.Event) (StreetState, error) {
 
 	for _, e := range events {
 		switch e.Effect {
+		case event.StreetEntityEnterEffect:
+			entityID, ok := e.Data.(uuid.UUID)
+			if !ok {
+				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			}
+			state.EntityMap[entityID] = true
 		}
 	}
 	return state, nil
