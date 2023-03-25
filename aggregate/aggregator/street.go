@@ -1,12 +1,9 @@
 package aggregator
 
 import (
-	"fmt"
-
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
-	pkgerrors "github.com/pkg/errors"
 )
 
 type StreetState struct {
@@ -14,13 +11,9 @@ type StreetState struct {
 	EntityMap map[uuid.UUID]bool
 }
 
-type streetAggregateImpl struct {
-	store        *store.Store
-	aggregateSet map[event.Effect]func([]event.Event, event.Event) error
-}
-
 func NewStreetAggregator(store *store.Store) Aggregator {
-	return mioAggregateImpl{
+	return aggregateImpl{
+		name:  "STREET",
 		store: store,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"STREET_ENTITY_ENTER"
@@ -32,11 +25,10 @@ func NewStreetAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
-				_, ok := inputEvent.Data.(uuid.UUID)
-				if !ok {
-					return pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", event.StreetEntityEnterEffect))
+				_, err = event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
 				}
-
 				return nil
 			},
 			//"STREET_ENTITY_LEAVE"
@@ -48,9 +40,9 @@ func NewStreetAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
-				entityID, ok := inputEvent.Data.(uuid.UUID)
-				if !ok {
-					return pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", event.StreetEntityLeaveEffect))
+				entityID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
 				}
 
 				if !state.EntityMap[entityID] {
@@ -63,36 +55,23 @@ func NewStreetAggregator(store *store.Store) Aggregator {
 	}
 }
 
-func (i streetAggregateImpl) GetStore() *store.Store {
-	return i.store
-}
-
-func (i streetAggregateImpl) Aggregate(event event.Event) error {
-	if err := aggregate(i.store, i.aggregateSet, event); err != nil {
-		return fmt.Errorf("[STREET_AGGREGATE][%v] %v", event.Effect, err)
-	}
-	fmt.Printf("[STREET_AGGREGATE][%v] aggregated.\n", event.Effect)
-	return nil
-}
-
 func GetStreetState(events []event.Event) (StreetState, error) {
-	state := StreetState{}
-
-	for _, e := range events {
+	return composeState(StreetState{}, events, func(state StreetState, e event.Event) (StreetState, error) {
 		switch e.Effect {
 		case event.StreetEntityEnterEffect:
-			entityID, ok := e.Data.(uuid.UUID)
-			if !ok {
-				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			entityID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
 			}
+
 			state.EntityMap[entityID] = true
 		case event.StreetEntityLeaveEffect:
-			entityID, ok := e.Data.(uuid.UUID)
-			if !ok {
-				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			entityID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
 			}
 			state.EntityMap[entityID] = false
 		}
-	}
-	return state, nil
+		return state, nil
+	})
 }

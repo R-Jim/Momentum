@@ -1,13 +1,10 @@
 package aggregator
 
 import (
-	"fmt"
-
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
-	pkgerrors "github.com/pkg/errors"
 )
 
 type MioState struct {
@@ -15,13 +12,9 @@ type MioState struct {
 	Position math.Pos
 }
 
-type mioAggregateImpl struct {
-	store        *store.Store
-	aggregateSet map[event.Effect]func([]event.Event, event.Event) error
-}
-
 func NewMioAggregator(store *store.Store) Aggregator {
-	return mioAggregateImpl{
+	return aggregateImpl{
+		name:  "MIO",
 		store: store,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"MIO_INIT"
@@ -41,9 +34,9 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
-				destinationPosition, ok := inputEvent.Data.(math.Pos)
-				if !ok {
-					return pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", event.MioWalkEffect))
+				destinationPosition, err := event.ParseData[math.Pos](inputEvent)
+				if err != nil {
+					return err
 				}
 
 				_, _, distanceSqrt := math.GetDistances(state.Position, destinationPosition)
@@ -62,9 +55,9 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
-				destinationPosition, ok := inputEvent.Data.(math.Pos)
-				if !ok {
-					return pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", event.MioWalkEffect))
+				destinationPosition, err := event.ParseData[math.Pos](inputEvent)
+				if err != nil {
+					return err
 				}
 
 				_, _, distanceSqrt := math.GetDistances(state.Position, destinationPosition)
@@ -90,44 +83,30 @@ func NewMioAggregator(store *store.Store) Aggregator {
 	}
 }
 
-func (i mioAggregateImpl) GetStore() *store.Store {
-	return i.store
-}
-
-func (i mioAggregateImpl) Aggregate(event event.Event) error {
-	if err := aggregate(i.store, i.aggregateSet, event); err != nil {
-		return fmt.Errorf("[MIO_AGGREGATE][%v] %v", event.Effect, err)
-	}
-	fmt.Printf("[MIO_AGGREGATE][%v] aggregated.\n", event.Effect)
-	return nil
-}
-
 func GetMioState(events []event.Event) (MioState, error) {
-	state := MioState{}
-
-	for _, e := range events {
+	return composeState(MioState{}, events, func(state MioState, e event.Event) (MioState, error) {
 		switch e.Effect {
 		case event.MioInitEffect:
-			pos, ok := e.Data.(math.Pos)
-			if !ok {
-				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			pos, err := event.ParseData[math.Pos](e)
+			if err != nil {
+				return state, err
 			}
 			state.ID = e.EntityID
 			state.Position = pos
 		case event.MioWalkEffect:
-			pos, ok := e.Data.(math.Pos)
-			if !ok {
-				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			pos, err := event.ParseData[math.Pos](e)
+			if err != nil {
+				return state, err
 			}
 			state.Position = pos
 		case event.MioRunEffect:
-			pos, ok := e.Data.(math.Pos)
-			if !ok {
-				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			pos, err := event.ParseData[math.Pos](e)
+			if err != nil {
+				return state, err
 			}
 			state.Position = pos
 		case event.MioIdleEffect:
 		}
-	}
-	return state, nil
+		return state, nil
+	})
 }
