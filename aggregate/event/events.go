@@ -1,6 +1,12 @@
 package event
 
-import "github.com/google/uuid"
+import (
+	"fmt"
+	"reflect"
+
+	"github.com/google/uuid"
+	pkgerrors "github.com/pkg/errors"
+)
 
 type data interface{}
 
@@ -12,4 +18,12 @@ type Event struct {
 	Version  int
 	Effect   Effect
 	Data     data
+}
+
+func ParseData[T data](e Event) (T, error) {
+	data, ok := e.Data.(T)
+	if !ok {
+		return data, pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", reflect.TypeOf(data)))
+	}
+	return data, nil
 }

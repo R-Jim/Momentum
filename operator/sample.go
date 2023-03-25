@@ -21,7 +21,7 @@ func NewSample(sampleAggregator aggregator.Aggregator, sampleAnimator animator.A
 }
 
 func (o sampleOperator) SampleOperate(id uuid.UUID) error {
-	event := event.NewSampleChangeEvent(id)
+	event := event.NewSampleEvent(id)
 
 	if err := o.sampleAggregator.Aggregate(event); err != nil {
 		return err
