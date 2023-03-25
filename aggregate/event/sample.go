@@ -1,13 +1,19 @@
 package event
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 const (
 	SampleEffect Effect = "SAMPLE_EFFECT"
 )
 
-func NewSampleChangeEvent(id uuid.UUID) Event {
+func NewSampleEvent(id uuid.UUID) Event {
 	return Event{
-		ID: id,
+		ID:       uuid.New(),
+		EntityID: id,
+		Version:  0,
+		Effect:   SampleEffect,
+		Data:     "SAMPLE_DATA",
 	}
 }
