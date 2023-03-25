@@ -39,6 +39,26 @@ func NewStreetAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"STREET_ENTITY_LEAVE"
+			event.StreetEntityLeaveEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetStreetState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				entityID, ok := inputEvent.Data.(uuid.UUID)
+				if !ok {
+					return pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", event.StreetEntityLeaveEffect))
+				}
+
+				if !state.EntityMap[entityID] {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
 		},
 	}
 }
@@ -66,6 +86,12 @@ func GetStreetState(events []event.Event) (StreetState, error) {
 				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
 			}
 			state.EntityMap[entityID] = true
+		case event.StreetEntityLeaveEffect:
+			entityID, ok := e.Data.(uuid.UUID)
+			if !ok {
+				return state, pkgerrors.WithStack(fmt.Errorf("failed to compose state for effect: %s", e.Effect))
+			}
+			state.EntityMap[entityID] = false
 		}
 	}
 	return state, nil
