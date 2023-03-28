@@ -10,6 +10,7 @@ import (
 type MioState struct {
 	ID       uuid.UUID
 	Position math.Pos
+	StreetID uuid.UUID
 }
 
 func NewMioAggregator(store *store.Store) Aggregator {

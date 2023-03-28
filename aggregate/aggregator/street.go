@@ -3,12 +3,15 @@ package aggregator
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
 
 type StreetState struct {
 	ID        uuid.UUID
 	EntityMap map[uuid.UUID]bool
+	HeadA     math.Pos
+	HeadB     math.Pos
 }
 
 func NewStreetAggregator(store *store.Store) Aggregator {
