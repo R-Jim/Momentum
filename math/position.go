@@ -120,3 +120,14 @@ func SinDegree(d float64) float64 {
 func CosDegree(d float64) float64 {
 	return math.Cos(d * math.Pi / 180)
 }
+
+// buffer represent zone created by connecting A,B's circle with r = buffer
+func IsBetweenAAndB(currentPos, a, b Pos, buffer float64) bool {
+	_, _, distAB := GetDistances(a, b)
+	_, _, distFromA := GetDistances(currentPos, a)
+	_, _, distFromB := GetDistances(currentPos, b)
+
+	fixedBuffer := 0.02
+
+	return (distFromA+distFromB-distAB)-((buffer+fixedBuffer)*2) <= 0
+}
