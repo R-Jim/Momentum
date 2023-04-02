@@ -14,7 +14,7 @@ func Test_Mio_Init(t *testing.T) {
 	mioID := uuid.New()
 	store := store.NewStore()
 
-	mioOperator := mioOperator{
+	mioOperator := MioOperator{
 		mioAggregator: aggregator.NewMioAggregator(&store),
 	}
 
@@ -34,7 +34,7 @@ func Test_Mio_Walk(t *testing.T) {
 	mioID := uuid.New()
 	store := store.NewStore()
 
-	mioOperator := mioOperator{
+	mioOperator := MioOperator{
 		mioAggregator: aggregator.NewMioAggregator(&store),
 	}
 
@@ -61,7 +61,7 @@ func Test_Mio_Run(t *testing.T) {
 	mioID := uuid.New()
 	store := store.NewStore()
 
-	mioOperator := mioOperator{
+	mioOperator := MioOperator{
 		mioAggregator: aggregator.NewMioAggregator(&store),
 	}
 
@@ -92,7 +92,7 @@ func Test_Mio_Idle(t *testing.T) {
 	mioID := uuid.New()
 	store := store.NewStore()
 
-	mioOperator := mioOperator{
+	mioOperator := MioOperator{
 		mioAggregator: aggregator.NewMioAggregator(&store),
 	}
 

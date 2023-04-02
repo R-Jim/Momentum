@@ -80,6 +80,22 @@ func NewMioAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"MIO_ENTER_STREET"
+			event.MioEnterStreetEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
 		},
 	}
 }
@@ -107,6 +123,13 @@ func GetMioState(events []event.Event) (MioState, error) {
 			}
 			state.Position = pos
 		case event.MioIdleEffect:
+
+		case event.MioEnterStreetEffect:
+			streetID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
+			}
+			state.StreetID = streetID
 		}
 		return state, nil
 	})

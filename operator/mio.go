@@ -8,20 +8,20 @@ import (
 	"github.com/google/uuid"
 )
 
-type mioOperator struct {
+type MioOperator struct {
 	mioAggregator aggregator.Aggregator
 
 	mioAnimator animator.Animator
 }
 
-func NewMio(mioAggregator aggregator.Aggregator, mioAnimator animator.Animator) mioOperator {
-	return mioOperator{
+func NewMio(mioAggregator aggregator.Aggregator, mioAnimator animator.Animator) MioOperator {
+	return MioOperator{
 		mioAggregator: mioAggregator,
 		mioAnimator:   mioAnimator,
 	}
 }
 
-func (o mioOperator) Init(id uuid.UUID, position math.Pos) error {
+func (o MioOperator) Init(id uuid.UUID, position math.Pos) error {
 	store := o.mioAggregator.GetStore()
 	event := event.NewMioInitEvent(id, position)
 
@@ -41,7 +41,7 @@ func (o mioOperator) Init(id uuid.UUID, position math.Pos) error {
 	return nil
 }
 
-func (o mioOperator) Walk(id uuid.UUID, posEnd math.Pos) error {
+func (o MioOperator) Walk(id uuid.UUID, posEnd math.Pos) error {
 	store := o.mioAggregator.GetStore()
 	events, err := (*store).GetEventsByEntityID(id)
 	if err != nil {
@@ -66,7 +66,7 @@ func (o mioOperator) Walk(id uuid.UUID, posEnd math.Pos) error {
 	return nil
 }
 
-func (o mioOperator) Run(id uuid.UUID, posEnd math.Pos) error {
+func (o MioOperator) Run(id uuid.UUID, posEnd math.Pos) error {
 	store := o.mioAggregator.GetStore()
 	events, err := (*store).GetEventsByEntityID(id)
 	if err != nil {
@@ -91,7 +91,7 @@ func (o mioOperator) Run(id uuid.UUID, posEnd math.Pos) error {
 	return nil
 }
 
-func (o mioOperator) Idle(id uuid.UUID) error {
+func (o MioOperator) Idle(id uuid.UUID) error {
 	store := o.mioAggregator.GetStore()
 	events, err := (*store).GetEventsByEntityID(id)
 	if err != nil {
@@ -99,6 +99,31 @@ func (o mioOperator) Idle(id uuid.UUID) error {
 	}
 
 	event := event.NewMioIdleEvent(id, len(events)+1)
+
+	if err := o.mioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.mioAnimator != nil {
+		if err := animator.Draw(o.mioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o MioOperator) EnterStreet(id uuid.UUID, streetID uuid.UUID) error {
+	store := o.mioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioEnterStreetEvent(id, streetID, len(events)+1)
 
 	if err := o.mioAggregator.Aggregate(event); err != nil {
 		return err
