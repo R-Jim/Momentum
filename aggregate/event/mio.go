@@ -11,6 +11,8 @@ const (
 	MioWalkEffect Effect = "MIO_WALK"
 	MioRunEffect  Effect = "MIO_RUN"
 	MioIdleEffect Effect = "MIO_IDLE"
+
+	MioEnterStreetEffect Effect = "MIO_ENTER_STREET"
 )
 
 func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
@@ -49,5 +51,15 @@ func NewMioIdleEvent(entityID uuid.UUID, version int) Event {
 		EntityID: entityID,
 		Version:  version,
 		Effect:   MioIdleEffect,
+	}
+}
+
+func NewMioEnterStreetEvent(entityID uuid.UUID, streetID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioEnterStreetEffect,
+		Data:     streetID,
 	}
 }
