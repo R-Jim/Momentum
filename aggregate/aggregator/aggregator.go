@@ -26,9 +26,9 @@ func (i aggregateImpl) GetStore() *store.Store {
 
 func (i aggregateImpl) Aggregate(event event.Event) error {
 	if err := aggregate(i.store, i.aggregateSet, event); err != nil {
-		return fmt.Errorf("[%s][%v] %v", i.name, event.Effect, err)
+		return fmt.Errorf("[%s][%v][%v] %v.\n", i.name, event.EntityID, event.Effect, err)
 	}
-	fmt.Printf("[%s][%v] aggregated.\n", i.name, event.Effect)
+	fmt.Printf("[%s][%v][%v] aggregated.\n", i.name, event.EntityID, event.Effect)
 	return nil
 }
 
