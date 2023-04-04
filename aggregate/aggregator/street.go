@@ -90,8 +90,11 @@ func GetStreetState(events []event.Event) (StreetState, error) {
 			if err != nil {
 				return state, err
 			}
+
+			state.ID = e.EntityID
 			state.HeadA = heads[0]
 			state.HeadB = heads[1]
+			state.EntityMap = map[uuid.UUID]bool{}
 
 		case event.StreetEntityEnterEffect:
 			entityID, err := event.ParseData[uuid.UUID](e)
