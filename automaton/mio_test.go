@@ -33,7 +33,6 @@ func Test_EnterStreetFromCurrentPosition(t *testing.T) {
 
 	streetID := uuid.New()
 	err = streetOperator.Init(streetID, math.NewPos(2, 0), math.NewPos(2, 4))
-
 	require.NoError(t, err)
 
 	//
@@ -43,7 +42,8 @@ func Test_EnterStreetFromCurrentPosition(t *testing.T) {
 		mioStore:    &mioStore,
 		streetStore: &streetStore,
 
-		mioOperator: mioOperator,
+		mioOperator:    mioOperator,
+		streetOperator: streetOperator,
 	}
 
 	automaton.Automate()
@@ -53,4 +53,36 @@ func Test_EnterStreetFromCurrentPosition(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, streetID, mioState.StreetID)
+
+	events, err = streetStore.GetEventsByEntityID(streetID)
+	streetState, err := aggregator.GetStreetState(events)
+
+	require.True(t, streetState.EntityMap[mioID])
+
+	// Check moving to new pos
+	newStreetID := uuid.New()
+	err = streetOperator.Init(newStreetID, math.NewPos(4, 0), math.NewPos(4, 4))
+	require.NoError(t, err)
+
+	err = mioOperator.Walk(mioID, math.NewPos(3, 2))
+	require.NoError(t, err)
+	err = mioOperator.Walk(mioID, math.NewPos(4, 2))
+	require.NoError(t, err)
+
+	automaton.Automate()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, newStreetID, mioState.StreetID)
+
+	events, err = streetStore.GetEventsByEntityID(streetID)
+	streetState, err = aggregator.GetStreetState(events)
+
+	require.False(t, streetState.EntityMap[mioID])
+
+	events, err = streetStore.GetEventsByEntityID(newStreetID)
+	newStreetState, err := aggregator.GetStreetState(events)
+
+	require.True(t, newStreetState.EntityMap[mioID])
 }

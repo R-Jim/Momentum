@@ -19,7 +19,7 @@ func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
 	return Event{
 		ID:       uuid.New(),
 		EntityID: entityID,
-		Version:  0,
+		Version:  1,
 		Effect:   MioInitEffect,
 		Data:     position,
 	}

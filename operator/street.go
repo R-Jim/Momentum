@@ -8,23 +8,73 @@ import (
 	"github.com/google/uuid"
 )
 
-type streetOperator struct {
+type StreetOperator struct {
 	streetAggregator aggregator.Aggregator
 
 	streetAnimator animator.Animator
 }
 
-func NewStreet(streetAggregator aggregator.Aggregator, streetAnimator animator.Animator) streetOperator {
-	return streetOperator{
+func NewStreet(streetAggregator aggregator.Aggregator, streetAnimator animator.Animator) StreetOperator {
+	return StreetOperator{
 		streetAggregator: streetAggregator,
 		streetAnimator:   streetAnimator,
 	}
 }
 
-func (o streetOperator) Init(id uuid.UUID, headA, headB math.Pos) error {
+func (o StreetOperator) Init(id uuid.UUID, headA, headB math.Pos) error {
 	store := o.streetAggregator.GetStore()
 
 	event := event.NewStreetInitEvent(id, headA, headB)
+
+	if err := o.streetAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.streetAnimator != nil {
+		if err := animator.Draw(o.streetAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o StreetOperator) EntityEnter(id, entityID uuid.UUID) error {
+	store := o.streetAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewStreetEntityEnterEvent(id, len(events)+1, entityID)
+
+	if err := o.streetAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.streetAnimator != nil {
+		if err := animator.Draw(o.streetAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o StreetOperator) EntityLeave(id, entityID uuid.UUID) error {
+	store := o.streetAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewStreetEntityLeaveEvent(id, len(events)+1, entityID)
 
 	if err := o.streetAggregator.Aggregate(event); err != nil {
 		return err

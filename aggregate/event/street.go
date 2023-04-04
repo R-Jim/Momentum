@@ -16,6 +16,7 @@ func NewStreetInitEvent(streetID uuid.UUID, headA, headB math.Pos) Event {
 	return Event{
 		ID:       uuid.New(),
 		EntityID: streetID,
+		Version:  1,
 		Effect:   StreetInitEffect,
 		Data:     []math.Pos{headA, headB},
 	}

@@ -16,7 +16,8 @@ type mioAutomaton struct {
 	mioStore    *store.Store
 	streetStore *store.Store
 
-	mioOperator operator.MioOperator
+	mioOperator    operator.MioOperator
+	streetOperator operator.StreetOperator
 }
 
 func (m mioAutomaton) Automate() {
@@ -30,13 +31,31 @@ func (m mioAutomaton) EnterStreetFromCurrentPosition() {
 		fmt.Print(err)
 	}
 
+	oldStreetID := mioState.StreetID
+
 	for streetID, streetEvents := range (*m.streetStore).GetEvents() {
 		streetState, err := aggregator.GetStreetState(streetEvents)
 		if err != nil {
 			fmt.Print(err)
 		}
 		if math.IsBetweenAAndB(mioState.Position, streetState.HeadA, streetState.HeadB, 1) {
-			m.mioOperator.EnterStreet(mioState.ID, streetID)
+			if oldStreetID != streetID {
+				err := m.mioOperator.EnterStreet(mioState.ID, streetID)
+				if err != nil {
+					fmt.Print(err)
+				}
+				err = m.streetOperator.EntityEnter(streetID, mioState.ID)
+				if err != nil {
+					fmt.Print(err)
+				}
+				if oldStreetID.String() != uuid.Nil.String() {
+					err = m.streetOperator.EntityLeave(oldStreetID, mioState.ID)
+					if err != nil {
+						fmt.Print(err)
+					}
+				}
+				break
+			}
 		}
 	}
 }
