@@ -15,7 +15,7 @@ func Test_EnterStreetFromCurrentPosition(t *testing.T) {
 	mioID := uuid.New()
 	mioStore := store.NewStore()
 
-	mioOperator := operator.NewMio(aggregator.NewMioAggregator(&mioStore), nil)
+	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
 
 	err := mioOperator.Init(mioID, math.NewPos(2, 2))
 	require.NoError(t, err)

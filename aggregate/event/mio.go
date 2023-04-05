@@ -13,6 +13,9 @@ const (
 	MioIdleEffect Effect = "MIO_IDLE"
 
 	MioEnterStreetEffect Effect = "MIO_ENTER_STREET"
+
+	MioEnterBuildingEffect Effect = "MIO_ENTER_BUILDING"
+	MioLeaveBuildingEffect Effect = "MIO_LEAVE_BUILDING"
 )
 
 func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
@@ -61,5 +64,25 @@ func NewMioEnterStreetEvent(entityID uuid.UUID, streetID uuid.UUID, version int)
 		Version:  version,
 		Effect:   MioEnterStreetEffect,
 		Data:     streetID,
+	}
+}
+
+func NewMioEnterBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioEnterBuildingEffect,
+		Data:     buildingID,
+	}
+}
+
+func NewMioLeaveBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioLeaveBuildingEffect,
+		Data:     buildingID,
 	}
 }
