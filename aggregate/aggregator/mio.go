@@ -8,9 +8,10 @@ import (
 )
 
 type MioState struct {
-	ID       uuid.UUID
-	Position math.Pos
-	StreetID uuid.UUID
+	ID         uuid.UUID
+	Position   math.Pos
+	StreetID   uuid.UUID
+	BuildingID uuid.UUID
 }
 
 func NewMioAggregator(store *store.Store) Aggregator {
@@ -89,11 +90,60 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
+				if state.BuildingID.String() != uuid.Nil.String() {
+					return ErrAggregateFail
+				}
 
 				_, err = event.ParseData[uuid.UUID](inputEvent)
 				if err != nil {
 					return err
 				}
+				return nil
+			},
+			//"MIO_ENTER_BUILDING"
+			event.MioEnterBuildingEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				if state.StreetID.String() != uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				if state.BuildingID.String() != uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			//"MIO_LEAVE_BUILDING"
+			event.MioLeaveBuildingEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.StreetID.String() != uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				if state.BuildingID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				buildingID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				if state.BuildingID.String() != buildingID.String() {
+					return ErrAggregateFail
+				}
+
 				return nil
 			},
 		},
@@ -130,6 +180,14 @@ func GetMioState(events []event.Event) (MioState, error) {
 				return state, err
 			}
 			state.StreetID = streetID
+		case event.MioEnterBuildingEffect:
+			buildingID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
+			}
+			state.BuildingID = buildingID
+		case event.MioLeaveBuildingEffect:
+			state.BuildingID = uuid.Nil
 		}
 		return state, nil
 	})
