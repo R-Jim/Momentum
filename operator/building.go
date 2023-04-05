@@ -84,3 +84,28 @@ func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (o BuildingOperator) EntityAct(id, entityID uuid.UUID) error {
+	store := o.BuildingAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewBuildingEntityActEvent(id, entityID, len(events)+1)
+
+	if err := o.BuildingAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.BuildingAnimator != nil {
+		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
