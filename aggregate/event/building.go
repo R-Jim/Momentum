@@ -27,7 +27,7 @@ func NewBuildingEntityEnterEvent(buildingID uuid.UUID, version int, entityID uui
 		ID:       uuid.New(),
 		EntityID: buildingID,
 		Version:  version,
-		Effect:   StreetEntityEnterEffect,
+		Effect:   BuildingEntityEnterEffect,
 		Data:     entityID,
 	}
 }
@@ -37,7 +37,7 @@ func NewBuildingEntityLeaveEvent(buildingID uuid.UUID, version int, entityID uui
 		ID:       uuid.New(),
 		EntityID: buildingID,
 		Version:  version,
-		Effect:   StreetEntityLeaveEffect,
+		Effect:   BuildingEntityLeaveEffect,
 		Data:     entityID,
 	}
 }

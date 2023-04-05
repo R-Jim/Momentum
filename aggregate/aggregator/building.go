@@ -20,7 +20,7 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"BUILDING_INIT"
 			event.BuildingInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
-				state, err := GetStreetState(currentEvents)
+				state, err := GetBuildingState(currentEvents)
 				if err != nil {
 					return err
 				}
@@ -41,7 +41,7 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 			},
 			//"BUILDING_ENTITY_ENTER"
 			event.BuildingEntityEnterEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
-				state, err := GetStreetState(currentEvents)
+				state, err := GetBuildingState(currentEvents)
 				if err != nil {
 					return err
 				}
@@ -56,7 +56,7 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 			},
 			//"BUILDING_ENTITY_LEAVE"
 			event.BuildingEntityLeaveEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
-				state, err := GetStreetState(currentEvents)
+				state, err := GetBuildingState(currentEvents)
 				if err != nil {
 					return err
 				}
@@ -81,7 +81,7 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 func GetBuildingState(events []event.Event) (BuildingState, error) {
 	return composeState(BuildingState{}, events, func(state BuildingState, e event.Event) (BuildingState, error) {
 		switch e.Effect {
-		case event.StreetInitEffect:
+		case event.BuildingInitEffect:
 			pos, err := event.ParseData[math.Pos](e)
 			if err != nil {
 				return state, err
@@ -91,14 +91,14 @@ func GetBuildingState(events []event.Event) (BuildingState, error) {
 			state.Pos = pos
 			state.EntityMap = map[uuid.UUID]bool{}
 
-		case event.StreetEntityEnterEffect:
+		case event.BuildingEntityEnterEffect:
 			entityID, err := event.ParseData[uuid.UUID](e)
 			if err != nil {
 				return state, err
 			}
 
 			state.EntityMap[entityID] = true
-		case event.StreetEntityLeaveEffect:
+		case event.BuildingEntityLeaveEffect:
 			entityID, err := event.ParseData[uuid.UUID](e)
 			if err != nil {
 				return state, err

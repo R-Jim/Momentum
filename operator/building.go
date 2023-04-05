@@ -9,24 +9,17 @@ import (
 )
 
 type BuildingOperator struct {
-	buildingAggregator aggregator.Aggregator
+	BuildingAggregator aggregator.Aggregator
 
-	buildingAnimator animator.Animator
-}
-
-func NewBuilding(buildingAggregator aggregator.Aggregator, buildingAnimator animator.Animator) BuildingOperator {
-	return BuildingOperator{
-		buildingAggregator: buildingAggregator,
-		buildingAnimator:   buildingAnimator,
-	}
+	BuildingAnimator animator.Animator
 }
 
 func (o BuildingOperator) Init(id uuid.UUID, pos math.Pos) error {
-	store := o.buildingAggregator.GetStore()
+	store := o.BuildingAggregator.GetStore()
 
 	event := event.NewBuildingInitEvent(id, pos)
 
-	if err := o.buildingAggregator.Aggregate(event); err != nil {
+	if err := o.BuildingAggregator.Aggregate(event); err != nil {
 		return err
 	}
 
@@ -34,8 +27,8 @@ func (o BuildingOperator) Init(id uuid.UUID, pos math.Pos) error {
 		return err
 	}
 
-	if o.buildingAnimator != nil {
-		if err := animator.Draw(o.buildingAnimator.GetAnimateSet(), event); err != nil {
+	if o.BuildingAnimator != nil {
+		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), event); err != nil {
 			return err
 		}
 	}
@@ -43,7 +36,7 @@ func (o BuildingOperator) Init(id uuid.UUID, pos math.Pos) error {
 }
 
 func (o BuildingOperator) EntityEnter(id, entityID uuid.UUID) error {
-	store := o.buildingAggregator.GetStore()
+	store := o.BuildingAggregator.GetStore()
 	events, err := (*store).GetEventsByEntityID(id)
 	if err != nil {
 		return err
@@ -51,7 +44,7 @@ func (o BuildingOperator) EntityEnter(id, entityID uuid.UUID) error {
 
 	event := event.NewBuildingEntityEnterEvent(id, len(events)+1, entityID)
 
-	if err := o.buildingAggregator.Aggregate(event); err != nil {
+	if err := o.BuildingAggregator.Aggregate(event); err != nil {
 		return err
 	}
 
@@ -59,8 +52,8 @@ func (o BuildingOperator) EntityEnter(id, entityID uuid.UUID) error {
 		return err
 	}
 
-	if o.buildingAnimator != nil {
-		if err := animator.Draw(o.buildingAnimator.GetAnimateSet(), event); err != nil {
+	if o.BuildingAnimator != nil {
+		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), event); err != nil {
 			return err
 		}
 	}
@@ -68,7 +61,7 @@ func (o BuildingOperator) EntityEnter(id, entityID uuid.UUID) error {
 }
 
 func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
-	store := o.buildingAggregator.GetStore()
+	store := o.BuildingAggregator.GetStore()
 	events, err := (*store).GetEventsByEntityID(id)
 	if err != nil {
 		return err
@@ -76,7 +69,7 @@ func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
 
 	event := event.NewBuildingEntityLeaveEvent(id, len(events)+1, entityID)
 
-	if err := o.buildingAggregator.Aggregate(event); err != nil {
+	if err := o.BuildingAggregator.Aggregate(event); err != nil {
 		return err
 	}
 
@@ -84,8 +77,8 @@ func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
 		return err
 	}
 
-	if o.buildingAnimator != nil {
-		if err := animator.Draw(o.buildingAnimator.GetAnimateSet(), event); err != nil {
+	if o.BuildingAnimator != nil {
+		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), event); err != nil {
 			return err
 		}
 	}
