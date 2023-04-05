@@ -74,6 +74,26 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"BUILDING_ENTITY_ACT"
+			event.BuildingEntityActEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetBuildingState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				entityID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				if entityID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
 		},
 	}
 }

@@ -10,6 +10,8 @@ const (
 
 	BuildingEntityEnterEffect Effect = "BUILDING_ENTITY_ENTER"
 	BuildingEntityLeaveEffect Effect = "BUILDING_ENTITY_LEAVE"
+
+	BuildingEntityActEffect Effect = "BUILDING_ENTITY_ACT"
 )
 
 func NewBuildingInitEvent(buildingID uuid.UUID, pos math.Pos) Event {
@@ -38,6 +40,16 @@ func NewBuildingEntityLeaveEvent(buildingID uuid.UUID, version int, entityID uui
 		EntityID: buildingID,
 		Version:  version,
 		Effect:   BuildingEntityLeaveEffect,
+		Data:     entityID,
+	}
+}
+
+func NewBuildingEntityActEvent(buildingID uuid.UUID, entityID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: buildingID,
+		Version:  version,
+		Effect:   BuildingEntityActEffect,
 		Data:     entityID,
 	}
 }
