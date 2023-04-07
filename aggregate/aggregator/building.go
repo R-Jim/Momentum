@@ -93,6 +93,34 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 					return ErrAggregateFail
 				}
 
+				if !state.EntityMap[entityID] {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
+			//"BUILDING_WORKER_ACT"
+			event.BuildingWorkerActEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetBuildingState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				workerID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				if workerID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				if !state.WorkerMap[workerID] {
+					return ErrAggregateFail
+				}
+
 				return nil
 			},
 			//"BUILDING_WORKER_ASSIGN"
