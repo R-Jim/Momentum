@@ -10,6 +10,7 @@ import (
 type BuildingState struct {
 	ID        uuid.UUID
 	EntityMap map[uuid.UUID]bool
+	WorkerMap map[uuid.UUID]bool
 	Pos       math.Pos
 }
 
@@ -94,6 +95,41 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"BUILDING_WORKER_ASSIGN"
+			event.BuildingWorkerAssignEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetBuildingState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				_, err = event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			//"BUILDING_WORKER_UNASSIGN"
+			event.BuildingWorkerUnassignEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetBuildingState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				entityID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				if !state.WorkerMap[entityID] {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
 		},
 	}
 }
@@ -110,6 +146,7 @@ func GetBuildingState(events []event.Event) (BuildingState, error) {
 			state.ID = e.EntityID
 			state.Pos = pos
 			state.EntityMap = map[uuid.UUID]bool{}
+			state.WorkerMap = map[uuid.UUID]bool{}
 
 		case event.BuildingEntityEnterEffect:
 			entityID, err := event.ParseData[uuid.UUID](e)
@@ -124,6 +161,20 @@ func GetBuildingState(events []event.Event) (BuildingState, error) {
 				return state, err
 			}
 			state.EntityMap[entityID] = false
+
+		case event.BuildingWorkerAssignEffect:
+			workerID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
+			}
+
+			state.WorkerMap[workerID] = true
+		case event.BuildingWorkerUnassignEffect:
+			workerID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
+			}
+			state.WorkerMap[workerID] = false
 		}
 		return state, nil
 	})
