@@ -18,6 +18,12 @@ const (
 	MioLeaveBuildingEffect Effect = "MIO_LEAVE_BUILDING"
 
 	MioActEffect Effect = "MIO_ACT"
+
+	MioStreamEffect Effect = "MIO_STREAM_EFFECT"
+	MioEatEffect    Effect = "MIO_EAT_EFFECT"
+	MioStarveEffect Effect = "MIO_STARVE_EFFECT"
+	MioDrinkEffect  Effect = "MIO_DRINK_EFFECT"
+	MioSweatEffect  Effect = "MIO_SWEAT_EFFECT"
 )
 
 func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
@@ -96,5 +102,55 @@ func NewMioActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event
 		Version:  version,
 		Effect:   MioActEffect,
 		Data:     buildingID,
+	}
+}
+
+func NewMioStreamEvent(entityID uuid.UUID, value, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioStreamEffect,
+		Data:     value,
+	}
+}
+
+func NewMioEatEvent(entityID uuid.UUID, value, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioEatEffect,
+		Data:     value,
+	}
+}
+
+func NewMioStarveEvent(entityID uuid.UUID, value, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioStarveEffect,
+		Data:     value,
+	}
+}
+
+func NewMioDrinkEvent(entityID uuid.UUID, value, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioDrinkEffect,
+		Data:     value,
+	}
+}
+
+func NewMioSweatEvent(entityID uuid.UUID, value, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioSweatEffect,
+		Data:     value,
 	}
 }

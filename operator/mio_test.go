@@ -235,3 +235,217 @@ func Test_Mio_Act(t *testing.T) {
 
 	require.Equal(t, event.BuildingEntityActEffect, events[len(events)-1].Effect)
 }
+
+func Test_Mio_Stream(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, mioID, mioState.ID)
+
+	mioActivityState, err := aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 100, mioActivityState.MaxMood)
+	require.Equal(t, 70, mioActivityState.Mood)
+
+	require.NoError(t, mioOperator.Stream(mioID, 12))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 58, mioActivityState.Mood)
+
+	require.NoError(t, mioOperator.Stream(mioID, 60))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, mioActivityState.Mood)
+}
+
+func Test_Mio_Eat(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, mioID, mioState.ID)
+
+	mioActivityState, err := aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 100, mioActivityState.MaxEnergy)
+	require.Equal(t, 70, mioActivityState.Energy)
+
+	require.NoError(t, mioOperator.Eat(mioID, 12))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 73, mioActivityState.Mood)
+	require.Equal(t, 82, mioActivityState.Energy)
+
+	require.NoError(t, mioOperator.Eat(mioID, 60))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 88, mioActivityState.Mood)
+	require.Equal(t, 100, mioActivityState.Energy)
+}
+
+func Test_Mio_Starve(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, mioID, mioState.ID)
+
+	mioActivityState, err := aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 100, mioActivityState.MaxEnergy)
+	require.Equal(t, 70, mioActivityState.Energy)
+
+	require.NoError(t, mioOperator.Starve(mioID, 12))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 58, mioActivityState.Energy)
+
+	require.NoError(t, mioOperator.Starve(mioID, 60))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, mioActivityState.Energy)
+}
+
+func Test_Mio_Drink(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, mioID, mioState.ID)
+
+	mioActivityState, err := aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 100, mioActivityState.MaxDehydration)
+	require.Equal(t, 70, mioActivityState.Dehydration)
+
+	require.NoError(t, mioOperator.Drink(mioID, 12))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 73, mioActivityState.Mood)
+	require.Equal(t, 82, mioActivityState.Dehydration)
+
+	require.NoError(t, mioOperator.Drink(mioID, 60))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 88, mioActivityState.Mood)
+	require.Equal(t, 100, mioActivityState.Dehydration)
+}
+
+func Test_Mio_Sweat(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, mioID, mioState.ID)
+
+	mioActivityState, err := aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 100, mioActivityState.MaxDehydration)
+	require.Equal(t, 70, mioActivityState.Dehydration)
+
+	require.NoError(t, mioOperator.Sweat(mioID, 12))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 58, mioActivityState.Dehydration)
+
+	require.NoError(t, mioOperator.Sweat(mioID, 60))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 0, mioActivityState.Dehydration)
+}

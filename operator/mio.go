@@ -264,3 +264,127 @@ func (o MioOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (o MioOperator) Stream(id uuid.UUID, value int) error {
+	store := o.MioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioStreamEvent(id, value, len(events)+1)
+
+	if err := o.MioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o MioOperator) Eat(id uuid.UUID, value int) error {
+	store := o.MioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioEatEvent(id, value, len(events)+1)
+
+	if err := o.MioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o MioOperator) Starve(id uuid.UUID, value int) error {
+	store := o.MioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioStarveEvent(id, value, len(events)+1)
+
+	if err := o.MioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o MioOperator) Drink(id uuid.UUID, value int) error {
+	store := o.MioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioDrinkEvent(id, value, len(events)+1)
+
+	if err := o.MioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func (o MioOperator) Sweat(id uuid.UUID, value int) error {
+	store := o.MioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioSweatEvent(id, value, len(events)+1)
+
+	if err := o.MioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
