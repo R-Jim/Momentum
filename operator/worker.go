@@ -120,3 +120,46 @@ func (o WorkerOperator) UnassignBuilding(id uuid.UUID, buildingID uuid.UUID) err
 	}
 	return nil
 }
+
+func (o WorkerOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
+	workerStore := o.WorkerAggregator.GetStore()
+	buildingStore := o.BuildingAggregator.GetStore()
+
+	workerEvents, err := (*workerStore).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+	buildingEvents, err := (*buildingStore).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	workerActEvent := event.NewWorkerActEvent(id, buildingID, len(workerEvents)+1)
+	buildingWorkerActEvent := event.NewBuildingWorkerActEvent(buildingID, id, len(buildingEvents)+1)
+
+	if err := o.WorkerAggregator.Aggregate(workerActEvent); err != nil {
+		return err
+	}
+	if err := o.BuildingAggregator.Aggregate(buildingWorkerActEvent); err != nil {
+		return err
+	}
+
+	if err := (*workerStore).AppendEvent(workerActEvent); err != nil {
+		return err
+	}
+	if err := (*buildingStore).AppendEvent(buildingWorkerActEvent); err != nil {
+		return err
+	}
+
+	if o.WorkerAnimator != nil {
+		if err := animator.Draw(o.WorkerAnimator.GetAnimateSet(), workerActEvent); err != nil {
+			return err
+		}
+	}
+	if o.BuildingAnimator != nil {
+		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingWorkerActEvent); err != nil {
+			return err
+		}
+	}
+	return nil
+}

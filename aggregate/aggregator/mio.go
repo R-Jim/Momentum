@@ -146,6 +146,27 @@ func NewMioAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"MIO_ACT"
+			event.MioActEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.BuildingID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				buildingID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				if state.BuildingID.String() != buildingID.String() {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
 		},
 	}
 }

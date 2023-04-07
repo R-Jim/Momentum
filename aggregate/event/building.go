@@ -12,6 +12,7 @@ const (
 	BuildingEntityLeaveEffect Effect = "BUILDING_ENTITY_LEAVE"
 
 	BuildingEntityActEffect Effect = "BUILDING_ENTITY_ACT"
+	BuildingWorkerActEffect Effect = "BUILDING_WORKER_ACT"
 
 	BuildingWorkerAssignEffect   Effect = "BUILDING_WORKER_ASSIGN"
 	BuildingWorkerUnassignEffect Effect = "BUILDING_WORKER_UNASSIGN"
@@ -54,6 +55,16 @@ func NewBuildingEntityActEvent(buildingID uuid.UUID, entityID uuid.UUID, version
 		Version:  version,
 		Effect:   BuildingEntityActEffect,
 		Data:     entityID,
+	}
+}
+
+func NewBuildingWorkerActEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: buildingID,
+		Version:  version,
+		Effect:   BuildingWorkerActEffect,
+		Data:     workerID,
 	}
 }
 

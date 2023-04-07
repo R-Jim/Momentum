@@ -16,6 +16,8 @@ const (
 
 	MioEnterBuildingEffect Effect = "MIO_ENTER_BUILDING"
 	MioLeaveBuildingEffect Effect = "MIO_LEAVE_BUILDING"
+
+	MioActEffect Effect = "MIO_ACT"
 )
 
 func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
@@ -83,6 +85,16 @@ func NewMioLeaveBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version 
 		EntityID: entityID,
 		Version:  version,
 		Effect:   MioLeaveBuildingEffect,
+		Data:     buildingID,
+	}
+}
+
+func NewMioActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioActEffect,
 		Data:     buildingID,
 	}
 }

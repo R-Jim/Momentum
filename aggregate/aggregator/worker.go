@@ -71,6 +71,30 @@ func NewWorkerAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"WORKER_ACT"
+			event.WorkerActEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetWorkerState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				if state.BuildingID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				buildingID, err := event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				if state.BuildingID != buildingID {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
 		},
 	}
 }

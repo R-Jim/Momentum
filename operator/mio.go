@@ -221,3 +221,46 @@ func (o MioOperator) LeaveBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 	return nil
 }
+
+func (o MioOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
+	mioStore := o.MioAggregator.GetStore()
+	buildingStore := o.BuildingAggregator.GetStore()
+
+	mioEvents, err := (*mioStore).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+	buildingEvents, err := (*buildingStore).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	mioActEvent := event.NewMioActEvent(id, buildingID, len(mioEvents)+1)
+	buildingMioActEvent := event.NewBuildingEntityActEvent(buildingID, id, len(buildingEvents)+1)
+
+	if err := o.MioAggregator.Aggregate(mioActEvent); err != nil {
+		return err
+	}
+	if err := o.BuildingAggregator.Aggregate(buildingMioActEvent); err != nil {
+		return err
+	}
+
+	if err := (*mioStore).AppendEvent(mioActEvent); err != nil {
+		return err
+	}
+	if err := (*buildingStore).AppendEvent(buildingMioActEvent); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioActEvent); err != nil {
+			return err
+		}
+	}
+	if o.BuildingAnimator != nil {
+		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingMioActEvent); err != nil {
+			return err
+		}
+	}
+	return nil
+}

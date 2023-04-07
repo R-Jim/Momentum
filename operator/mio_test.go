@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
+	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
@@ -187,4 +188,50 @@ func Test_Mio_LeaveBuilding(t *testing.T) {
 	require.False(t, buildingState.EntityMap[mioID])
 
 	require.Error(t, mioOperator.LeaveBuilding(mioID, buildingID))
+}
+
+func Test_Mio_Act(t *testing.T) {
+	mioStore := store.NewStore()
+	buildingStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator:      aggregator.NewMioAggregator(&mioStore),
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+	}
+
+	BuildingOperator := BuildingOperator{
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+	}
+
+	mioID := uuid.New()
+	buildingID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+
+	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, buildingID, mioState.BuildingID)
+
+	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	require.NoError(t, err)
+	buildingState, err := aggregator.GetBuildingState(events)
+	require.NoError(t, err)
+	require.True(t, buildingState.EntityMap[mioID])
+
+	require.NoError(t, mioOperator.Act(mioID, buildingID))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	require.Equal(t, event.MioActEffect, events[len(events)-1].Effect)
+
+	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	require.NoError(t, err)
+
+	require.Equal(t, event.BuildingEntityActEffect, events[len(events)-1].Effect)
 }
