@@ -14,6 +14,16 @@ type MioState struct {
 	BuildingID uuid.UUID
 }
 
+type MioActivityState struct {
+	MaxMood        int
+	MaxEnergy      int
+	MaxDehydration int
+
+	Mood        int
+	Energy      int
+	Dehydration int
+}
+
 func NewMioAggregator(store *store.Store) Aggregator {
 	return aggregateImpl{
 		name:  "MIO",
@@ -167,6 +177,91 @@ func NewMioAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"MIO_STREAM"
+			event.MioStreamEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[int](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			//"MIO_EAT"
+			event.MioEatEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[int](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			//"MIO_STARVE"
+			event.MioStarveEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[int](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			//"MIO_DRINK"
+			event.MioDrinkEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[int](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
+			//"MIO_SWEAT"
+			event.MioSweatEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[int](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
 		},
 	}
 }
@@ -209,6 +304,85 @@ func GetMioState(events []event.Event) (MioState, error) {
 			state.BuildingID = buildingID
 		case event.MioLeaveBuildingEffect:
 			state.BuildingID = uuid.Nil
+		}
+		return state, nil
+	})
+}
+
+func GetMioActivityState(events []event.Event) (MioActivityState, error) {
+	return composeState(MioActivityState{}, events, func(state MioActivityState, e event.Event) (MioActivityState, error) {
+		switch e.Effect {
+		case event.MioInitEffect:
+			state.MaxMood = 100
+			state.MaxEnergy = 100
+			state.MaxDehydration = 100
+
+			state.Mood = 70
+			state.Energy = 70
+			state.Dehydration = 70
+		case event.MioStreamEffect:
+			value, err := event.ParseData[int](e)
+			if err != nil {
+				return state, err
+			}
+
+			if state.Mood < value {
+				state.Mood = 0
+			} else {
+				state.Mood -= value
+			}
+		case event.MioEatEffect:
+			value, err := event.ParseData[int](e)
+			if err != nil {
+				return state, err
+			}
+
+			state.Energy += value
+			if state.Energy > state.MaxEnergy {
+				state.Energy = state.MaxEnergy
+			}
+
+			state.Mood += value / 4
+			if state.Mood > state.MaxMood {
+				state.Mood = state.MaxMood
+			}
+		case event.MioStarveEffect:
+			value, err := event.ParseData[int](e)
+			if err != nil {
+				return state, err
+			}
+
+			if state.Energy < value {
+				state.Energy = 0
+			} else {
+				state.Energy -= value
+			}
+		case event.MioDrinkEffect:
+			value, err := event.ParseData[int](e)
+			if err != nil {
+				return state, err
+			}
+
+			state.Dehydration += value
+			if state.Dehydration > state.MaxDehydration {
+				state.Dehydration = state.MaxDehydration
+			}
+
+			state.Mood += value / 4
+			if state.Mood > state.MaxMood {
+				state.Mood = state.MaxMood
+			}
+		case event.MioSweatEffect:
+			value, err := event.ParseData[int](e)
+			if err != nil {
+				return state, err
+			}
+
+			if state.Dehydration < value {
+				state.Dehydration = 0
+			} else {
+				state.Dehydration -= value
+			}
 		}
 		return state, nil
 	})
