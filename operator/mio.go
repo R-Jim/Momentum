@@ -417,6 +417,7 @@ func (o MioOperator) Drink(id uuid.UUID, value int) error {
 	}
 	return nil
 }
+
 func (o MioOperator) Sweat(id uuid.UUID, value int) error {
 	store := o.MioAggregator.GetStore()
 	events, err := (*store).GetEventsByEntityID(id)
@@ -425,6 +426,31 @@ func (o MioOperator) Sweat(id uuid.UUID, value int) error {
 	}
 
 	event := event.NewMioSweatEvent(id, value, len(events)+1)
+
+	if err := o.MioAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o MioOperator) ChangePlannedPoses(id uuid.UUID, value []math.Pos) error {
+	store := o.MioAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewMioChangePlannedPoses(id, value, len(events)+1)
 
 	if err := o.MioAggregator.Aggregate(event); err != nil {
 		return err

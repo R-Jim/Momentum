@@ -27,6 +27,8 @@ const (
 	MioStarveEffect Effect = "MIO_STARVE_EFFECT"
 	MioDrinkEffect  Effect = "MIO_DRINK_EFFECT"
 	MioSweatEffect  Effect = "MIO_SWEAT_EFFECT"
+
+	MioChangePlannedPoses Effect = "MIO_CHANGE_PLANNED_POSITIONS"
 )
 
 func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
@@ -174,6 +176,16 @@ func NewMioSweatEvent(entityID uuid.UUID, value, version int) Event {
 		EntityID: entityID,
 		Version:  version,
 		Effect:   MioSweatEffect,
+		Data:     value,
+	}
+}
+
+func NewMioChangePlannedPoses(entityID uuid.UUID, value []math.Pos, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioChangePlannedPoses,
 		Data:     value,
 	}
 }

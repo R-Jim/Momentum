@@ -515,3 +515,43 @@ func Test_Mio_Sweat(t *testing.T) {
 
 	require.Equal(t, 0, mioActivityState.Dehydration)
 }
+
+func Test_Mio_ChangePlannedPoses(t *testing.T) {
+	mioID := uuid.New()
+	store := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&store),
+	}
+
+	err := mioOperator.Init(mioID, math.NewPos(10, 5))
+	require.NoError(t, err)
+
+	plannedPos := []math.Pos{
+		math.NewPos(3, 3),
+		math.NewPos(2, 5),
+	}
+	mioOperator.ChangePlannedPoses(mioID, plannedPos)
+
+	events, err := store.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, plannedPos, mioState.PlannedPoses)
+
+	plannedPos = []math.Pos{
+		math.NewPos(2, 5),
+		math.NewPos(1, 5),
+	}
+	mioOperator.ChangePlannedPoses(mioID, plannedPos)
+
+	events, err = store.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, plannedPos, mioState.PlannedPoses)
+}

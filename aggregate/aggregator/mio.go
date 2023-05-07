@@ -14,6 +14,7 @@ type MioState struct {
 	BuildingID uuid.UUID
 
 	SelectedBuildingID uuid.UUID
+	PlannedPoses       []math.Pos
 }
 
 type MioActivityState struct {
@@ -302,6 +303,24 @@ func NewMioAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+
+			//"MIO_CHANGE_PLANNED_POSITIONS"
+			event.MioChangePlannedPoses: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[[]math.Pos](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
 		},
 	}
 }
@@ -352,6 +371,13 @@ func GetMioState(events []event.Event) (MioState, error) {
 			state.BuildingID = buildingID
 		case event.MioLeaveBuildingEffect:
 			state.BuildingID = uuid.Nil
+
+		case event.MioChangePlannedPoses:
+			plannedPoses, err := event.ParseData[[]math.Pos](e)
+			if err != nil {
+				return state, err
+			}
+			state.PlannedPoses = plannedPoses
 		}
 		return state, nil
 	})
