@@ -12,6 +12,8 @@ type MioState struct {
 	Position   math.Pos
 	StreetID   uuid.UUID
 	BuildingID uuid.UUID
+
+	SelectedBuildingID uuid.UUID
 }
 
 type MioActivityState struct {
@@ -101,6 +103,44 @@ func NewMioAggregator(store *store.Store) Aggregator {
 					return ErrAggregateFail
 				}
 				if state.BuildingID.String() != uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			//"MIO_SELECT_BUILDING"
+			event.MioSelectBuildingEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				if state.StreetID.String() != uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[uuid.UUID](inputEvent)
+				if err != nil {
+					return err
+				}
+				return nil
+			},
+			//"MIO_UNSELECT_BUILDING"
+			event.MioUnselectBuildingEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetMioState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+				if state.StreetID.String() != uuid.Nil.String() {
 					return ErrAggregateFail
 				}
 
@@ -296,6 +336,14 @@ func GetMioState(events []event.Event) (MioState, error) {
 				return state, err
 			}
 			state.StreetID = streetID
+		case event.MioSelectBuildingEffect:
+			buildingID, err := event.ParseData[uuid.UUID](e)
+			if err != nil {
+				return state, err
+			}
+			state.SelectedBuildingID = buildingID
+		case event.MioUnselectBuildingEffect:
+			state.SelectedBuildingID = uuid.Nil
 		case event.MioEnterBuildingEffect:
 			buildingID, err := event.ParseData[uuid.UUID](e)
 			if err != nil {

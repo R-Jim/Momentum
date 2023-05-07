@@ -14,10 +14,10 @@ type BuildingOperator struct {
 	BuildingAnimator animator.Animator
 }
 
-func (o BuildingOperator) Init(id uuid.UUID, pos math.Pos) error {
+func (o BuildingOperator) Init(id uuid.UUID, buildingType event.BuildingType, pos math.Pos) error {
 	store := o.BuildingAggregator.GetStore()
 
-	event := event.NewBuildingInitEvent(id, pos)
+	event := event.NewBuildingInitEvent(id, buildingType, pos)
 
 	if err := o.BuildingAggregator.Aggregate(event); err != nil {
 		return err

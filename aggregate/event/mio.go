@@ -14,6 +14,9 @@ const (
 
 	MioEnterStreetEffect Effect = "MIO_ENTER_STREET"
 
+	MioSelectBuildingEffect   Effect = "MIO_SELECT_EFFECT"
+	MioUnselectBuildingEffect Effect = "MIO_UNSELECT_EFFECT"
+
 	MioEnterBuildingEffect Effect = "MIO_ENTER_BUILDING"
 	MioLeaveBuildingEffect Effect = "MIO_LEAVE_BUILDING"
 
@@ -72,6 +75,26 @@ func NewMioEnterStreetEvent(entityID uuid.UUID, streetID uuid.UUID, version int)
 		Version:  version,
 		Effect:   MioEnterStreetEffect,
 		Data:     streetID,
+	}
+}
+
+func NewMioSelectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioSelectBuildingEffect,
+		Data:     buildingID,
+	}
+}
+
+func NewMioUnselectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   MioUnselectBuildingEffect,
+		Data:     buildingID,
 	}
 }
 

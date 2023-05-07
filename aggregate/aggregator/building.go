@@ -12,6 +12,8 @@ type BuildingState struct {
 	EntityMap map[uuid.UUID]bool
 	WorkerMap map[uuid.UUID]bool
 	Pos       math.Pos
+
+	Type string
 }
 
 func NewBuildingAggregator(store *store.Store) Aggregator {
@@ -33,7 +35,7 @@ func NewBuildingAggregator(store *store.Store) Aggregator {
 					return ErrAggregateFail
 				}
 
-				_, err = event.ParseData[math.Pos](inputEvent)
+				_, err = event.ParseData[event.BuildingInitEventData](inputEvent)
 				if err != nil {
 					return err
 				}
@@ -166,13 +168,14 @@ func GetBuildingState(events []event.Event) (BuildingState, error) {
 	return composeState(BuildingState{}, events, func(state BuildingState, e event.Event) (BuildingState, error) {
 		switch e.Effect {
 		case event.BuildingInitEffect:
-			pos, err := event.ParseData[math.Pos](e)
+			data, err := event.ParseData[event.BuildingInitEventData](e)
 			if err != nil {
 				return state, err
 			}
 
 			state.ID = e.EntityID
-			state.Pos = pos
+			state.Type = string(data.Type)
+			state.Pos = data.Pos
 			state.EntityMap = map[uuid.UUID]bool{}
 			state.WorkerMap = map[uuid.UUID]bool{}
 

@@ -121,7 +121,7 @@ func Test_Mio_EnterBuilding(t *testing.T) {
 	buildingID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
-	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, event.BuildingTypeMioHouse, math.NewPos(2, 2)))
 
 	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
 
@@ -138,6 +138,72 @@ func Test_Mio_EnterBuilding(t *testing.T) {
 	require.True(t, buildingState.EntityMap[mioID])
 
 	require.Error(t, mioOperator.EnterBuilding(mioID, buildingID))
+}
+
+func Test_Mio_SelectBuilding(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+	buildingID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	require.NoError(t, mioOperator.SelectBuilding(mioID, buildingID))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, buildingID, mioState.SelectedBuildingID)
+
+	require.NoError(t, mioOperator.SelectBuilding(mioID, buildingID))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, buildingID, mioState.SelectedBuildingID)
+}
+
+func Test_Mio_UnselectBuilding(t *testing.T) {
+	mioStore := store.NewStore()
+
+	mioOperator := MioOperator{
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+	}
+
+	mioID := uuid.New()
+	buildingID := uuid.New()
+
+	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
+
+	require.NoError(t, mioOperator.SelectBuilding(mioID, buildingID))
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, buildingID, mioState.SelectedBuildingID)
+
+	require.NoError(t, mioOperator.UnselectBuilding(mioID, buildingID))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, uuid.Nil, mioState.SelectedBuildingID)
+
+	require.NoError(t, mioOperator.UnselectBuilding(mioID, buildingID))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+	require.Equal(t, uuid.Nil, mioState.SelectedBuildingID)
 }
 
 func Test_Mio_LeaveBuilding(t *testing.T) {
@@ -157,7 +223,7 @@ func Test_Mio_LeaveBuilding(t *testing.T) {
 	buildingID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
-	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, event.BuildingTypeMioHouse, math.NewPos(2, 2)))
 
 	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
 
@@ -207,7 +273,7 @@ func Test_Mio_Act(t *testing.T) {
 	buildingID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
-	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, event.BuildingTypeMioHouse, math.NewPos(2, 2)))
 
 	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
 
