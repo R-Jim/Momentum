@@ -1,6 +1,7 @@
 package automaton
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
@@ -170,6 +171,7 @@ func Test_MioMoodBehavior_Mood(t *testing.T) {
 func Test_MioMoodBehavior_Energy(t *testing.T) {
 	mioID := uuid.New()
 	mioStore := store.NewStore()
+	streetStore := store.NewStore()
 	buildingStore := store.NewStore()
 
 	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
@@ -196,6 +198,7 @@ func Test_MioMoodBehavior_Energy(t *testing.T) {
 		entityID: mioID,
 
 		mioStore:      &mioStore,
+		streetStore:   &streetStore,
 		buildingStore: &buildingStore,
 
 		mioOperator: mioOperator,
@@ -249,6 +252,7 @@ func Test_MioMoodBehavior_Energy(t *testing.T) {
 func Test_MioMoodBehavior_Drink(t *testing.T) {
 	mioID := uuid.New()
 	mioStore := store.NewStore()
+	streetStore := store.NewStore()
 	buildingStore := store.NewStore()
 
 	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
@@ -275,6 +279,7 @@ func Test_MioMoodBehavior_Drink(t *testing.T) {
 		entityID: mioID,
 
 		mioStore:      &mioStore,
+		streetStore:   &streetStore,
 		buildingStore: &buildingStore,
 
 		mioOperator: mioOperator,
@@ -328,6 +333,7 @@ func Test_MioMoodBehavior_Drink(t *testing.T) {
 func Test_MioMoodBehavior(t *testing.T) {
 	mioID := uuid.New()
 	mioStore := store.NewStore()
+	streetStore := store.NewStore()
 	buildingStore := store.NewStore()
 
 	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
@@ -358,6 +364,7 @@ func Test_MioMoodBehavior(t *testing.T) {
 		entityID: mioID,
 
 		mioStore:      &mioStore,
+		streetStore:   &streetStore,
 		buildingStore: &buildingStore,
 
 		mioOperator: mioOperator,
@@ -428,4 +435,228 @@ func Test_MioMoodBehavior(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, mioHouseID, mioState.SelectedBuildingID)
+}
+
+func Test_mioBuildingPathFinding_simple(t *testing.T) {
+	posA := math.NewPos(0, 0)
+	posB := math.NewPos(5, 0)
+	posC := math.NewPos(8, 0)
+	buildingPos := math.NewPos(8, 2)
+
+	mioPos := math.NewPos(2, 0)
+
+	mapPaths := []math.Path{
+		{Start: posA, End: posB, Cost: 10}, // street1
+		{Start: posB, End: posC},           // street2
+		{Start: posC, End: buildingPos},    // building street
+	}
+
+	mapGraph := math.NewGraph(mapPaths)
+
+	mioID := uuid.New()
+	street1ID := uuid.New()
+	street2ID := uuid.New()
+	buildingStreetID := uuid.New()
+
+	mioStore := store.NewStore()
+	buildingStore := store.NewStore()
+	streetStore := store.NewStore()
+
+	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
+	BuildingOperator := operator.BuildingOperator{
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+	}
+	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+
+	m := mioAutomaton{
+		entityID: mioID,
+		mapPaths: mapPaths,
+		mapGraph: mapGraph,
+
+		mioStore:      &mioStore,
+		streetStore:   &streetStore,
+		buildingStore: &buildingStore,
+
+		mioOperator:    mioOperator,
+		streetOperator: streetOperator,
+	}
+
+	err := mioOperator.Init(mioID, mioPos)
+	require.NoError(t, err)
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.NotEqual(t, uuid.Nil, mioState.ID)
+
+	err = streetOperator.Init(street1ID, posA, posB)
+	require.NoError(t, err)
+	err = streetOperator.Init(street2ID, posB, posC)
+	require.NoError(t, err)
+	err = streetOperator.Init(buildingStreetID, posC, buildingPos)
+	require.NoError(t, err)
+
+	drinkStoreID := uuid.New()
+	require.NoError(t, BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos))
+
+	m.EnterStreetFromCurrentPosition()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, street1ID, mioState.StreetID)
+
+	m.prevSelectedBuilding = drinkStoreID
+
+	m.mioBuildingPathFinding()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, []math.Pos{posB, posC, buildingPos}, mioState.PlannedPoses)
+}
+
+func Test_mioBuildingPathFinding(t *testing.T) {
+	posA := math.NewPos(0, 0)
+	posB := math.NewPos(5, 0)
+	posC := math.NewPos(5, -2)
+	posD := math.NewPos(0, -2)
+	posE := math.NewPos(2, 2)
+	building1Pos := math.NewPos(4, 4)
+	building2Pos := math.NewPos(2, -1)
+
+	mioPos := math.NewPos(2, 0)
+
+	mapPaths := []math.Path{
+		{Start: posA, End: posB, Cost: 2},
+		{Start: posA, End: posD, Cost: 1},
+		{Start: posA, End: posE, Cost: 3},
+
+		{Start: posB, End: posC, Cost: 2},
+		{Start: posB, End: building1Pos, Cost: 8},
+		{Start: posB, End: posE, Cost: 3},
+
+		{Start: posC, End: posD, Cost: 4},
+		{Start: posC, End: building2Pos, Cost: 2},
+
+		{Start: posD, End: building2Pos, Cost: 1},
+
+		{Start: posE, End: building1Pos, Cost: 5},
+	}
+
+	mapGraph := math.NewGraph(mapPaths)
+
+	mioID := uuid.New()
+	streetAB_ID := uuid.New()
+	streetAD_ID := uuid.New()
+	streetAE_ID := uuid.New()
+
+	streetBC_ID := uuid.New()
+	streetBBuilding1ID := uuid.New()
+	streetBE_ID := uuid.New()
+
+	streetCD_ID := uuid.New()
+	streetCBuilding2ID := uuid.New()
+
+	streetDBuilding2ID := uuid.New()
+
+	streetEBuilding1ID := uuid.New()
+
+	building1ID := uuid.New()
+	building2ID := uuid.New()
+
+	mioStore := store.NewStore()
+	buildingStore := store.NewStore()
+	streetStore := store.NewStore()
+
+	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
+	BuildingOperator := operator.BuildingOperator{
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+	}
+	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+
+	m := mioAutomaton{
+		entityID: mioID,
+		mapPaths: mapPaths,
+		mapGraph: mapGraph,
+
+		mioStore:      &mioStore,
+		streetStore:   &streetStore,
+		buildingStore: &buildingStore,
+
+		mioOperator:    mioOperator,
+		streetOperator: streetOperator,
+	}
+
+	err := mioOperator.Init(mioID, mioPos)
+	require.NoError(t, err)
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.NotEqual(t, uuid.Nil, mioState.ID)
+
+	{
+		err = streetOperator.Init(streetAB_ID, posA, posB)
+		require.NoError(t, err)
+		err = streetOperator.Init(streetAD_ID, posA, posD)
+		require.NoError(t, err)
+		err = streetOperator.Init(streetAE_ID, posA, posE)
+		require.NoError(t, err)
+
+		err = streetOperator.Init(streetBC_ID, posB, posC)
+		require.NoError(t, err)
+		err = streetOperator.Init(streetBE_ID, posB, posE)
+		require.NoError(t, err)
+		err = streetOperator.Init(streetBBuilding1ID, posB, building1Pos)
+		require.NoError(t, err)
+
+		err = streetOperator.Init(streetCD_ID, posC, posD)
+		require.NoError(t, err)
+		err = streetOperator.Init(streetCBuilding2ID, posC, building2Pos)
+		require.NoError(t, err)
+
+		err = streetOperator.Init(streetDBuilding2ID, posC, building2Pos)
+		require.NoError(t, err)
+
+		err = streetOperator.Init(streetEBuilding1ID, posC, building1Pos)
+		require.NoError(t, err)
+	}
+
+	require.NoError(t, BuildingOperator.Init(building1ID, event.BuildingTypeDrinkStore, building1Pos))
+	require.NoError(t, BuildingOperator.Init(building2ID, event.BuildingTypeDrinkStore, building2Pos))
+
+	require.NoError(t, m.mioOperator.EnterStreet(mioID, streetAB_ID))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, streetAB_ID, mioState.StreetID, fmt.Sprintf("%s, %s", streetAB_ID.String(), mioState.StreetID.String()))
+
+	m.prevSelectedBuilding = building1ID
+
+	m.mioBuildingPathFinding()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, []math.Pos{posA, posE, building1Pos}, mioState.PlannedPoses)
 }
