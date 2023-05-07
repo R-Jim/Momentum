@@ -53,7 +53,7 @@ func (m mioAutomaton) EnterStreetFromCurrentPosition() {
 		if err != nil {
 			fmt.Print(err)
 		}
-		if math.IsBetweenAAndB(mioState.Position, streetState.HeadA, streetState.HeadB, 1) {
+		if math.IsBetweenAAndB(mioState.Position, streetState.HeadA, streetState.HeadB, 0.2) {
 			if oldStreetID != streetID {
 				err := m.mioOperator.EnterStreet(mioState.ID, streetID)
 				if err != nil {

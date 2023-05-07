@@ -92,6 +92,7 @@ func Test_EnterStreetFromCurrentPosition(t *testing.T) {
 func Test_MioMoodBehavior_Mood(t *testing.T) {
 	mioID := uuid.New()
 	mioStore := store.NewStore()
+	streetStore := store.NewStore()
 	buildingStore := store.NewStore()
 
 	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
@@ -118,6 +119,7 @@ func Test_MioMoodBehavior_Mood(t *testing.T) {
 		entityID: mioID,
 
 		mioStore:      &mioStore,
+		streetStore:   &streetStore,
 		buildingStore: &buildingStore,
 
 		mioOperator: mioOperator,
@@ -638,7 +640,7 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 	require.NoError(t, BuildingOperator.Init(building1ID, event.BuildingTypeDrinkStore, building1Pos))
 	require.NoError(t, BuildingOperator.Init(building2ID, event.BuildingTypeDrinkStore, building2Pos))
 
-	require.NoError(t, m.mioOperator.EnterStreet(mioID, streetAB_ID))
+	m.EnterStreetFromCurrentPosition()
 
 	events, err = mioStore.GetEventsByEntityID(mioID)
 	require.NoError(t, err)
