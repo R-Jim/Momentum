@@ -136,6 +136,59 @@ func (o MioOperator) EnterStreet(id uuid.UUID, streetID uuid.UUID) error {
 	return nil
 }
 
+func (o MioOperator) SelectBuilding(id uuid.UUID, buildingID uuid.UUID) error {
+	mioStore := o.MioAggregator.GetStore()
+
+	mioEvents, err := (*mioStore).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	mioEnterBuildingEvent := event.NewMioSelectBuildingEvent(id, buildingID, len(mioEvents)+1)
+
+	if err := o.MioAggregator.Aggregate(mioEnterBuildingEvent); err != nil {
+		return err
+	}
+
+	if err := (*mioStore).AppendEvent(mioEnterBuildingEvent); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioEnterBuildingEvent); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (o MioOperator) UnselectBuilding(id uuid.UUID, buildingID uuid.UUID) error {
+	mioStore := o.MioAggregator.GetStore()
+
+	mioEvents, err := (*mioStore).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	mioLeaveBuildingEvent := event.NewMioUnselectBuildingEvent(id, buildingID, len(mioEvents)+1)
+
+	if err := o.MioAggregator.Aggregate(mioLeaveBuildingEvent); err != nil {
+		return err
+	}
+
+	if err := (*mioStore).AppendEvent(mioLeaveBuildingEvent); err != nil {
+		return err
+	}
+
+	if o.MioAnimator != nil {
+		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioLeaveBuildingEvent); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (o MioOperator) EnterBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	mioStore := o.MioAggregator.GetStore()
 	buildingStore := o.BuildingAggregator.GetStore()

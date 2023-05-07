@@ -18,13 +18,33 @@ const (
 	BuildingWorkerUnassignEffect Effect = "BUILDING_WORKER_UNASSIGN"
 )
 
-func NewBuildingInitEvent(buildingID uuid.UUID, pos math.Pos) Event {
+type BuildingType string
+
+const (
+	BuildingTypeMioHouse   BuildingType = "MIO_HOUSE"
+	BuildingTypeFoodStore  BuildingType = "FOOD_STORE"
+	BuildingTypeDrinkStore BuildingType = "DRINK_STORE"
+)
+
+func (t BuildingType) String() string {
+	return string(t)
+}
+
+type BuildingInitEventData struct {
+	Type BuildingType
+	Pos  math.Pos
+}
+
+func NewBuildingInitEvent(buildingID uuid.UUID, buildingType BuildingType, pos math.Pos) Event {
 	return Event{
 		ID:       uuid.New(),
 		EntityID: buildingID,
 		Version:  1,
 		Effect:   BuildingInitEffect,
-		Data:     pos,
+		Data: BuildingInitEventData{
+			Type: buildingType,
+			Pos:  pos,
+		},
 	}
 }
 

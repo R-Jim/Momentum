@@ -48,7 +48,7 @@ func Test_Worker_AssignBuilding(t *testing.T) {
 	buildingID := uuid.New()
 
 	require.NoError(t, workerOperator.Init(workerID))
-	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, event.BuildingTypeMioHouse, math.NewPos(2, 2)))
 
 	require.NoError(t, workerOperator.AssignBuilding(workerID, buildingID))
 
@@ -84,7 +84,7 @@ func Test_Worker_UnAssignBuilding(t *testing.T) {
 	buildingID := uuid.New()
 
 	require.NoError(t, workerOperator.Init(workerID))
-	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, event.BuildingTypeMioHouse, math.NewPos(2, 2)))
 
 	require.NoError(t, workerOperator.AssignBuilding(workerID, buildingID))
 
@@ -134,7 +134,7 @@ func Test_Worker_Act(t *testing.T) {
 	buildingID := uuid.New()
 
 	require.NoError(t, workerOperator.Init(workerID))
-	require.NoError(t, BuildingOperator.Init(buildingID, math.NewPos(2, 2)))
+	require.NoError(t, BuildingOperator.Init(buildingID, event.BuildingTypeMioHouse, math.NewPos(2, 2)))
 
 	require.NoError(t, workerOperator.AssignBuilding(workerID, buildingID))
 
