@@ -24,19 +24,19 @@ func GetNextStepXY(posStart Pos, pivotDegree float64, posEnd Pos, desRad, step, 
 	positions := GetPositions(posStart, pivotDegree, maxTurnDegree, float64(60), step)
 	if distance >= maxRadius {
 		var nearestPos Pos
-		var nearestDistance float64
+		var nearestDistance *float64
 		for _, position := range positions {
 			_, _, dis := GetDistances(position, posEnd)
-			if nearestDistance == 0 {
+			if nearestDistance == nil {
 				nearestPos = position
-				nearestDistance = dis
-			} else if dis < nearestDistance && dis >= maxRadius {
+				nearestDistance = &dis
+			} else if dis < *nearestDistance && dis >= maxRadius {
 				nearestPos = position
-				nearestDistance = dis
+				nearestDistance = &dis
 			}
 		}
 
-		if nearestDistance >= maxRadius {
+		if *nearestDistance >= maxRadius {
 			return nearestPos.x, nearestPos.y
 		}
 	}

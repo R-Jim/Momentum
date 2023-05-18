@@ -662,3 +662,98 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 
 	require.Equal(t, []math.Pos{posA, posE, building1Pos}, mioState.PlannedPoses)
 }
+
+func Test_Move(t *testing.T) {
+	posA := math.NewPos(0, 0)
+	posB := math.NewPos(5, 0)
+
+	mioPos := math.NewPos(2, 0)
+
+	mioID := uuid.New()
+
+	mioStore := store.NewStore()
+	buildingStore := store.NewStore()
+
+	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
+
+	err := mioOperator.Init(mioID, mioPos)
+	require.NoError(t, err)
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.NotEqual(t, uuid.Nil, mioState.ID)
+
+	m := mioAutomaton{
+		entityID: mioID,
+
+		mioStore:      &mioStore,
+		buildingStore: &buildingStore,
+
+		mioOperator: mioOperator,
+	}
+
+	require.NoError(t, m.mioOperator.ChangePlannedPoses(mioID, []math.Pos{posA, posB}))
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, []math.Pos{posA, posB}, mioState.PlannedPoses)
+
+	m.Move()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, math.NewPos(0, 0), mioState.Position)
+
+	m.Move()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, math.NewPos(2, 0), mioState.Position)
+
+	m.Move()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, math.NewPos(4, 0), mioState.Position)
+
+	m.Move()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, math.NewPos(5, 0), mioState.Position)
+
+	// No planned position left, stay in place
+	m.Move()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err = aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, math.NewPos(5, 0), mioState.Position)
+}
