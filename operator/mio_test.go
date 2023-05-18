@@ -69,7 +69,7 @@ func Test_Mio_Run(t *testing.T) {
 	err := mioOperator.Init(mioID, math.NewPos(2, 2))
 	require.NoError(t, err)
 
-	err = mioOperator.Run(mioID, math.NewPos(4, 3))
+	err = mioOperator.Run(mioID, math.NewPos(2, 4))
 	require.NoError(t, err)
 
 	events, err := store.GetEventsByEntityID(mioID)
@@ -78,10 +78,10 @@ func Test_Mio_Run(t *testing.T) {
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
 
-	require.Equal(t, math.NewPos(4, 3), mioState.Position)
+	require.Equal(t, math.NewPos(2, 4), mioState.Position)
 
 	// invalid run distant, too short
-	err = mioOperator.Run(mioID, math.NewPos(5, 3))
+	err = mioOperator.Run(mioID, math.NewPos(2, 4.5))
 	require.ErrorContains(t, err, aggregator.ErrAggregateFail.Error())
 
 	// invalid run distant, too long
