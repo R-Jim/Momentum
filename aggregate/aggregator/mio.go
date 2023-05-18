@@ -7,6 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
+const (
+	MAX_RUN_DISTANT  = 2
+	MIN_RUN_DISTANT  = 1
+	MAX_WALK_DISTANT = 1
+)
+
 type MioState struct {
 	ID         uuid.UUID
 	Position   math.Pos
@@ -55,7 +61,7 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				}
 
 				_, _, distanceSqrt := math.GetDistances(state.Position, destinationPosition)
-				if distanceSqrt > 1 {
+				if distanceSqrt > MAX_WALK_DISTANT {
 					return ErrAggregateFail
 				}
 
@@ -76,7 +82,7 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				}
 
 				_, _, distanceSqrt := math.GetDistances(state.Position, destinationPosition)
-				if distanceSqrt < 2 || distanceSqrt > 5 {
+				if distanceSqrt < MIN_RUN_DISTANT || distanceSqrt > MAX_RUN_DISTANT {
 					return ErrAggregateFail
 				}
 

@@ -277,3 +277,50 @@ func isBuildingFitMood(buildingState aggregator.BuildingState, isBored, isHungry
 
 	return false
 }
+
+func (m mioAutomaton) Move() {
+	events := (*m.mioStore).GetEvents()[m.entityID]
+	mioState, err := aggregator.GetMioState(events)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	if len(mioState.PlannedPoses) == 0 {
+		return
+	}
+
+	pos := mioState.PlannedPoses[0]
+
+	_, _, distanceSqrt := math.GetDistances(mioState.Position, pos)
+
+	if distanceSqrt <= aggregator.MAX_WALK_DISTANT {
+		nextPos := math.NewPos(math.GetNextStepXY(mioState.Position, 0, pos, 0, distanceSqrt, 180))
+		err = m.mioOperator.Walk(m.entityID, nextPos)
+	} else if distanceSqrt <= aggregator.MAX_RUN_DISTANT {
+		nextPos := math.NewPos(math.GetNextStepXY(mioState.Position, 0, pos, 0, distanceSqrt, 180))
+		err = m.mioOperator.Run(m.entityID, nextPos)
+	} else {
+		nextPos := math.NewPos(math.GetNextStepXY(mioState.Position, 0, pos, 0, aggregator.MAX_RUN_DISTANT, 180))
+		err = m.mioOperator.Run(m.entityID, nextPos)
+	}
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	events = (*m.mioStore).GetEvents()[m.entityID]
+	mioState, err = aggregator.GetMioState(events)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	plannedPoses := []math.Pos{}
+	if mioState.Position == pos {
+		for i := 1; i < len(mioState.PlannedPoses); i++ {
+			plannedPoses = append(plannedPoses, mioState.PlannedPoses[i])
+		}
+	} else {
+		plannedPoses = mioState.PlannedPoses
+	}
+
+	m.mioOperator.ChangePlannedPoses(m.entityID, plannedPoses)
+}
