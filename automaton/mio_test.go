@@ -757,3 +757,56 @@ func Test_Move(t *testing.T) {
 
 	require.Equal(t, math.NewPos(5, 0), mioState.Position)
 }
+
+func Test_HourlyExhaustion(t *testing.T) {
+	mioPos := math.NewPos(2, 0)
+
+	mioID := uuid.New()
+
+	mioStore := store.NewStore()
+	buildingStore := store.NewStore()
+
+	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
+
+	err := mioOperator.Init(mioID, mioPos)
+	require.NoError(t, err)
+
+	events, err := mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioState, err := aggregator.GetMioState(events)
+	require.NoError(t, err)
+
+	require.NotEqual(t, uuid.Nil, mioState.ID)
+
+	m := mioAutomaton{
+		entityID: mioID,
+
+		mioStore:      &mioStore,
+		buildingStore: &buildingStore,
+
+		mioOperator: mioOperator,
+	}
+
+	m.HourlyExhaustion()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioActivityState, err := aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 65, mioActivityState.Energy)
+	require.Equal(t, 65, mioActivityState.Dehydration)
+
+	m.HourlyExhaustion()
+
+	events, err = mioStore.GetEventsByEntityID(mioID)
+	require.NoError(t, err)
+
+	mioActivityState, err = aggregator.GetMioActivityState(events)
+	require.NoError(t, err)
+
+	require.Equal(t, 60, mioActivityState.Energy)
+	require.Equal(t, 60, mioActivityState.Dehydration)
+}

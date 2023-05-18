@@ -37,6 +37,8 @@ type shortestPath struct {
 func (m mioAutomaton) Automate() {
 	m.EnterStreetFromCurrentPosition()
 	m.MioMoodBehavior()
+	m.Move()
+	m.HourlyExhaustion()
 }
 
 func (m mioAutomaton) EnterStreetFromCurrentPosition() {
@@ -323,4 +325,21 @@ func (m mioAutomaton) Move() {
 	}
 
 	m.mioOperator.ChangePlannedPoses(m.entityID, plannedPoses)
+}
+
+func (m mioAutomaton) HourlyExhaustion() {
+	events := (*m.mioStore).GetEvents()[m.entityID]
+	mioState, err := aggregator.GetMioState(events)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	err = m.mioOperator.Starve(mioState.ID, 5)
+	if err != nil {
+		fmt.Print(err)
+	}
+	err = m.mioOperator.Sweat(mioState.ID, 5)
+	if err != nil {
+		fmt.Print(err)
+	}
 }
