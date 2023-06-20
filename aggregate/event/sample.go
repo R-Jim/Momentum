@@ -9,11 +9,5 @@ const (
 )
 
 func NewSampleEvent(id uuid.UUID) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: id,
-		Version:  0,
-		Effect:   SampleEffect,
-		Data:     "SAMPLE_DATA",
-	}
+	return newEvent(id, 0, SampleEffect, "SAMPLE_DATA")
 }

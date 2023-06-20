@@ -3,6 +3,7 @@ package event
 import (
 	"fmt"
 	"reflect"
+	"time"
 
 	"github.com/google/uuid"
 	pkgerrors "github.com/pkg/errors"
@@ -18,6 +19,20 @@ type Event struct {
 	Version  int
 	Effect   Effect
 	Data     data
+
+	CreatedAt time.Time
+}
+
+func newEvent(entityID uuid.UUID, version int, effect Effect, data data) Event {
+	return Event{
+		ID:       uuid.New(),
+		EntityID: entityID,
+		Version:  version,
+		Effect:   effect,
+		Data:     data,
+
+		CreatedAt: time.Now(),
+	}
 }
 
 func ParseData[T data](e Event) (T, error) {
