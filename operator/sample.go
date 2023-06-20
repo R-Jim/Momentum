@@ -32,8 +32,8 @@ func (o sampleOperator) SampleOperate(id uuid.UUID) error {
 		return err
 	}
 
-	if err := animator.Draw(o.sampleAnimator.GetAnimateSet(), event); err != nil {
-		return err
+	if o.sampleAnimator != nil {
+		o.sampleAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }

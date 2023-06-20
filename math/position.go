@@ -5,8 +5,8 @@ import (
 )
 
 type Pos struct {
-	x float64
-	y float64
+	X float64
+	Y float64
 }
 
 func NewPos(x, y float64) Pos {
@@ -37,7 +37,7 @@ func GetNextStepXY(posStart Pos, pivotDegree float64, posEnd Pos, desRad, step, 
 		}
 
 		if nearestDistance >= maxRadius {
-			return nearestPos.x, nearestPos.y
+			return nearestPos.X, nearestPos.Y
 		}
 	}
 
@@ -55,7 +55,7 @@ func GetNextStepXY(posStart Pos, pivotDegree float64, posEnd Pos, desRad, step, 
 			farthestDistance = dis
 		}
 	}
-	return farthestPos.x, farthestPos.y
+	return farthestPos.X, farthestPos.Y
 }
 
 func GetPositions(pos Pos, pivotDegree, maxTurnDegree, degreeStep, step float64) []Pos {
@@ -63,17 +63,17 @@ func GetPositions(pos Pos, pivotDegree, maxTurnDegree, degreeStep, step float64)
 	for i := maxTurnDegree; i >= float64(0); i -= degreeStep {
 		if i == 0 {
 			result = append(result, Pos{
-				x: math.RoundToEven((pos.x+step*CosDegree(pivotDegree))*100) / 100,
-				y: math.RoundToEven((pos.y+step*SinDegree(pivotDegree))*100) / 100,
+				X: math.RoundToEven((pos.X+step*CosDegree(pivotDegree))*100) / 100,
+				Y: math.RoundToEven((pos.Y+step*SinDegree(pivotDegree))*100) / 100,
 			})
 		} else {
 			result = append(result, Pos{
-				x: math.RoundToEven((pos.x+step*CosDegree(pivotDegree+i))*100) / 100,
-				y: math.RoundToEven((pos.y+step*SinDegree(pivotDegree+i))*100) / 100,
+				X: math.RoundToEven((pos.X+step*CosDegree(pivotDegree+i))*100) / 100,
+				Y: math.RoundToEven((pos.Y+step*SinDegree(pivotDegree+i))*100) / 100,
 			})
 			result = append(result, Pos{
-				x: math.RoundToEven((pos.x+step*CosDegree(pivotDegree+i*-1))*100) / 100,
-				y: math.RoundToEven((pos.y+step*SinDegree(pivotDegree+i*-1))*100) / 100,
+				X: math.RoundToEven((pos.X+step*CosDegree(pivotDegree+i*-1))*100) / 100,
+				Y: math.RoundToEven((pos.Y+step*SinDegree(pivotDegree+i*-1))*100) / 100,
 			})
 		}
 	}
@@ -81,8 +81,8 @@ func GetPositions(pos Pos, pivotDegree, maxTurnDegree, degreeStep, step float64)
 }
 
 func GetDistances(posStart Pos, posEnd Pos) (distanceX, distanceY, distanceSqrt float64) {
-	distanceX = math.Abs(posEnd.x - posStart.x)
-	distanceY = math.Abs(posEnd.y - posStart.y)
+	distanceX = math.Abs(posEnd.X - posStart.X)
+	distanceY = math.Abs(posEnd.Y - posStart.Y)
 
 	if distanceX == 0 && distanceY == 0 {
 		return 0, 0, 0
@@ -101,8 +101,8 @@ func GetDistances(posStart Pos, posEnd Pos) (distanceX, distanceY, distanceSqrt 
 }
 
 func GetDegree(posStart, posEnd Pos) float64 {
-	x := posEnd.x - posStart.x
-	y := posEnd.y - posStart.y
+	x := posEnd.X - posStart.X
+	y := posEnd.Y - posStart.Y
 
 	deg := math.RoundToEven(math.Atan(y/x) * 180 / math.Pi)
 	if x < 0 && y < 0 {

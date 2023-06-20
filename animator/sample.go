@@ -7,23 +7,29 @@ import (
 )
 
 type sampleImpl struct {
+	animatorImpl *AnimatorImpl
+
 	screen      *ebiten.Image
 	sampleStore *store.Store
 }
 
 func NewSampleAnimator(store *store.Store) Animator {
-	return sampleImpl{
-		sampleStore: store,
-	}
-}
-
-func (i sampleImpl) GetAnimateSet() map[event.Effect]func(event.Event) error {
-	return map[event.Effect]func(event.Event) error{
-		event.SampleEffect: func(e event.Event) error {
-			// op := &ebiten.DrawImageOptions{}
-			// image := ebiten.NewImage(w, h)
-			// i.screen.DrawImage(image, op)
+	animateEventSet := map[event.Effect]func(event event.Event) []Frame{
+		event.SampleEffect: func(e event.Event) []Frame {
 			return nil
 		},
 	}
+
+	return sampleImpl{
+		sampleStore: store,
+
+		animatorImpl: &AnimatorImpl{
+			Events:         []event.Event{},
+			getEventFrames: animateEventSet,
+		},
+	}
+}
+
+func (i sampleImpl) Animator() *AnimatorImpl {
+	return i.animatorImpl
 }
