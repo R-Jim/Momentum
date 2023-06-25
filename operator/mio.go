@@ -29,9 +29,7 @@ func (o MioOperator) Init(id uuid.UUID, position math.Pos) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -54,9 +52,7 @@ func (o MioOperator) Walk(id uuid.UUID, posEnd math.Pos) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -79,9 +75,7 @@ func (o MioOperator) Run(id uuid.UUID, posEnd math.Pos) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -104,9 +98,7 @@ func (o MioOperator) Idle(id uuid.UUID) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -129,9 +121,7 @@ func (o MioOperator) EnterStreet(id uuid.UUID, streetID uuid.UUID) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -155,8 +145,8 @@ func (o MioOperator) SelectBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioEnterBuildingEvent); err != nil {
-			return err
+		if o.MioAnimator != nil {
+			o.MioAnimator.Animator().AppendEvent(mioEnterBuildingEvent)
 		}
 	}
 	return nil
@@ -181,9 +171,7 @@ func (o MioOperator) UnselectBuilding(id uuid.UUID, buildingID uuid.UUID) error 
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioLeaveBuildingEvent); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(mioLeaveBuildingEvent)
 	}
 
 	return nil
@@ -220,14 +208,10 @@ func (o MioOperator) EnterBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioEnterBuildingEvent); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(mioEnterBuildingEvent)
 	}
 	if o.BuildingAnimator != nil {
-		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingMioEnterEvent); err != nil {
-			return err
-		}
+		o.BuildingAnimator.Animator().AppendEvent(buildingMioEnterEvent)
 	}
 	return nil
 }
@@ -263,14 +247,10 @@ func (o MioOperator) LeaveBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioLeaveBuildingEvent); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(mioLeaveBuildingEvent)
 	}
 	if o.BuildingAnimator != nil {
-		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingMioLeaveEvent); err != nil {
-			return err
-		}
+		o.BuildingAnimator.Animator().AppendEvent(buildingMioLeaveEvent)
 	}
 	return nil
 }
@@ -306,14 +286,10 @@ func (o MioOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), mioActEvent); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(mioActEvent)
 	}
 	if o.BuildingAnimator != nil {
-		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingMioActEvent); err != nil {
-			return err
-		}
+		o.BuildingAnimator.Animator().AppendEvent(buildingMioActEvent)
 	}
 	return nil
 }
@@ -336,9 +312,7 @@ func (o MioOperator) Stream(id uuid.UUID, value int) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -361,9 +335,7 @@ func (o MioOperator) Eat(id uuid.UUID, value int) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -386,9 +358,7 @@ func (o MioOperator) Starve(id uuid.UUID, value int) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -411,9 +381,7 @@ func (o MioOperator) Drink(id uuid.UUID, value int) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -436,9 +404,7 @@ func (o MioOperator) Sweat(id uuid.UUID, value int) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -461,9 +427,7 @@ func (o MioOperator) ChangePlannedPoses(id uuid.UUID, value []math.Pos) error {
 	}
 
 	if o.MioAnimator != nil {
-		if err := animator.Draw(o.MioAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.MioAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }

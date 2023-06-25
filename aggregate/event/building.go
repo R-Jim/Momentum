@@ -36,74 +36,59 @@ type BuildingInitEventData struct {
 }
 
 func NewBuildingInitEvent(buildingID uuid.UUID, buildingType BuildingType, pos math.Pos) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  1,
-		Effect:   BuildingInitEffect,
-		Data: BuildingInitEventData{
+	return newEvent(buildingID,
+		1,
+		BuildingInitEffect,
+		BuildingInitEventData{
 			Type: buildingType,
 			Pos:  pos,
-		},
-	}
+		})
 }
 
 func NewBuildingEntityEnterEvent(buildingID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  version,
-		Effect:   BuildingEntityEnterEffect,
-		Data:     entityID,
-	}
+	return newEvent(buildingID,
+		version,
+		BuildingEntityEnterEffect,
+		entityID,
+	)
 }
 
 func NewBuildingEntityLeaveEvent(buildingID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  version,
-		Effect:   BuildingEntityLeaveEffect,
-		Data:     entityID,
-	}
+	return newEvent(buildingID,
+		version,
+		BuildingEntityLeaveEffect,
+		entityID,
+	)
 }
 
 func NewBuildingEntityActEvent(buildingID uuid.UUID, entityID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  version,
-		Effect:   BuildingEntityActEffect,
-		Data:     entityID,
-	}
+	return newEvent(buildingID,
+		version,
+		BuildingEntityActEffect,
+		entityID,
+	)
 }
 
 func NewBuildingWorkerActEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  version,
-		Effect:   BuildingWorkerActEffect,
-		Data:     workerID,
-	}
+	return newEvent(buildingID,
+		version,
+		BuildingWorkerActEffect,
+		workerID,
+	)
 }
 
 func NewBuildingWorkerAssignEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  version,
-		Effect:   BuildingWorkerAssignEffect,
-		Data:     workerID,
-	}
+	return newEvent(buildingID,
+		version,
+		BuildingWorkerAssignEffect,
+		workerID,
+	)
 }
 
 func NewBuildingWorkerUnassignEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: buildingID,
-		Version:  version,
-		Effect:   BuildingWorkerUnassignEffect,
-		Data:     workerID,
-	}
+	return newEvent(buildingID,
+		version,
+		BuildingWorkerUnassignEffect,
+		workerID,
+	)
 }

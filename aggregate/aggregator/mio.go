@@ -10,7 +10,7 @@ import (
 const (
 	MAX_RUN_DISTANT  = 2
 	MIN_RUN_DISTANT  = 1
-	MAX_WALK_DISTANT = 1
+	MAX_WALK_DISTANT = 50
 )
 
 type MioState struct {

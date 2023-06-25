@@ -32,160 +32,135 @@ const (
 )
 
 func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  1,
-		Effect:   MioInitEffect,
-		Data:     position,
-	}
+	return newEvent(entityID, 1, MioInitEffect, position)
 }
 
 func NewMioWalkEvent(entityID uuid.UUID, version int, newPosition math.Pos) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioWalkEffect,
-		Data:     newPosition,
-	}
+	return newEvent(entityID, version, MioWalkEffect, newPosition)
 }
 
 func NewMioRunEvent(entityID uuid.UUID, version int, newPosition math.Pos) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioRunEffect,
-		Data:     newPosition,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioRunEffect,
+		newPosition,
+	)
 }
 
 func NewMioIdleEvent(entityID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioIdleEffect,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioIdleEffect,
+		nil,
+	)
 }
 
 func NewMioEnterStreetEvent(entityID uuid.UUID, streetID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioEnterStreetEffect,
-		Data:     streetID,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioEnterStreetEffect,
+		streetID,
+	)
 }
 
 func NewMioSelectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioSelectBuildingEffect,
-		Data:     buildingID,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioSelectBuildingEffect,
+		buildingID,
+	)
 }
 
 func NewMioUnselectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioUnselectBuildingEffect,
-		Data:     buildingID,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioUnselectBuildingEffect,
+		buildingID,
+	)
 }
 
 func NewMioEnterBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioEnterBuildingEffect,
-		Data:     buildingID,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioEnterBuildingEffect,
+		buildingID,
+	)
 }
 
 func NewMioLeaveBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioLeaveBuildingEffect,
-		Data:     buildingID,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioLeaveBuildingEffect,
+		buildingID,
+	)
 }
 
 func NewMioActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioActEffect,
-		Data:     buildingID,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioActEffect,
+		buildingID,
+	)
 }
 
 func NewMioStreamEvent(entityID uuid.UUID, value, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioStreamEffect,
-		Data:     value,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioStreamEffect,
+		value,
+	)
 }
 
 func NewMioEatEvent(entityID uuid.UUID, value, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioEatEffect,
-		Data:     value,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioEatEffect,
+		value,
+	)
 }
 
 func NewMioStarveEvent(entityID uuid.UUID, value, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioStarveEffect,
-		Data:     value,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioStarveEffect,
+		value,
+	)
 }
 
 func NewMioDrinkEvent(entityID uuid.UUID, value, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioDrinkEffect,
-		Data:     value,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioDrinkEffect,
+		value,
+	)
 }
 
 func NewMioSweatEvent(entityID uuid.UUID, value, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioSweatEffect,
-		Data:     value,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioSweatEffect,
+		value,
+	)
 }
 
 func NewMioChangePlannedPoses(entityID uuid.UUID, value []math.Pos, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   MioChangePlannedPoses,
-		Data:     value,
-	}
+	return newEvent(
+		entityID,
+		version,
+		MioChangePlannedPoses,
+		value,
+	)
 }

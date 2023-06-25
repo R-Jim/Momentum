@@ -12,40 +12,17 @@ const (
 )
 
 func NewWorkerInitEvent(entityID uuid.UUID) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  1,
-		Effect:   WorkerInitEffect,
-	}
+	return newEvent(entityID, 1, WorkerInitEffect, nil)
 }
 
 func NewWorkerAssignEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   WorkerAssignEffect,
-		Data:     buildingID,
-	}
+	return newEvent(entityID, version, WorkerAssignEffect, buildingID)
 }
 
 func NewWorkerUnassignEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   WorkerUnassignEffect,
-		Data:     buildingID,
-	}
+	return newEvent(entityID, version, WorkerUnassignEffect, buildingID)
 }
 
 func NewWorkerActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: entityID,
-		Version:  version,
-		Effect:   WorkerActEffect,
-		Data:     buildingID,
-	}
+	return newEvent(entityID, version, WorkerActEffect, buildingID)
 }
