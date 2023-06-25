@@ -2,4 +2,4 @@ test:
 	go test ./... -cover
 
 gen-asset:
-	go run tool/gen_asset.go
+	go run tool/gen/gen_asset.go

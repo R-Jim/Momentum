@@ -28,9 +28,7 @@ func (o WorkerOperator) Init(id uuid.UUID) error {
 	}
 
 	if o.WorkerAnimator != nil {
-		if err := animator.Draw(o.WorkerAnimator.GetAnimateSet(), event); err != nil {
-			return err
-		}
+		o.WorkerAnimator.Animator().AppendEvent(event)
 	}
 	return nil
 }
@@ -66,14 +64,10 @@ func (o WorkerOperator) AssignBuilding(id uuid.UUID, buildingID uuid.UUID) error
 	}
 
 	if o.WorkerAnimator != nil {
-		if err := animator.Draw(o.WorkerAnimator.GetAnimateSet(), workerAssignBuildingEvent); err != nil {
-			return err
-		}
+		o.WorkerAnimator.Animator().AppendEvent(workerAssignBuildingEvent)
 	}
 	if o.BuildingAnimator != nil {
-		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingWorkerAssignEvent); err != nil {
-			return err
-		}
+		o.BuildingAnimator.Animator().AppendEvent(buildingWorkerAssignEvent)
 	}
 	return nil
 }
@@ -109,14 +103,10 @@ func (o WorkerOperator) UnassignBuilding(id uuid.UUID, buildingID uuid.UUID) err
 	}
 
 	if o.WorkerAnimator != nil {
-		if err := animator.Draw(o.WorkerAnimator.GetAnimateSet(), workerAssignBuildingEvent); err != nil {
-			return err
-		}
+		o.WorkerAnimator.Animator().AppendEvent(workerAssignBuildingEvent)
 	}
 	if o.BuildingAnimator != nil {
-		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingWorkerAssignEvent); err != nil {
-			return err
-		}
+		o.BuildingAnimator.Animator().AppendEvent(buildingWorkerAssignEvent)
 	}
 	return nil
 }
@@ -152,14 +142,10 @@ func (o WorkerOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 
 	if o.WorkerAnimator != nil {
-		if err := animator.Draw(o.WorkerAnimator.GetAnimateSet(), workerActEvent); err != nil {
-			return err
-		}
+		o.WorkerAnimator.Animator().AppendEvent(workerActEvent)
 	}
 	if o.BuildingAnimator != nil {
-		if err := animator.Draw(o.BuildingAnimator.GetAnimateSet(), buildingWorkerActEvent); err != nil {
-			return err
-		}
+		o.BuildingAnimator.Animator().AppendEvent(buildingWorkerActEvent)
 	}
 	return nil
 }

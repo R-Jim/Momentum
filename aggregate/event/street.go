@@ -13,31 +13,13 @@ const (
 )
 
 func NewStreetInitEvent(streetID uuid.UUID, headA, headB math.Pos) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: streetID,
-		Version:  1,
-		Effect:   StreetInitEffect,
-		Data:     []math.Pos{headA, headB},
-	}
+	return newEvent(streetID, 1, StreetInitEffect, []math.Pos{headA, headB})
 }
 
 func NewStreetEntityEnterEvent(streetID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: streetID,
-		Version:  version,
-		Effect:   StreetEntityEnterEffect,
-		Data:     entityID,
-	}
+	return newEvent(streetID, version, StreetEntityEnterEffect, entityID)
 }
 
 func NewStreetEntityLeaveEvent(streetID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return Event{
-		ID:       uuid.New(),
-		EntityID: streetID,
-		Version:  version,
-		Effect:   StreetEntityLeaveEffect,
-		Data:     entityID,
-	}
+	return newEvent(streetID, version, StreetEntityLeaveEffect, entityID)
 }
