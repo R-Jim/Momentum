@@ -10,13 +10,12 @@ import (
 const (
 	MAX_RUN_DISTANT  = 2
 	MIN_RUN_DISTANT  = 1
-	MAX_WALK_DISTANT = 50
+	MAX_WALK_DISTANT = 1
 )
 
 type MioState struct {
 	ID         uuid.UUID
 	Position   math.Pos
-	StreetID   uuid.UUID
 	BuildingID uuid.UUID
 
 	SelectedBuildingID uuid.UUID
@@ -128,9 +127,9 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
-				if state.StreetID.String() != uuid.Nil.String() {
-					return ErrAggregateFail
-				}
+				// if state.StreetID.String() != uuid.Nil.String() {
+				// 	return ErrAggregateFail
+				// }
 
 				_, err = event.ParseData[uuid.UUID](inputEvent)
 				if err != nil {
@@ -147,10 +146,6 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				if state.ID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
 				}
-				if state.StreetID.String() != uuid.Nil.String() {
-					return ErrAggregateFail
-				}
-
 				_, err = event.ParseData[uuid.UUID](inputEvent)
 				if err != nil {
 					return err
@@ -164,9 +159,6 @@ func NewMioAggregator(store *store.Store) Aggregator {
 					return err
 				}
 				if state.ID.String() == uuid.Nil.String() {
-					return ErrAggregateFail
-				}
-				if state.StreetID.String() != uuid.Nil.String() {
 					return ErrAggregateFail
 				}
 				if state.BuildingID.String() != uuid.Nil.String() {
@@ -184,9 +176,6 @@ func NewMioAggregator(store *store.Store) Aggregator {
 				state, err := GetMioState(currentEvents)
 				if err != nil {
 					return err
-				}
-				if state.StreetID.String() != uuid.Nil.String() {
-					return ErrAggregateFail
 				}
 				if state.BuildingID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
@@ -354,13 +343,6 @@ func GetMioState(events []event.Event) (MioState, error) {
 			}
 			state.Position = pos
 		case event.MioIdleEffect:
-
-		case event.MioEnterStreetEffect:
-			streetID, err := event.ParseData[uuid.UUID](e)
-			if err != nil {
-				return state, err
-			}
-			state.StreetID = streetID
 		case event.MioSelectBuildingEffect:
 			buildingID, err := event.ParseData[uuid.UUID](e)
 			if err != nil {
