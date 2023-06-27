@@ -1,7 +1,6 @@
 package automaton
 
 import (
-	"fmt"
 	"testing"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
@@ -13,81 +12,81 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_EnterStreetFromCurrentPosition(t *testing.T) {
-	mioID := uuid.New()
-	mioStore := store.NewStore()
+// func Test_EnterStreetFromCurrentPosition(t *testing.T) {
+// 	mioID := uuid.New()
+// 	mioStore := store.NewStore()
 
-	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
+// 	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
 
-	err := mioOperator.Init(mioID, math.NewPos(2, 2))
-	require.NoError(t, err)
+// 	err := mioOperator.Init(mioID, math.NewPos(2, 2))
+// 	require.NoError(t, err)
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
-	require.NoError(t, err)
+// 	events, err := mioStore.GetEventsByEntityID(mioID)
+// 	require.NoError(t, err)
 
-	mioState, err := aggregator.GetMioState(events)
-	require.NoError(t, err)
+// 	mioState, err := aggregator.GetMioState(events)
+// 	require.NoError(t, err)
 
-	require.Equal(t, math.NewPos(2, 2), mioState.Position)
+// 	require.Equal(t, math.NewPos(2, 2), mioState.Position)
 
-	streetStore := store.NewStore()
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+// 	streetStore := store.NewStore()
+// 	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
 
-	streetID := uuid.New()
-	err = streetOperator.Init(streetID, math.NewPos(2, 0), math.NewPos(2, 4))
-	require.NoError(t, err)
+// 	streetID := uuid.New()
+// 	err = streetOperator.Init(streetID, math.NewPos(2, 0), math.NewPos(2, 4))
+// 	require.NoError(t, err)
 
-	//
-	automaton := mioAutomaton{
-		entityID: mioID,
+// 	//
+// 	automaton := MioAutomaton{
+// 		EntityID: mioID,
 
-		mioStore:    &mioStore,
-		streetStore: &streetStore,
+// 		MioStore:    &mioStore,
+// 		StreetStore: &streetStore,
 
-		mioOperator:    mioOperator,
-		streetOperator: streetOperator,
-	}
+// 		MioOperator:    mioOperator,
+// 		StreetOperator: streetOperator,
+// 	}
 
-	automaton.EnterStreetFromCurrentPosition()
+// 	automaton.EnterStreetFromCurrentPosition()
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
-	mioState, err = aggregator.GetMioState(events)
-	require.NoError(t, err)
+// 	events, err = mioStore.GetEventsByEntityID(mioID)
+// 	mioState, err = aggregator.GetMioState(events)
+// 	require.NoError(t, err)
 
-	require.Equal(t, streetID, mioState.StreetID)
+// 	require.Equal(t, streetID, mioState.StreetID)
 
-	events, err = streetStore.GetEventsByEntityID(streetID)
-	streetState, err := aggregator.GetStreetState(events)
+// 	events, err = streetStore.GetEventsByEntityID(streetID)
+// 	streetState, err := aggregator.GetStreetState(events)
 
-	require.True(t, streetState.EntityMap[mioID])
+// 	require.True(t, streetState.EntityMap[mioID])
 
-	// Check moving to new pos
-	newStreetID := uuid.New()
-	err = streetOperator.Init(newStreetID, math.NewPos(4, 0), math.NewPos(4, 4))
-	require.NoError(t, err)
+// 	// Check moving to new pos
+// 	newStreetID := uuid.New()
+// 	err = streetOperator.Init(newStreetID, math.NewPos(4, 0), math.NewPos(4, 4))
+// 	require.NoError(t, err)
 
-	err = mioOperator.Walk(mioID, math.NewPos(3, 2))
-	require.NoError(t, err)
-	err = mioOperator.Walk(mioID, math.NewPos(4, 2))
-	require.NoError(t, err)
+// 	err = mioOperator.Walk(mioID, math.NewPos(3, 2))
+// 	require.NoError(t, err)
+// 	err = mioOperator.Walk(mioID, math.NewPos(4, 2))
+// 	require.NoError(t, err)
 
-	automaton.EnterStreetFromCurrentPosition()
+// 	// automaton.EnterStreetFromCurrentPosition()
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
-	mioState, err = aggregator.GetMioState(events)
-	require.NoError(t, err)
-	require.Equal(t, newStreetID, mioState.StreetID)
+// 	events, err = mioStore.GetEventsByEntityID(mioID)
+// 	mioState, err = aggregator.GetMioState(events)
+// 	require.NoError(t, err)
+// 	require.Equal(t, newStreetID, mioState.StreetID)
 
-	events, err = streetStore.GetEventsByEntityID(streetID)
-	streetState, err = aggregator.GetStreetState(events)
+// 	events, err = streetStore.GetEventsByEntityID(streetID)
+// 	streetState, err = aggregator.GetStreetState(events)
 
-	require.False(t, streetState.EntityMap[mioID])
+// 	require.False(t, streetState.EntityMap[mioID])
 
-	events, err = streetStore.GetEventsByEntityID(newStreetID)
-	newStreetState, err := aggregator.GetStreetState(events)
+// 	events, err = streetStore.GetEventsByEntityID(newStreetID)
+// 	newStreetState, err := aggregator.GetStreetState(events)
 
-	require.True(t, newStreetState.EntityMap[mioID])
-}
+// 	require.True(t, newStreetState.EntityMap[mioID])
+// }
 
 func Test_MioMoodBehavior_Mood(t *testing.T) {
 	mioID := uuid.New()
@@ -115,14 +114,14 @@ func Test_MioMoodBehavior_Mood(t *testing.T) {
 	require.NoError(t, BuildingOperator.Init(mioHouseID, event.BuildingTypeMioHouse, math.NewPos(2, 0)))
 
 	//
-	automaton := mioAutomaton{
-		entityID: mioID,
+	automaton := MioAutomaton{
+		EntityID: mioID,
 
-		mioStore:      &mioStore,
-		streetStore:   &streetStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator: mioOperator,
+		MioOperator: mioOperator,
 	}
 
 	automaton.MioMoodBehavior()
@@ -196,14 +195,14 @@ func Test_MioMoodBehavior_Energy(t *testing.T) {
 	require.NoError(t, BuildingOperator.Init(foodStoreID, event.BuildingTypeFoodStore, math.NewPos(2, 6)))
 
 	//
-	automaton := mioAutomaton{
-		entityID: mioID,
+	automaton := MioAutomaton{
+		EntityID: mioID,
 
-		mioStore:      &mioStore,
-		streetStore:   &streetStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator: mioOperator,
+		MioOperator: mioOperator,
 	}
 
 	automaton.MioMoodBehavior()
@@ -277,14 +276,14 @@ func Test_MioMoodBehavior_Drink(t *testing.T) {
 	require.NoError(t, BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, math.NewPos(4, 4)))
 
 	//
-	automaton := mioAutomaton{
-		entityID: mioID,
+	automaton := MioAutomaton{
+		EntityID: mioID,
 
-		mioStore:      &mioStore,
-		streetStore:   &streetStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator: mioOperator,
+		MioOperator: mioOperator,
 	}
 
 	automaton.MioMoodBehavior()
@@ -362,14 +361,14 @@ func Test_MioMoodBehavior(t *testing.T) {
 	require.NoError(t, BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, math.NewPos(4, 4)))
 
 	//
-	automaton := mioAutomaton{
-		entityID: mioID,
+	automaton := MioAutomaton{
+		EntityID: mioID,
 
-		mioStore:      &mioStore,
-		streetStore:   &streetStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator: mioOperator,
+		MioOperator: mioOperator,
 	}
 
 	automaton.MioMoodBehavior()
@@ -470,17 +469,17 @@ func Test_mioBuildingPathFinding_simple(t *testing.T) {
 	}
 	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
 
-	m := mioAutomaton{
-		entityID: mioID,
-		mapPaths: mapPaths,
-		mapGraph: mapGraph,
+	m := MioAutomaton{
+		EntityID: mioID,
+		MapPaths: mapPaths,
+		MapGraph: mapGraph,
 
-		mioStore:      &mioStore,
-		streetStore:   &streetStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator:    mioOperator,
-		streetOperator: streetOperator,
+		MioOperator:    mioOperator,
+		StreetOperator: streetOperator,
 	}
 
 	err := mioOperator.Init(mioID, mioPos)
@@ -504,19 +503,17 @@ func Test_mioBuildingPathFinding_simple(t *testing.T) {
 	drinkStoreID := uuid.New()
 	require.NoError(t, BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos))
 
-	m.EnterStreetFromCurrentPosition()
-
 	events, err = mioStore.GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	mioState, err = aggregator.GetMioState(events)
 	require.NoError(t, err)
 
-	require.Equal(t, street1ID, mioState.StreetID)
+	require.NoError(t, mioOperator.SelectBuilding(mioID, drinkStoreID))
 
 	m.prevSelectedBuilding = drinkStoreID
 
-	m.mioBuildingPathFinding()
+	m.PathFindingUpdate()
 
 	events, err = mioStore.GetEventsByEntityID(mioID)
 	require.NoError(t, err)
@@ -581,22 +578,22 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 	streetStore := store.NewStore()
 
 	mioOperator := operator.MioOperator{MioAggregator: aggregator.NewMioAggregator(&mioStore)}
-	BuildingOperator := operator.BuildingOperator{
+	buildingOperator := operator.BuildingOperator{
 		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
 	}
 	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
 
-	m := mioAutomaton{
-		entityID: mioID,
-		mapPaths: mapPaths,
-		mapGraph: mapGraph,
+	m := MioAutomaton{
+		EntityID: mioID,
+		MapPaths: mapPaths,
+		MapGraph: mapGraph,
 
-		mioStore:      &mioStore,
-		streetStore:   &streetStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator:    mioOperator,
-		streetOperator: streetOperator,
+		MioOperator:    mioOperator,
+		StreetOperator: streetOperator,
 	}
 
 	err := mioOperator.Init(mioID, mioPos)
@@ -637,10 +634,10 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 		require.NoError(t, err)
 	}
 
-	require.NoError(t, BuildingOperator.Init(building1ID, event.BuildingTypeDrinkStore, building1Pos))
-	require.NoError(t, BuildingOperator.Init(building2ID, event.BuildingTypeDrinkStore, building2Pos))
+	require.NoError(t, buildingOperator.Init(building1ID, event.BuildingTypeDrinkStore, building1Pos))
+	require.NoError(t, buildingOperator.Init(building2ID, event.BuildingTypeDrinkStore, building2Pos))
 
-	m.EnterStreetFromCurrentPosition()
+	require.NoError(t, mioOperator.SelectBuilding(mioID, building1ID))
 
 	events, err = mioStore.GetEventsByEntityID(mioID)
 	require.NoError(t, err)
@@ -648,11 +645,9 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 	mioState, err = aggregator.GetMioState(events)
 	require.NoError(t, err)
 
-	require.Equal(t, streetAB_ID, mioState.StreetID, fmt.Sprintf("%s, %s", streetAB_ID.String(), mioState.StreetID.String()))
-
 	m.prevSelectedBuilding = building1ID
 
-	m.mioBuildingPathFinding()
+	m.PathFindingUpdate()
 
 	events, err = mioStore.GetEventsByEntityID(mioID)
 	require.NoError(t, err)
@@ -687,16 +682,16 @@ func Test_Move(t *testing.T) {
 
 	require.NotEqual(t, uuid.Nil, mioState.ID)
 
-	m := mioAutomaton{
-		entityID: mioID,
+	m := MioAutomaton{
+		EntityID: mioID,
 
-		mioStore:      &mioStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator: mioOperator,
+		MioOperator: mioOperator,
 	}
 
-	require.NoError(t, m.mioOperator.ChangePlannedPoses(mioID, []math.Pos{posA, posB}))
+	require.NoError(t, m.MioOperator.ChangePlannedPoses(mioID, []math.Pos{posA, posB}))
 
 	events, err = mioStore.GetEventsByEntityID(mioID)
 	require.NoError(t, err)
@@ -716,6 +711,7 @@ func Test_Move(t *testing.T) {
 
 	require.Equal(t, math.NewPos(0, 0), mioState.Position)
 
+	require.NoError(t, m.MioOperator.ChangePlannedPoses(mioID, []math.Pos{posB}))
 	m.Move()
 
 	events, err = mioStore.GetEventsByEntityID(mioID)
@@ -779,13 +775,13 @@ func Test_HourlyExhaustion(t *testing.T) {
 
 	require.NotEqual(t, uuid.Nil, mioState.ID)
 
-	m := mioAutomaton{
-		entityID: mioID,
+	m := MioAutomaton{
+		EntityID: mioID,
 
-		mioStore:      &mioStore,
-		buildingStore: &buildingStore,
+		MioStore:      &mioStore,
+		BuildingStore: &buildingStore,
 
-		mioOperator: mioOperator,
+		MioOperator: mioOperator,
 	}
 
 	m.HourlyExhaustion()

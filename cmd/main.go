@@ -7,8 +7,10 @@ import (
 	"image/color"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
+	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/animator"
+	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/google/uuid"
@@ -18,76 +20,131 @@ import (
 )
 
 type Game struct {
-	mioID uuid.UUID
+	mioID      uuid.UUID
+	buildingID uuid.UUID
+
+	mioStore *store.Store
 
 	mioOperator *operator.MioOperator
 
 	mioAnimator *animator.Animator
 
+	mioAutomaton *automaton.MioAutomaton
+
 	p math.Pos
 
 	framesToRender map[int][]animator.Frame
+
+	automationCounter int
+
 	gameMap       []math.Path
 	buildingPoses []math.Pos // TODO: should get building pos from building store
 }
 
 func (g *Game) Init() {
 	mioID := uuid.New()
-	store := store.NewStore()
+	mioStore := store.NewStore()
 
-	mioAnimator := animator.NewMioAnimator(&store)
+	mioAnimator := animator.NewMioAnimator(&mioStore)
 
 	mioOperator := operator.MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&store),
+		MioAggregator: aggregator.NewMioAggregator(&mioStore),
 		MioAnimator:   mioAnimator,
 	}
 
-	err := mioOperator.Init(mioID, math.NewPos(1, 2))
+	g.mioID = mioID
+	g.mioStore = &mioStore
+	g.mioAnimator = &mioAnimator
+	g.mioOperator = &mioOperator
+	g.p = math.NewPos(200, 200)
+	g.framesToRender = map[int][]animator.Frame{}
+
+	posA := math.NewPos(200, 200)
+	posB := math.NewPos(300, 200)
+	posC := math.NewPos(500, 200)
+	posD := math.NewPos(400, 300)
+	buildingPos := math.NewPos(600, 400)
+
+	g.buildingPoses = []math.Pos{buildingPos}
+
+	mapPaths := []math.Path{
+		{Start: posA, End: posB, Cost: 10},        // street1
+		{Start: posB, End: posC, Cost: 5},         // street2
+		{Start: posB, End: posD, Cost: 5},         // street3
+		{Start: posC, End: buildingPos, Cost: 15}, // building street1
+		{Start: posD, End: buildingPos, Cost: 10}, // building street2
+	}
+
+	g.gameMap = mapPaths
+
+	mapGraph := math.NewGraph(mapPaths)
+
+	street1ID := uuid.New()
+	street2ID := uuid.New()
+	street3ID := uuid.New()
+	buildingStreetID1 := uuid.New()
+	buildingStreetID2 := uuid.New()
+
+	buildingStore := store.NewStore()
+	streetStore := store.NewStore()
+
+	BuildingOperator := operator.BuildingOperator{
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+	}
+	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+
+	g.mioAutomaton = &automaton.MioAutomaton{
+		EntityID: mioID,
+		MapPaths: mapPaths,
+		MapGraph: mapGraph,
+
+		MioStore:      &mioStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
+
+		MioOperator:    mioOperator,
+		StreetOperator: streetOperator,
+	}
+
+	err := mioOperator.Init(mioID, posA)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	g.mioID = mioID
-	g.mioAnimator = &mioAnimator
-	g.mioOperator = &mioOperator
-	g.p = math.NewPos(1, 2)
-	g.framesToRender = map[int][]animator.Frame{}
-
-	posA := math.NewPos(200, 200)
-	posB := math.NewPos(450, 200)
-	posC := math.NewPos(450, 100)
-	posD := math.NewPos(200, 100)
-	posE := math.NewPos(300, 300)
-	building1Pos := math.NewPos(400, 400)
-	building2Pos := math.NewPos(300, 150)
-
-	g.gameMap = []math.Path{
-		{Start: posA, End: posB, Cost: 2},
-		{Start: posA, End: posD, Cost: 1},
-		{Start: posA, End: posE, Cost: 3},
-
-		{Start: posB, End: posC, Cost: 2},
-		{Start: posB, End: building1Pos, Cost: 8},
-		{Start: posB, End: posE, Cost: 3},
-
-		{Start: posC, End: posD, Cost: 4},
-		{Start: posC, End: building2Pos, Cost: 2},
-
-		{Start: posD, End: building2Pos, Cost: 1},
-
-		{Start: posE, End: building1Pos, Cost: 5},
+	err = streetOperator.Init(street1ID, posA, posB)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = streetOperator.Init(street2ID, posB, posC)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = streetOperator.Init(street3ID, posB, posD)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = streetOperator.Init(buildingStreetID1, posC, buildingPos)
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = streetOperator.Init(buildingStreetID2, posD, buildingPos)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	g.buildingPoses = []math.Pos{building1Pos, building2Pos}
+	drinkStoreID := uuid.New()
+	err = BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos)
+	if err != nil {
+		log.Fatal(err)
+	}
+	g.buildingID = drinkStoreID
 }
 
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
-		newPos := math.NewPos(g.p.X+aggregator.MAX_WALK_DISTANT, g.p.Y)
-		if err := g.mioOperator.Walk(g.mioID, newPos); err != nil {
+		if err := g.mioOperator.SelectBuilding(g.mioID, g.buildingID); err != nil {
 			return err
 		}
-		g.p = newPos
 	}
 
 	framesPerEvent := (*g.mioAnimator).Animator().GetFramesPerEvent()
@@ -97,12 +154,19 @@ func (g *Game) Update() error {
 		}
 	}
 
+	g.automationCounter++
+	if g.automationCounter >= int(ebiten.CurrentFPS()/5) {
+		g.mioAutomaton.PathFindingUpdate()
+		g.mioAutomaton.Move()
+		g.automationCounter = 0
+	}
 	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.DrawMap(screen)
 	g.DrawBuilding(screen)
+	g.DrawMio(screen)
 
 	frames, isExist := g.framesToRender[0]
 	if !isExist {
@@ -157,6 +221,23 @@ func (g *Game) DrawBuilding(screen *ebiten.Image) {
 	for _, pos := range g.buildingPoses {
 		drawBuilding(pos)
 	}
+}
+
+func (g *Game) DrawMio(screen *ebiten.Image) {
+	events, err := (*g.mioStore).GetEventsByEntityID(g.mioID)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	mioPositionState, err := aggregator.GetMioState(events)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	// TODO: separate to building draw layer
+	mioRadius := 20.0
+
+	ebitenutil.DrawRect(screen, mioPositionState.Position.X-mioRadius/2, mioPositionState.Position.Y-mioRadius/2, mioRadius, mioRadius, color.RGBA{0x0, 0xff, 0x0, 0xff})
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {

@@ -12,18 +12,18 @@ import (
 	"github.com/google/uuid"
 )
 
-type mioAutomaton struct {
-	entityID uuid.UUID
+type MioAutomaton struct {
+	EntityID uuid.UUID
 
-	mapPaths []math.Path
-	mapGraph math.Graph
+	MapPaths []math.Path
+	MapGraph math.Graph
 
-	mioStore      *store.Store
-	streetStore   *store.Store
-	buildingStore *store.Store
+	MioStore      *store.Store
+	StreetStore   *store.Store
+	BuildingStore *store.Store
 
-	mioOperator    operator.MioOperator
-	streetOperator operator.StreetOperator
+	MioOperator    operator.MioOperator
+	StreetOperator operator.StreetOperator
 
 	// For performance optimization
 	prevSelectedBuilding uuid.UUID
@@ -34,51 +34,38 @@ type shortestPath struct {
 	cost  int
 }
 
-func (m mioAutomaton) Automate() {
-	m.EnterStreetFromCurrentPosition()
+func (m MioAutomaton) Automate() {
+	// m.EnterStreetFromCurrentPosition() // Deprecated: should do it from street side
 	m.MioMoodBehavior()
+	m.PathFindingUpdate()
 	m.Move()
 	m.HourlyExhaustion()
 }
 
-func (m mioAutomaton) EnterStreetFromCurrentPosition() {
-	events := (*m.mioStore).GetEvents()[m.entityID]
+func (m MioAutomaton) getStreetIDsFromCurrentPosition() []uuid.UUID {
+	events := (*m.MioStore).GetEvents()[m.EntityID]
 	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)
 	}
 
-	oldStreetID := mioState.StreetID
+	matchedStreetIDs := []uuid.UUID{}
 
-	for streetID, streetEvents := range (*m.streetStore).GetEvents() {
+	for streetID, streetEvents := range (*m.StreetStore).GetEvents() {
 		streetState, err := aggregator.GetStreetState(streetEvents)
 		if err != nil {
 			fmt.Print(err)
 		}
 		if math.IsBetweenAAndB(mioState.Position, streetState.HeadA, streetState.HeadB, 0.2) {
-			if oldStreetID != streetID {
-				err := m.mioOperator.EnterStreet(mioState.ID, streetID)
-				if err != nil {
-					fmt.Print(err)
-				}
-				err = m.streetOperator.EntityEnter(streetID, mioState.ID)
-				if err != nil {
-					fmt.Print(err)
-				}
-				if oldStreetID.String() != uuid.Nil.String() {
-					err = m.streetOperator.EntityLeave(oldStreetID, mioState.ID)
-					if err != nil {
-						fmt.Print(err)
-					}
-				}
-				break
-			}
+			matchedStreetIDs = append(matchedStreetIDs, streetID)
 		}
 	}
+
+	return matchedStreetIDs
 }
 
-func (m *mioAutomaton) MioMoodBehavior() {
-	events := (*m.mioStore).GetEvents()[m.entityID]
+func (m *MioAutomaton) MioMoodBehavior() {
+	events := (*m.MioStore).GetEvents()[m.EntityID]
 	mioActivityState, err := aggregator.GetMioActivityState(events)
 	if err != nil {
 		fmt.Print(err)
@@ -94,7 +81,7 @@ func (m *mioAutomaton) MioMoodBehavior() {
 	}
 
 	if !isBored && !isHungry && !isThirsty {
-		err = m.mioOperator.UnselectBuilding(mioState.ID, mioState.BuildingID)
+		err = m.MioOperator.UnselectBuilding(mioState.ID, mioState.BuildingID)
 		if err != nil {
 			fmt.Print(err)
 		}
@@ -104,7 +91,7 @@ func (m *mioAutomaton) MioMoodBehavior() {
 	var selectedBuildingID uuid.UUID
 	var selectedBuildingDistance float64
 
-	for buildingID, buildingEvents := range (*m.buildingStore).GetEvents() {
+	for buildingID, buildingEvents := range (*m.BuildingStore).GetEvents() {
 		buildingState, err := aggregator.GetBuildingState(buildingEvents)
 		if err != nil {
 			fmt.Print(err)
@@ -129,87 +116,133 @@ func (m *mioAutomaton) MioMoodBehavior() {
 
 	m.prevSelectedBuilding = selectedBuildingID
 
-	err = m.mioOperator.SelectBuilding(mioState.ID, selectedBuildingID)
+	err = m.MioOperator.SelectBuilding(mioState.ID, selectedBuildingID)
+	if err != nil {
+		fmt.Print(err)
+	}
+}
+
+func (m MioAutomaton) PathFindingUpdate() {
+	events := (*m.MioStore).GetEvents()[m.EntityID]
+	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)
 	}
 
-	m.mioBuildingPathFinding()
-}
-
-func (m mioAutomaton) mioBuildingPathFinding() {
-	if m.prevSelectedBuilding.String() == uuid.Nil.String() {
+	if mioState.SelectedBuildingID == uuid.Nil {
 		return
 	}
 
+	buildingEvents := (*m.BuildingStore).GetEvents()[mioState.SelectedBuildingID]
+	buildingState, err := aggregator.GetBuildingState(buildingEvents)
+	if err != nil {
+		fmt.Print(err)
+	}
+
+	if mioState.Position == buildingState.Pos {
+		err = m.MioOperator.UnselectBuilding(m.EntityID, mioState.SelectedBuildingID)
+		if err != nil {
+			fmt.Print(err)
+		}
+		err = m.MioOperator.ChangePlannedPoses(m.EntityID, nil)
+		if err != nil {
+			fmt.Print(err)
+		}
+		return
+	}
+
+	getStreetShortestPath := func(streetID uuid.UUID) shortestPath {
+		var mioPos, streetHeadAPos, streetHeadBPos, buildingPos math.Pos
+
+		{
+			streetEvents := (*m.StreetStore).GetEvents()[streetID]
+			streetState, err := aggregator.GetStreetState(streetEvents)
+			if err != nil {
+				fmt.Print(err)
+			}
+
+			mioPos = mioState.Position
+			streetHeadAPos = streetState.HeadA
+			streetHeadBPos = streetState.HeadB
+			buildingPos = buildingState.Pos
+		}
+
+		{
+			if streetHeadAPos == buildingPos {
+				return shortestPath{
+					poses: []math.Pos{streetHeadAPos},
+				}
+			} else if streetHeadBPos == buildingPos {
+				return shortestPath{
+					poses: []math.Pos{streetHeadBPos},
+				}
+			}
+		}
+
+		streetPathCost := 0
+		for _, path := range m.MapPaths {
+			if (path.Start == streetHeadAPos && path.End == streetHeadBPos) || (path.Start == streetHeadBPos && path.End == streetHeadAPos) {
+				streetPathCost = path.Cost
+			}
+		}
+
+		_, _, distFromA := math.GetDistances(mioPos, streetHeadAPos)
+		_, _, distFromB := math.GetDistances(mioPos, streetHeadBPos)
+		totalDist := distFromA + distFromB
+
+		var shortestPathFromStreetA, shortestPathFromStreetB shortestPath
+		{
+			var wg sync.WaitGroup
+			wg.Add(2)
+
+			go func() {
+				defer wg.Done()
+				shortestPathFromStreetA = findShortestPath(m.MapGraph, m.MapPaths, streetHeadAPos, buildingPos)
+			}()
+			go func() {
+				defer wg.Done()
+				shortestPathFromStreetB = findShortestPath(m.MapGraph, m.MapPaths, streetHeadBPos, buildingPos)
+			}()
+
+			wg.Wait()
+		}
+		{
+			shortestPathFromStreetACost := float64(streetPathCost)*distFromA/totalDist + float64(shortestPathFromStreetA.cost)
+			shortestPathFromStreetBCost := float64(streetPathCost)*distFromB/totalDist + float64(shortestPathFromStreetB.cost)
+			if shortestPathFromStreetACost <= shortestPathFromStreetBCost && len(shortestPathFromStreetA.poses) <= len(shortestPathFromStreetB.poses) {
+				return shortestPath{
+					poses: append([]math.Pos{streetHeadAPos}, shortestPathFromStreetA.poses...),
+					cost:  shortestPathFromStreetA.cost,
+				}
+			} else {
+				return shortestPath{
+					poses: append([]math.Pos{streetHeadBPos}, shortestPathFromStreetB.poses...),
+					cost:  shortestPathFromStreetB.cost,
+				}
+			}
+		}
+	}
+
 	var plannedPath []math.Pos
+	var lastPathCost *int
 
-	var mioPos, streetHeadAPos, streetHeadBPos, buildingPos math.Pos
-
-	{
-		buildingEvents := (*m.buildingStore).GetEvents()[m.prevSelectedBuilding]
-		buildingState, err := aggregator.GetBuildingState(buildingEvents)
-		if err != nil {
-			fmt.Print(err)
-		}
-
-		events := (*m.mioStore).GetEvents()[m.entityID]
-		mioState, err := aggregator.GetMioState(events)
-		if err != nil {
-			fmt.Print(err)
-		}
-
-		streetEvents := (*m.streetStore).GetEvents()[mioState.StreetID]
-		streetState, err := aggregator.GetStreetState(streetEvents)
-		if err != nil {
-			fmt.Print(err)
-		}
-
-		mioPos = mioState.Position
-		streetHeadAPos = streetState.HeadA
-		streetHeadBPos = streetState.HeadB
-		buildingPos = buildingState.Pos
-	}
-
-	streetPathCost := 0
-	for _, path := range m.mapPaths {
-		if (path.Start == streetHeadAPos && path.End == streetHeadBPos) || (path.Start == streetHeadBPos && path.End == streetHeadAPos) {
-			streetPathCost = path.Cost
+	matchedStreetIDs := m.getStreetIDsFromCurrentPosition()
+	for _, streetID := range matchedStreetIDs {
+		path := getStreetShortestPath(streetID)
+		if lastPathCost == nil || *lastPathCost > path.cost {
+			lastPathCost = &path.cost
+			plannedPath = path.poses
 		}
 	}
-
-	_, _, distFromA := math.GetDistances(mioPos, streetHeadAPos)
-	_, _, distFromB := math.GetDistances(mioPos, streetHeadBPos)
-	totalDist := distFromA + distFromB
-
-	var shortestPathFromStreetA, shortestPathFromStreetB shortestPath
-	{
-		var wg sync.WaitGroup
-		wg.Add(2)
-
-		go func() {
-			defer wg.Done()
-			shortestPathFromStreetA = findShortestPath(m.mapGraph, m.mapPaths, streetHeadAPos, buildingPos)
-		}()
-		go func() {
-			defer wg.Done()
-			shortestPathFromStreetB = findShortestPath(m.mapGraph, m.mapPaths, streetHeadBPos, buildingPos)
-		}()
-
-		wg.Wait()
+	if plannedPath == nil {
+		return
 	}
 
-	{
-		shortestPathFromStreetACost := float64(streetPathCost)*distFromA/totalDist + float64(shortestPathFromStreetA.cost)
-		shortestPathFromStreetBCost := float64(streetPathCost)*distFromB/totalDist + float64(shortestPathFromStreetB.cost)
-		if shortestPathFromStreetACost <= shortestPathFromStreetBCost {
-			plannedPath = append([]math.Pos{streetHeadAPos}, shortestPathFromStreetA.poses...)
-		} else {
-			plannedPath = append([]math.Pos{streetHeadBPos}, shortestPathFromStreetB.poses...)
-		}
+	if mioState.Position == plannedPath[0] {
+		plannedPath = plannedPath[1:]
 	}
 
-	err := m.mioOperator.ChangePlannedPoses(m.entityID, plannedPath)
+	err = m.MioOperator.ChangePlannedPoses(m.EntityID, plannedPath)
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -280,8 +313,8 @@ func isBuildingFitMood(buildingState aggregator.BuildingState, isBored, isHungry
 	return false
 }
 
-func (m mioAutomaton) Move() {
-	events := (*m.mioStore).GetEvents()[m.entityID]
+func (m MioAutomaton) Move() {
+	events := (*m.MioStore).GetEvents()[m.EntityID]
 	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)
@@ -297,48 +330,31 @@ func (m mioAutomaton) Move() {
 
 	if distanceSqrt <= aggregator.MAX_WALK_DISTANT {
 		nextPos := math.NewPos(math.GetNextStepXY(mioState.Position, 0, pos, 0, distanceSqrt, 180))
-		err = m.mioOperator.Walk(m.entityID, nextPos)
+		err = m.MioOperator.Walk(m.EntityID, nextPos)
 	} else if distanceSqrt <= aggregator.MAX_RUN_DISTANT {
 		nextPos := math.NewPos(math.GetNextStepXY(mioState.Position, 0, pos, 0, distanceSqrt, 180))
-		err = m.mioOperator.Run(m.entityID, nextPos)
+		err = m.MioOperator.Run(m.EntityID, nextPos)
 	} else {
 		nextPos := math.NewPos(math.GetNextStepXY(mioState.Position, 0, pos, 0, aggregator.MAX_RUN_DISTANT, 180))
-		err = m.mioOperator.Run(m.entityID, nextPos)
+		err = m.MioOperator.Run(m.EntityID, nextPos)
 	}
 	if err != nil {
 		fmt.Print(err)
 	}
-
-	events = (*m.mioStore).GetEvents()[m.entityID]
-	mioState, err = aggregator.GetMioState(events)
-	if err != nil {
-		fmt.Print(err)
-	}
-
-	plannedPoses := []math.Pos{}
-	if mioState.Position == pos {
-		for i := 1; i < len(mioState.PlannedPoses); i++ {
-			plannedPoses = append(plannedPoses, mioState.PlannedPoses[i])
-		}
-	} else {
-		plannedPoses = mioState.PlannedPoses
-	}
-
-	m.mioOperator.ChangePlannedPoses(m.entityID, plannedPoses)
 }
 
-func (m mioAutomaton) HourlyExhaustion() {
-	events := (*m.mioStore).GetEvents()[m.entityID]
+func (m MioAutomaton) HourlyExhaustion() {
+	events := (*m.MioStore).GetEvents()[m.EntityID]
 	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)
 	}
 
-	err = m.mioOperator.Starve(mioState.ID, 5)
+	err = m.MioOperator.Starve(mioState.ID, 5)
 	if err != nil {
 		fmt.Print(err)
 	}
-	err = m.mioOperator.Sweat(mioState.ID, 5)
+	err = m.MioOperator.Sweat(mioState.ID, 5)
 	if err != nil {
 		fmt.Print(err)
 	}
