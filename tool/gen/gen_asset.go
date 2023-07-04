@@ -19,17 +19,23 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/hajimehoshi/file2byteslice"
 )
 
-func genFile(pngFileName string, genFileName string, varName string) error {
+func genFile(pngFileName string, genFileName string, varName string, spriteSize []int) error {
 	var out io.Writer
+	var f *os.File
+	var err error
+
 	if genFileName != "" {
-		f, err := os.Create(genFileName)
+		f, err = os.Create(genFileName)
 		if err != nil {
 			return err
 		}
@@ -55,6 +61,11 @@ func genFile(pngFileName string, genFileName string, varName string) error {
 		return err
 	}
 
+	_, err = f.WriteString(fmt.Sprintf("var %v_Size = []int{%d,%d} \n", varName, spriteSize[0], spriteSize[1]))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -68,24 +79,46 @@ func walk(s string, d fs.DirEntry, err error) error {
 			return os.Remove(s)
 		} else if ext == ".png" {
 			generatedFileName := strings.Replace(s, ".png", ".go", -1)
-			varName := genVarName(s)
+			varName, spriteSize := genVarNameAndSpriteSize(s)
 			fmt.Printf("Found: %v, gen: %v, var: %v\n", s, generatedFileName, varName)
-			return genFile(s, generatedFileName, varName)
+			return genFile(s, generatedFileName, varName, spriteSize)
 		}
 	}
 	return nil
 }
 
 // my_image.png -> MyImage_png
-func genVarName(pngFileName string) string {
-	extRemoved := strings.Replace(filepath.Base(pngFileName), ".png", "", -1)
+func genVarNameAndSpriteSize(pngFileName string) (string, []int) {
 	resultStrings := []string{}
+	sizePerSprite := []int{}
 
+	{
+		spriteSizeComponentRegex, err := regexp.Compile("-\\d+x\\d+")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		sizePerSpriteComponent := spriteSizeComponentRegex.FindString(pngFileName)
+		spriteSizeRegex, err := regexp.Compile("\\d+")
+		if err != nil {
+			log.Fatalln(err)
+		}
+		spriteSizesString := spriteSizeRegex.FindAllString(sizePerSpriteComponent, 2)
+		for _, sizeString := range spriteSizesString {
+			size, err := strconv.Atoi(sizeString)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			sizePerSprite = append(sizePerSprite, int(size))
+		}
+	}
+
+	extRemoved := strings.Replace(filepath.Base(pngFileName), ".png", "", -1)
 	for _, part := range strings.Split(extRemoved, "_") {
 		parts := strings.SplitN(part, "", 2)
 		resultStrings = append(resultStrings, strings.ToUpper(parts[0]), parts[1])
 	}
-	return strings.Join(resultStrings, "") + "_png"
+
+	return strings.ReplaceAll(strings.Join(resultStrings, ""), "-", "_"), sizePerSprite
 }
 
 func main() {
