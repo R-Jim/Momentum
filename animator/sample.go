@@ -3,19 +3,20 @@ package animator
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
 type sampleImpl struct {
-	animatorImpl *AnimatorImpl
+	animatorImpl *animatorImpl
 
 	screen      *ebiten.Image
 	sampleStore *store.Store
 }
 
 func NewSampleAnimator(store *store.Store) Animator {
-	animateEventSet := map[event.Effect]func(event event.Event) []Frame{
-		event.SampleEffect: func(e event.Event) []Frame {
+	animateEventSet := map[event.Effect]func(event event.Event) []frame{
+		event.SampleEffect: func(e event.Event) []frame {
 			return nil
 		},
 	}
@@ -23,13 +24,13 @@ func NewSampleAnimator(store *store.Store) Animator {
 	return sampleImpl{
 		sampleStore: store,
 
-		animatorImpl: &AnimatorImpl{
-			Events:         []event.Event{},
-			getEventFrames: animateEventSet,
+		animatorImpl: &animatorImpl{
+			framesToRender:    []map[uuid.UUID][]frame{},
+			getEventFramesSet: animateEventSet,
 		},
 	}
 }
 
-func (i sampleImpl) Animator() *AnimatorImpl {
+func (i sampleImpl) Animator() *animatorImpl {
 	return i.animatorImpl
 }
