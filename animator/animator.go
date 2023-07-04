@@ -2,39 +2,56 @@ package animator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
+	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
-	"github.com/hajimehoshi/ebiten/v2"
 )
 
-type Frame struct {
-	Image  ebiten.Image
-	Option ebiten.DrawImageOptions
+type animatorImpl struct {
+	framesToRender []map[uuid.UUID][]frame
+
+	getEventFramesSet map[event.Effect]func(event event.Event) []frame
+	getIdleFramesFunc func(entityIDsWithEvent []uuid.UUID) []frame
 }
 
-type AnimatorImpl struct {
-	Events         []event.Event
-	getEventFrames map[event.Effect]func(event event.Event) []Frame
+func newAnimatorImpl() *animatorImpl {
+	return &animatorImpl{
+		framesToRender: make([]map[uuid.UUID][]frame, system.DEFAULT_FPS),
+	}
 }
 
 type Animator interface {
-	Animator() *AnimatorImpl
+	Animator() *animatorImpl
 }
 
-func (a *AnimatorImpl) AppendEvent(event event.Event) {
-	a.Events = append(a.Events, event)
-}
-
-func (a *AnimatorImpl) GetFramesPerEvent() map[uuid.UUID][]Frame {
-	framesPerEvent := map[uuid.UUID][]Frame{}
-
-	for _, event := range a.Events {
-		getFramesFunc, isExist := a.getEventFrames[event.Effect]
-		if !isExist {
-			continue
-		}
-		framesPerEvent[event.ID] = getFramesFunc(event)
+func (a *animatorImpl) ProcessEvent(event event.Event) {
+	getFramesFunc, isExist := a.getEventFramesSet[event.Effect]
+	if !isExist {
+		return
 	}
 
-	a.Events = []event.Event{}
-	return framesPerEvent
+	for index, _frame := range getFramesFunc(event) {
+		if len(a.framesToRender) == index {
+			a.framesToRender = append(
+				a.framesToRender,
+				map[uuid.UUID][]frame{event.EntityID: {_frame}})
+		} else {
+			a.framesToRender[index][event.EntityID] = append(a.framesToRender[index][event.EntityID], _frame)
+		}
+	}
+}
+
+func (a *animatorImpl) GetFrames() []frame {
+	frames := []frame{}
+	entityIDsWithEvent := []uuid.UUID{}
+
+	if len(a.framesToRender) > 0 {
+		for entityID, framesByEntityID := range a.framesToRender[0] {
+			frames = append(frames, framesByEntityID...)
+
+			entityIDsWithEvent = append(entityIDsWithEvent, entityID)
+		}
+		a.framesToRender = a.framesToRender[1:]
+	}
+
+	return append(frames, a.getIdleFramesFunc(entityIDsWithEvent)...)
 }
