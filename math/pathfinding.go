@@ -8,7 +8,7 @@ import (
 type Path struct {
 	Start Pos
 	End   Pos
-	Cost  int
+	Cost  float64
 }
 
 type Graph map[Pos][]Pos
@@ -53,6 +53,7 @@ func (g Graph) findPath(prevPoses []Pos, start, end Pos) [][]Pos {
 
 	for _, pos := range startList {
 		p := pos
+		pPoses := prevPoses
 		go func() {
 			defer wg.Done()
 
@@ -62,19 +63,14 @@ func (g Graph) findPath(prevPoses []Pos, start, end Pos) [][]Pos {
 			}
 
 			{
-				isLoop := false
-				for _, prevPos := range prevPoses {
+				for _, prevPos := range pPoses {
 					if p == prevPos {
-						isLoop = true
-						break
+						return
 					}
-				}
-				if isLoop == true {
-					return
 				}
 			}
 
-			r := g.findPath(prevPoses, p, end)
+			r := g.findPath(pPoses, p, end)
 			if len(r) == 0 {
 				return
 			}
