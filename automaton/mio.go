@@ -29,9 +29,9 @@ type MioAutomaton struct {
 	prevSelectedBuilding uuid.UUID
 }
 
-type shortestPath struct {
+type pathWithCost struct {
 	poses []math.Pos
-	cost  int
+	cost  float64
 }
 
 func (m MioAutomaton) Automate() {
@@ -151,7 +151,7 @@ func (m MioAutomaton) PathFindingUpdate() {
 		return
 	}
 
-	getStreetShortestPath := func(streetID uuid.UUID) shortestPath {
+	getStreetShortestPath := func(streetID uuid.UUID) *pathWithCost {
 		var mioPos, streetHeadAPos, streetHeadBPos, buildingPos math.Pos
 
 		{
@@ -167,19 +167,7 @@ func (m MioAutomaton) PathFindingUpdate() {
 			buildingPos = buildingState.Pos
 		}
 
-		{
-			if streetHeadAPos == buildingPos {
-				return shortestPath{
-					poses: []math.Pos{streetHeadAPos},
-				}
-			} else if streetHeadBPos == buildingPos {
-				return shortestPath{
-					poses: []math.Pos{streetHeadBPos},
-				}
-			}
-		}
-
-		streetPathCost := 0
+		streetPathCost := 0.0
 		for _, path := range m.MapPaths {
 			if (path.Start == streetHeadAPos && path.End == streetHeadBPos) || (path.Start == streetHeadBPos && path.End == streetHeadAPos) {
 				streetPathCost = path.Cost
@@ -190,7 +178,8 @@ func (m MioAutomaton) PathFindingUpdate() {
 		_, _, distFromB := math.GetDistances(mioPos, streetHeadBPos)
 		totalDist := distFromA + distFromB
 
-		var shortestPathFromStreetA, shortestPathFromStreetB shortestPath
+		var shortestPathFromStreetA, shortestPathFromStreetB *pathWithCost
+		var shortestPathFromStreetACost, shortestPathFromStreetBCost float64
 		{
 			var wg sync.WaitGroup
 			wg.Add(2)
@@ -205,26 +194,46 @@ func (m MioAutomaton) PathFindingUpdate() {
 			}()
 
 			wg.Wait()
+			if shortestPathFromStreetA != nil {
+				shortestPathFromStreetACost = float64(streetPathCost)*distFromA/totalDist + float64(shortestPathFromStreetA.cost)
+			}
+			if shortestPathFromStreetB != nil {
+				shortestPathFromStreetBCost = float64(streetPathCost)*distFromB/totalDist + float64(shortestPathFromStreetB.cost)
+			}
+			if shortestPathFromStreetA == nil && shortestPathFromStreetB == nil {
+				return nil
+			} else if shortestPathFromStreetA == nil {
+				return &pathWithCost{
+					poses: append([]math.Pos{streetHeadBPos}, shortestPathFromStreetB.poses...),
+					cost:  shortestPathFromStreetBCost,
+				}
+			} else if shortestPathFromStreetB == nil {
+				return &pathWithCost{
+					poses: append([]math.Pos{streetHeadAPos}, shortestPathFromStreetA.poses...),
+					cost:  shortestPathFromStreetACost,
+				}
+			}
 		}
 		{
-			shortestPathFromStreetACost := float64(streetPathCost)*distFromA/totalDist + float64(shortestPathFromStreetA.cost)
-			shortestPathFromStreetBCost := float64(streetPathCost)*distFromB/totalDist + float64(shortestPathFromStreetB.cost)
 			if shortestPathFromStreetACost <= shortestPathFromStreetBCost && len(shortestPathFromStreetA.poses) <= len(shortestPathFromStreetB.poses) {
-				return shortestPath{
+				return &pathWithCost{
 					poses: append([]math.Pos{streetHeadAPos}, shortestPathFromStreetA.poses...),
-					cost:  shortestPathFromStreetA.cost,
+					cost:  shortestPathFromStreetACost,
 				}
 			} else {
-				return shortestPath{
+				return &pathWithCost{
 					poses: append([]math.Pos{streetHeadBPos}, shortestPathFromStreetB.poses...),
-					cost:  shortestPathFromStreetB.cost,
+					cost:  shortestPathFromStreetBCost,
 				}
 			}
 		}
 	}
 
 	var plannedPath []math.Pos
-	var lastPathCost *int
+	var lastPathCost *float64
+
+	var testPath [][]math.Pos
+	var testCost []float64
 
 	matchedStreetIDs := m.getStreetIDsFromCurrentPosition()
 	for _, streetID := range matchedStreetIDs {
@@ -233,6 +242,9 @@ func (m MioAutomaton) PathFindingUpdate() {
 			lastPathCost = &path.cost
 			plannedPath = path.poses
 		}
+
+		testPath = append(testPath, path.poses)
+		testCost = append(testCost, path.cost)
 	}
 	if plannedPath == nil {
 		return
@@ -242,61 +254,77 @@ func (m MioAutomaton) PathFindingUpdate() {
 		plannedPath = plannedPath[1:]
 	}
 
+	// if duplicate with mio's old planned path, skip change planned poses
+	isDiffPaths := len(mioState.PlannedPoses) != len(plannedPath)
+
+	for i, pos := range mioState.PlannedPoses {
+		if pos != plannedPath[i] {
+			isDiffPaths = true
+			break
+		}
+	}
+
+	if !isDiffPaths {
+		return
+	}
+
+	fmt.Printf("new path selected, cost: %f\n", *lastPathCost)
+	for i, v := range testPath {
+		fmt.Printf("path %v, cost: %f\n", v, testCost[i])
+	}
+
 	err = m.MioOperator.ChangePlannedPoses(m.EntityID, plannedPath)
 	if err != nil {
 		fmt.Print(err)
 	}
 }
 
-func findShortestPath(mapGraph math.Graph, mapPaths []math.Path, start, end math.Pos) shortestPath {
-	var sp *shortestPath
+func findShortestPath(mapGraph math.Graph, mapPaths []math.Path, start, end math.Pos) *pathWithCost {
+	if start == end {
+		return &pathWithCost{}
+	}
+
+	pathWithCosts := []pathWithCost{}
 
 	paths := mapGraph.FindPath(start, end)
 
-	var wg sync.WaitGroup
-	wg.Add(len(paths))
+	// TODO: might use goroutine to optimize, make sure pathWithCosts doesn't overlap when append
 	for _, path := range paths {
-		p := path
-		go func() {
-			defer wg.Done()
+		lastPos := start
+		cost := 0.0
 
-			lastPos := start
-			cost := 0
+		for _, pos := range path {
+			if len(pathWithCosts) != 0 && cost > pathWithCosts[0].cost {
+				continue
+			}
 
-			for _, pos := range p {
-				if sp != nil && cost > sp.cost {
-					return
+			for _, mp := range mapPaths {
+				if (mp.Start == lastPos && mp.End == pos) || (mp.Start == pos && mp.End == lastPos) {
+					cost += mp.Cost
+					break
 				}
-
-				for _, mp := range mapPaths {
-					if (mp.Start == lastPos && mp.End == pos) || (mp.Start == pos && mp.End == lastPos) {
-						cost += mp.Cost
-						break
-					}
-				}
-
-				lastPos = pos
 			}
 
-			if sp != nil && cost > sp.cost {
-				return
-			}
+			lastPos = pos
+		}
 
-			if sp == nil {
-				sp = &shortestPath{}
-			}
-
-			sp.poses = p
-			sp.cost = cost
-		}()
-	}
-	wg.Wait()
-
-	if sp == nil {
-		return shortestPath{}
+		if len(pathWithCosts) != 0 && cost > pathWithCosts[0].cost {
+			continue
+		}
+		pathWithCosts = append(pathWithCosts, pathWithCost{
+			poses: path,
+			cost:  cost,
+		})
 	}
 
-	return *sp
+	var shortestPath *pathWithCost
+	for _, path := range pathWithCosts {
+		if shortestPath == nil || *&shortestPath.cost > path.cost {
+			shortestPath = &path
+		}
+	}
+
+	return shortestPath
 }
 
 func isBuildingFitMood(buildingState aggregator.BuildingState, isBored, isHungry, isThirsty bool) bool {

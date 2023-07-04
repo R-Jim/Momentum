@@ -33,7 +33,7 @@ func (o sampleOperator) SampleOperate(id uuid.UUID) error {
 	}
 
 	if o.sampleAnimator != nil {
-		o.sampleAnimator.Animator().AppendEvent(event)
+		o.sampleAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }

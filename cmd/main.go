@@ -13,6 +13,7 @@ import (
 	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/operator"
+	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -30,10 +31,6 @@ type Game struct {
 	mioAnimator *animator.Animator
 
 	mioAutomaton *automaton.MioAutomaton
-
-	p math.Pos
-
-	framesToRender map[int][]animator.Frame
 
 	automationCounter int
 
@@ -56,8 +53,6 @@ func (g *Game) Init() {
 	g.mioStore = &mioStore
 	g.mioAnimator = &mioAnimator
 	g.mioOperator = &mioOperator
-	g.p = math.NewPos(200, 200)
-	g.framesToRender = map[int][]animator.Frame{}
 
 	posA := math.NewPos(200, 200)
 	posB := math.NewPos(300, 200)
@@ -70,7 +65,7 @@ func (g *Game) Init() {
 	mapPaths := []math.Path{
 		{Start: posA, End: posB, Cost: 10},        // street1
 		{Start: posB, End: posC, Cost: 5},         // street2
-		{Start: posB, End: posD, Cost: 5},         // street3
+		{Start: posB, End: posD, Cost: 50},        // street3
 		{Start: posC, End: buildingPos, Cost: 15}, // building street1
 		{Start: posD, End: buildingPos, Cost: 10}, // building street2
 	}
@@ -106,7 +101,7 @@ func (g *Game) Init() {
 		StreetOperator: streetOperator,
 	}
 
-	err := mioOperator.Init(mioID, posA)
+	err := mioOperator.Init(mioID, posB)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -147,15 +142,8 @@ func (g *Game) Update() error {
 		}
 	}
 
-	framesPerEvent := (*g.mioAnimator).Animator().GetFramesPerEvent()
-	for _, frames := range framesPerEvent {
-		for i, frame := range frames {
-			g.framesToRender[i] = append(g.framesToRender[i], frame)
-		}
-	}
-
 	g.automationCounter++
-	if g.automationCounter >= int(ebiten.CurrentFPS()/5) {
+	if g.automationCounter >= int(system.AUTOMATION_TICK_PER_FPS) {
 		g.mioAutomaton.PathFindingUpdate()
 		g.mioAutomaton.Move()
 		g.automationCounter = 0
@@ -166,22 +154,13 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.DrawMap(screen)
 	g.DrawBuilding(screen)
-	g.DrawMio(screen)
+	// g.DrawMio(screen)
 
-	frames, isExist := g.framesToRender[0]
-	if !isExist {
-		return
-	}
+	frames := (*g.mioAnimator).Animator().GetFrames()
 
 	for _, frame := range frames {
-		screen.DrawImage(&frame.Image, &frame.Option)
+		screen.DrawImage(frame.Image, frame.Option)
 	}
-
-	updatedFramesToRender := map[int][]animator.Frame{}
-	for i := 1; i < len(g.framesToRender); i++ {
-		updatedFramesToRender[i-1] = g.framesToRender[i]
-	}
-	g.framesToRender = updatedFramesToRender
 }
 
 func (g *Game) DrawMap(screen *ebiten.Image) {
@@ -223,22 +202,22 @@ func (g *Game) DrawBuilding(screen *ebiten.Image) {
 	}
 }
 
-func (g *Game) DrawMio(screen *ebiten.Image) {
-	events, err := (*g.mioStore).GetEventsByEntityID(g.mioID)
-	if err != nil {
-		log.Fatalln(err)
-	}
+// func (g *Game) DrawMio(screen *ebiten.Image) {
+// 	events, err := (*g.mioStore).GetEventsByEntityID(g.mioID)
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
 
-	mioPositionState, err := aggregator.GetMioState(events)
-	if err != nil {
-		log.Fatalln(err)
-	}
+// 	mioPositionState, err := aggregator.GetMioState(events)
+// 	if err != nil {
+// 		log.Fatalln(err)
+// 	}
 
-	// TODO: separate to building draw layer
-	mioRadius := 20.0
+// 	// TODO: separate to building draw layer
+// 	mioRadius := 20.0
 
-	ebitenutil.DrawRect(screen, mioPositionState.Position.X-mioRadius/2, mioPositionState.Position.Y-mioRadius/2, mioRadius, mioRadius, color.RGBA{0x0, 0xff, 0x0, 0xff})
-}
+// 	ebitenutil.DrawRect(screen, mioPositionState.Position.X-mioRadius/2, mioPositionState.Position.Y-mioRadius/2, mioRadius, mioRadius, color.RGBA{0x0, 0xff, 0x0, 0xff})
+// }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight

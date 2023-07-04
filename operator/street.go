@@ -35,7 +35,7 @@ func (o StreetOperator) Init(id uuid.UUID, headA, headB math.Pos) error {
 	}
 
 	if o.streetAnimator != nil {
-		o.streetAnimator.Animator().AppendEvent(event)
+		o.streetAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -58,7 +58,7 @@ func (o StreetOperator) EntityEnter(id, entityID uuid.UUID) error {
 	}
 
 	if o.streetAnimator != nil {
-		o.streetAnimator.Animator().AppendEvent(event)
+		o.streetAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -81,7 +81,7 @@ func (o StreetOperator) EntityLeave(id, entityID uuid.UUID) error {
 	}
 
 	if o.streetAnimator != nil {
-		o.streetAnimator.Animator().AppendEvent(event)
+		o.streetAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }

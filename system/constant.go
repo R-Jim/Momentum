@@ -1,6 +1,9 @@
 package system
 
 const (
-	DEFAULT_FPS              = 30
-	FRAME_TO_AUTOMATION_TICK = DEFAULT_FPS
+	DEFAULT_FPS = 16
+)
+
+var (
+	AUTOMATION_TICK_PER_FPS = DEFAULT_FPS / 1 // 1 automation tick for every DEFAULT_FPS(example: 1 per 30FPS)
 )
