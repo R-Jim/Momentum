@@ -72,7 +72,7 @@ func main() {
 	var sizePerSprite []int // [x,y]
 	var defaultFPS int
 	{
-		spriteSizeComponentRegex, err := regexp.Compile("_\\d+x\\d+_")
+		spriteSizeComponentRegex, err := regexp.Compile("-\\d+x\\d+-")
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -91,7 +91,7 @@ func main() {
 		}
 	}
 	{
-		fpsComponentRegex, err := regexp.Compile("_\\d+_")
+		fpsComponentRegex, err := regexp.Compile("(?:-\\d+x\\d+-)\\d+")
 		if err != nil {
 			log.Fatalln(err)
 		}
