@@ -28,7 +28,7 @@ func (o BuildingOperator) Init(id uuid.UUID, buildingType event.BuildingType, po
 	}
 
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(event)
+		o.BuildingAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -51,7 +51,7 @@ func (o BuildingOperator) EntityEnter(id, entityID uuid.UUID) error {
 	}
 
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(event)
+		o.BuildingAnimator.Animator().ProcessEvent(event)
 
 	}
 	return nil
@@ -75,7 +75,7 @@ func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
 	}
 
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(event)
+		o.BuildingAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -98,7 +98,7 @@ func (o BuildingOperator) EntityAct(id, entityID uuid.UUID) error {
 	}
 
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(event)
+		o.BuildingAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }

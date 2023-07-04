@@ -28,7 +28,7 @@ func (o WorkerOperator) Init(id uuid.UUID) error {
 	}
 
 	if o.WorkerAnimator != nil {
-		o.WorkerAnimator.Animator().AppendEvent(event)
+		o.WorkerAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -64,10 +64,10 @@ func (o WorkerOperator) AssignBuilding(id uuid.UUID, buildingID uuid.UUID) error
 	}
 
 	if o.WorkerAnimator != nil {
-		o.WorkerAnimator.Animator().AppendEvent(workerAssignBuildingEvent)
+		o.WorkerAnimator.Animator().ProcessEvent(workerAssignBuildingEvent)
 	}
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(buildingWorkerAssignEvent)
+		o.BuildingAnimator.Animator().ProcessEvent(buildingWorkerAssignEvent)
 	}
 	return nil
 }
@@ -103,10 +103,10 @@ func (o WorkerOperator) UnassignBuilding(id uuid.UUID, buildingID uuid.UUID) err
 	}
 
 	if o.WorkerAnimator != nil {
-		o.WorkerAnimator.Animator().AppendEvent(workerAssignBuildingEvent)
+		o.WorkerAnimator.Animator().ProcessEvent(workerAssignBuildingEvent)
 	}
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(buildingWorkerAssignEvent)
+		o.BuildingAnimator.Animator().ProcessEvent(buildingWorkerAssignEvent)
 	}
 	return nil
 }
@@ -142,10 +142,10 @@ func (o WorkerOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 
 	if o.WorkerAnimator != nil {
-		o.WorkerAnimator.Animator().AppendEvent(workerActEvent)
+		o.WorkerAnimator.Animator().ProcessEvent(workerActEvent)
 	}
 	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().AppendEvent(buildingWorkerActEvent)
+		o.BuildingAnimator.Animator().ProcessEvent(buildingWorkerActEvent)
 	}
 	return nil
 }
