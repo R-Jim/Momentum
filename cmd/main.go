@@ -40,13 +40,21 @@ type Game struct {
 
 func (g *Game) Init() {
 	mioID := uuid.New()
+
 	mioStore := store.NewStore()
+	buildingStore := store.NewStore()
 
 	mioAnimator := animator.NewMioAnimator(&mioStore)
+
+	buildingOperator := operator.BuildingOperator{
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+	}
 
 	mioOperator := operator.MioOperator{
 		MioAggregator: aggregator.NewMioAggregator(&mioStore),
 		MioAnimator:   mioAnimator,
+
+		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
 	}
 
 	g.mioID = mioID
@@ -80,12 +88,8 @@ func (g *Game) Init() {
 	buildingStreetID1 := uuid.New()
 	buildingStreetID2 := uuid.New()
 
-	buildingStore := store.NewStore()
 	streetStore := store.NewStore()
 
-	BuildingOperator := operator.BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
 	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
 
 	g.mioAutomaton = &automaton.MioAutomaton{
@@ -101,7 +105,7 @@ func (g *Game) Init() {
 		StreetOperator: streetOperator,
 	}
 
-	err := mioOperator.Init(mioID, posB)
+	err := mioOperator.Init(mioID, buildingPos)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -128,7 +132,7 @@ func (g *Game) Init() {
 	}
 
 	drinkStoreID := uuid.New()
-	err = BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos)
+	err = buildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -139,6 +143,16 @@ func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
 		if err := g.mioOperator.SelectBuilding(g.mioID, g.buildingID); err != nil {
 			return err
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyK) {
+		if err := g.mioOperator.Act(g.mioID, g.buildingID); err != nil {
+			// return err
+		}
+	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
+		if err := g.mioOperator.EnterBuilding(g.mioID, g.buildingID); err != nil {
+			// return err
 		}
 	}
 
@@ -154,7 +168,6 @@ func (g *Game) Update() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.DrawMap(screen)
 	g.DrawBuilding(screen)
-	// g.DrawMio(screen)
 
 	frames := (*g.mioAnimator).Animator().GetFrames()
 
@@ -201,23 +214,6 @@ func (g *Game) DrawBuilding(screen *ebiten.Image) {
 		drawBuilding(pos)
 	}
 }
-
-// func (g *Game) DrawMio(screen *ebiten.Image) {
-// 	events, err := (*g.mioStore).GetEventsByEntityID(g.mioID)
-// 	if err != nil {
-// 		log.Fatalln(err)
-// 	}
-
-// 	mioPositionState, err := aggregator.GetMioState(events)
-// 	if err != nil {
-// 		log.Fatalln(err)
-// 	}
-
-// 	// TODO: separate to building draw layer
-// 	mioRadius := 20.0
-
-// 	ebitenutil.DrawRect(screen, mioPositionState.Position.X-mioRadius/2, mioPositionState.Position.Y-mioRadius/2, mioRadius, mioRadius, color.RGBA{0x0, 0xff, 0x0, 0xff})
-// }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return outsideWidth, outsideHeight

@@ -2,6 +2,7 @@ package animator
 
 import (
 	_ "image/png"
+	"log"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
@@ -22,8 +23,6 @@ type mioImpl struct {
 
 	mioStore *store.Store
 
-	entityLastPosition *map[uuid.UUID]math.Pos
-
 	mioAsset mioAsset
 }
 
@@ -31,18 +30,20 @@ type mioAsset struct {
 	idleSpriteSheet spriteSheet
 	walkSpriteSheet spriteSheet
 	runSpriteSheet  spriteSheet
+
+	actSpriteSheet spriteSheet
 }
 
 func NewMioAnimator(store *store.Store) Animator {
 	mio := mioImpl{
 		mioStore: store,
 
-		entityLastPosition: &map[uuid.UUID]math.Pos{},
-
 		mioAsset: mioAsset{
 			idleSpriteSheet: newSpriteSheet(asset.Idle_24x24, asset.Idle_24x24_Size),
 			walkSpriteSheet: newSpriteSheet(asset.Walk_24x24, asset.Walk_24x24_Size),
 			runSpriteSheet:  newSpriteSheet(asset.Walk_24x24, asset.Walk_24x24_Size),
+
+			actSpriteSheet: newSpriteSheet(asset.Act_24x24, asset.Act_24x24_Size),
 		},
 	}
 
@@ -68,7 +69,7 @@ func NewMioAnimator(store *store.Store) Animator {
 			}
 
 			frames := []frame{}
-			currentPos := (*mio.entityLastPosition)[e.EntityID] // TODO: should add a func to compose all of Mio's position effected effects
+			currentPos := mio.getMioPos(e.EntityID)
 			desireNumberOfFrames := len(mioWalkSprites)
 
 			for i := 0; i < len(mioWalkSprites); i++ {
@@ -80,7 +81,6 @@ func NewMioAnimator(store *store.Store) Animator {
 				})
 			}
 
-			(*mio.entityLastPosition)[e.EntityID] = destinationPos
 			return frames
 		},
 		event.MioRunEffect: func(e event.Event) []frame {
@@ -104,7 +104,7 @@ func NewMioAnimator(store *store.Store) Animator {
 			}
 
 			frames := []frame{}
-			currentPos := (*mio.entityLastPosition)[e.EntityID] // TODO: should add a func to compose all of Mio's position effected effects
+			currentPos := mio.getMioPos(e.EntityID)
 			desireNumberOfFrames := len(mioRunSprites)
 
 			for i := 0; i < len(mioRunSprites); i++ {
@@ -116,7 +116,23 @@ func NewMioAnimator(store *store.Store) Animator {
 				})
 			}
 
-			(*mio.entityLastPosition)[e.EntityID] = destinationPos
+			return frames
+		},
+		event.MioActEffect: func(e event.Event) []frame {
+			mioActSpriteSheet := mio.mioAsset.actSpriteSheet
+
+			mioActSprites := mioActSpriteSheet.sprites
+			frames := []frame{}
+			currentPos := mio.getMioPos(e.EntityID)
+
+			for i := 0; i < len(mioActSprites); i++ {
+				image := ebiten.NewImageFromImage(mioActSprites[i])
+				frames = append(frames, frame{
+					Image:  image,
+					Option: getCenteredDrawImageOptions(mioActSprites[i], currentPos),
+				})
+			}
+
 			return frames
 		},
 	}
@@ -159,4 +175,18 @@ func (i mioImpl) getMioIdleFrames(entityIDsWithFrame []uuid.UUID) []frame {
 	}
 
 	return result
+}
+
+func (i mioImpl) getMioPos(id uuid.UUID) math.Pos {
+	events, err := (*i.mioStore).GetEventsByEntityID(id)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	mioState, err := aggregator.GetMioState(events)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	return mioState.Position
 }
