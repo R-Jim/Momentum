@@ -155,6 +155,11 @@ func (g *Game) Update() error {
 			// return err
 		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyE) {
+		if err := g.mioOperator.Eat(g.mioID, 20); err != nil {
+			// return err
+		}
+	}
 
 	g.automationCounter++
 	if g.automationCounter >= int(system.AUTOMATION_TICK_PER_FPS) {

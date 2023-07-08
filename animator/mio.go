@@ -140,6 +140,9 @@ func NewMioAnimator(store *store.Store) Animator {
 	mio.animatorImpl = newAnimatorImpl()
 	mio.animatorImpl.getEventFramesSet = animateEventSet
 	mio.animatorImpl.getIdleFramesFunc = mio.getMioIdleFrames
+	mio.animatorImpl.subAnimators = []Animator{
+		NewMioEffectAnimator(mio.mioStore),
+	}
 	return mio
 }
 
