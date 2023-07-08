@@ -11,6 +11,8 @@ type animatorImpl struct {
 
 	getEventFramesSet map[event.Effect]func(event event.Event) []frame
 	getIdleFramesFunc func(entityIDsWithEvent []uuid.UUID) []frame
+
+	subAnimators []Animator
 }
 
 func newAnimatorImpl() *animatorImpl {
@@ -24,19 +26,21 @@ type Animator interface {
 }
 
 func (a *animatorImpl) ProcessEvent(event event.Event) {
-	getFramesFunc, isExist := a.getEventFramesSet[event.Effect]
-	if !isExist {
-		return
+	getFramesFunc := a.getEventFramesSet[event.Effect]
+	if getFramesFunc != nil {
+		for index, _frame := range getFramesFunc(event) {
+			if len(a.framesToRender) == index {
+				a.framesToRender = append(
+					a.framesToRender,
+					map[uuid.UUID][]frame{event.EntityID: {_frame}})
+			} else {
+				a.framesToRender[index][event.EntityID] = append(a.framesToRender[index][event.EntityID], _frame)
+			}
+		}
 	}
 
-	for index, _frame := range getFramesFunc(event) {
-		if len(a.framesToRender) == index {
-			a.framesToRender = append(
-				a.framesToRender,
-				map[uuid.UUID][]frame{event.EntityID: {_frame}})
-		} else {
-			a.framesToRender[index][event.EntityID] = append(a.framesToRender[index][event.EntityID], _frame)
-		}
+	for _, subAnimator := range a.subAnimators {
+		subAnimator.Animator().ProcessEvent(event)
 	}
 }
 
@@ -53,5 +57,13 @@ func (a *animatorImpl) GetFrames() []frame {
 		a.framesToRender = a.framesToRender[1:]
 	}
 
-	return append(frames, a.getIdleFramesFunc(entityIDsWithEvent)...)
+	if a.getIdleFramesFunc != nil {
+		frames = append(frames, a.getIdleFramesFunc(entityIDsWithEvent)...)
+	}
+
+	for _, subAnimator := range a.subAnimators {
+		frames = append(frames, subAnimator.Animator().GetFrames()...)
+	}
+
+	return frames
 }
