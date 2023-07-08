@@ -70,9 +70,9 @@ func main() {
 	spriteSheetName := fileNameRegex.Split(spriteSheetFile, 2)[0]
 
 	var sizePerSprite []int // [x,y]
-	var defaultFPS int
+	defaultFPS := 60
 	{
-		spriteSizeComponentRegex, err := regexp.Compile("-\\d+x\\d+-")
+		spriteSizeComponentRegex, err := regexp.Compile("-\\d+x\\d+")
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -101,9 +101,11 @@ func main() {
 			log.Fatalln(err)
 		}
 		fpsString := fpsRegex.FindString(fpsComponent)
-		defaultFPS, err = strconv.Atoi(fpsString)
-		if err != nil {
-			log.Fatalln(err)
+		if fpsString != "" {
+			defaultFPS, err = strconv.Atoi(fpsString)
+			if err != nil {
+				log.Fatalln(err)
+			}
 		}
 	}
 	log.Printf("animating sprite sheet, %s, sprite size: %vx%v, fps: %v\n", spriteSheetFile, sizePerSprite[0], sizePerSprite[1], defaultFPS)
