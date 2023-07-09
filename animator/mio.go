@@ -162,6 +162,8 @@ func NewMioAnimator(store *store.Store) Animator {
 	mio.animatorImpl.subAnimators = []Animator{
 		NewMioEffectAnimator(mio.mioStore),
 	}
+	mio.animatorImpl.defaultRenderLayer = MioRenderLayer
+
 	return mio
 }
 

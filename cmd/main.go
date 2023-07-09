@@ -36,6 +36,12 @@ type Game struct {
 
 	gameMap       []math.Path
 	buildingPoses []math.Pos // TODO: should get building pos from building store
+
+	defaultLayer *ebiten.Image
+	mioLayer     *ebiten.Image
+	effectLayer  *ebiten.Image
+
+	count int
 }
 
 func (g *Game) Init() {
@@ -137,6 +143,10 @@ func (g *Game) Init() {
 		log.Fatal(err)
 	}
 	g.buildingID = drinkStoreID
+
+	g.effectLayer = ebiten.NewImage(800, 600)
+	g.mioLayer = ebiten.NewImage(800, 600)
+	g.defaultLayer = ebiten.NewImage(800, 600)
 }
 
 func (g *Game) Update() error {
@@ -179,11 +189,32 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.DrawMap(screen)
 	g.DrawBuilding(screen)
 
-	frames := (*g.mioAnimator).Animator().GetFrames()
+	if g.count == int(60/system.DEFAULT_FPS) {
+		g.effectLayer.Clear()
+		g.mioLayer.Clear()
+		g.defaultLayer.Clear()
 
-	for _, frame := range frames {
-		screen.DrawImage(frame.Image, frame.Option)
+		frames := (*g.mioAnimator).Animator().GetFrames()
+
+		for _, frame := range frames {
+			switch frame.RenderLayer {
+			case animator.EffectRenderLayer:
+				g.effectLayer.DrawImage(frame.Image, frame.Option)
+			case animator.MioRenderLayer:
+				g.mioLayer.DrawImage(frame.Image, frame.Option)
+			default:
+				g.defaultLayer.DrawImage(frame.Image, frame.Option)
+			}
+		}
+
+		g.count = 0
 	}
+
+	screen.DrawImage(g.effectLayer, &ebiten.DrawImageOptions{})
+	screen.DrawImage(g.mioLayer, &ebiten.DrawImageOptions{})
+	screen.DrawImage(g.defaultLayer, &ebiten.DrawImageOptions{})
+
+	g.count++
 }
 
 func (g *Game) DrawMap(screen *ebiten.Image) {
