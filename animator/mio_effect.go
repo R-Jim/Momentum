@@ -41,6 +41,8 @@ func NewMioEffectAnimator(store *store.Store) Animator {
 
 	mio.animatorImpl = newAnimatorImpl()
 	mio.animatorImpl.getEventFramesSet = animateEventSet
+	mio.animatorImpl.defaultRenderLayer = EffectRenderLayer
+
 	return mio
 }
 
