@@ -9,9 +9,15 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+type RenderLayer string
+func (rl RenderLayer) String() string {
+	return string(rl)
+}
+
 type frame struct {
-	Image  *ebiten.Image
-	Option *ebiten.DrawImageOptions
+	Image       *ebiten.Image
+	Option      *ebiten.DrawImageOptions
+	RenderLayer RenderLayer
 }
 
 type spriteSheet struct {
