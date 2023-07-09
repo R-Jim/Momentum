@@ -160,6 +160,11 @@ func (g *Game) Update() error {
 			// return err
 		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.KeyW) {
+		if err := g.mioOperator.Stream(g.mioID, 20); err != nil {
+			// return err
+		}
+	}
 
 	g.automationCounter++
 	if g.automationCounter >= int(system.AUTOMATION_TICK_PER_FPS) {

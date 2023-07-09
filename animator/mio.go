@@ -31,7 +31,8 @@ type mioAsset struct {
 	walkSpriteSheet spriteSheet
 	runSpriteSheet  spriteSheet
 
-	actSpriteSheet spriteSheet
+	actSpriteSheet  spriteSheet
+	workSpriteSheet spriteSheet
 }
 
 func NewMioAnimator(store *store.Store) Animator {
@@ -43,7 +44,8 @@ func NewMioAnimator(store *store.Store) Animator {
 			walkSpriteSheet: newSpriteSheet(asset.Walk_24x24, asset.Walk_24x24_Size),
 			runSpriteSheet:  newSpriteSheet(asset.Walk_24x24, asset.Walk_24x24_Size),
 
-			actSpriteSheet: newSpriteSheet(asset.Act_24x24, asset.Act_24x24_Size),
+			actSpriteSheet:  newSpriteSheet(asset.Act_24x24, asset.Act_24x24_Size),
+			workSpriteSheet: newSpriteSheet(asset.Work_24x24, asset.Work_24x24_Size),
 		},
 	}
 
@@ -130,6 +132,23 @@ func NewMioAnimator(store *store.Store) Animator {
 				frames = append(frames, frame{
 					Image:  image,
 					Option: getCenteredDrawImageOptions(mioActSprites[i], currentPos),
+				})
+			}
+
+			return frames
+		},
+		event.MioStreamEffect: func(e event.Event) []frame {
+			mioWorkSpriteSheet := mio.mioAsset.workSpriteSheet
+
+			mioWorkSprites := mioWorkSpriteSheet.sprites
+			frames := []frame{}
+			currentPos := mio.getMioPos(e.EntityID)
+
+			for i := 0; i < len(mioWorkSprites); i++ {
+				image := ebiten.NewImageFromImage(mioWorkSprites[i])
+				frames = append(frames, frame{
+					Image:  image,
+					Option: getCenteredDrawImageOptions(mioWorkSprites[i], currentPos),
 				})
 			}
 
