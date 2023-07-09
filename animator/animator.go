@@ -7,6 +7,8 @@ import (
 )
 
 type animatorImpl struct {
+	defaultRenderLayer RenderLayer
+
 	framesToRender []map[uuid.UUID][]frame
 
 	getEventFramesSet map[event.Effect]func(event event.Event) []frame
@@ -59,6 +61,13 @@ func (a *animatorImpl) GetFrames() []frame {
 
 	if a.getIdleFramesFunc != nil {
 		frames = append(frames, a.getIdleFramesFunc(entityIDsWithEvent)...)
+	}
+
+	for i, _frame := range frames {
+		if _frame.RenderLayer.String() == "" {
+			_frame.RenderLayer = a.defaultRenderLayer
+			frames[i] = _frame
+		}
 	}
 
 	for _, subAnimator := range a.subAnimators {
