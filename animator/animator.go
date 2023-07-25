@@ -2,12 +2,17 @@ package animator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
+	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
 )
 
 type animatorImpl struct {
+	store *store.Store
+
 	defaultRenderLayer RenderLayer
+
+	counterSet map[uuid.UUID]int
 
 	framesToRender []map[uuid.UUID][]frame
 
@@ -19,6 +24,8 @@ type animatorImpl struct {
 
 func newAnimatorImpl() *animatorImpl {
 	return &animatorImpl{
+		counterSet: map[uuid.UUID]int{},
+
 		framesToRender: make([]map[uuid.UUID][]frame, system.DEFAULT_FPS),
 	}
 }
@@ -27,7 +34,29 @@ type Animator interface {
 	Animator() *animatorImpl
 }
 
-func (a *animatorImpl) ProcessEvent(event event.Event) {
+func (a *animatorImpl) pullNewEventFromStore() {
+	totalCounter := 0
+	for _, counter := range a.counterSet {
+		totalCounter += counter
+	}
+
+	if totalCounter != (*a.store).GetCounter() {
+		for id, events := range (*a.store).GetEvents() {
+			index, isExist := a.counterSet[id]
+			if isExist {
+				events = events[index:]
+			}
+
+			for _, event := range events {
+				a.processEvent(event)
+			}
+			a.counterSet[id] = index + len(events)
+		}
+	}
+
+}
+
+func (a *animatorImpl) processEvent(event event.Event) {
 	getFramesFunc := a.getEventFramesSet[event.Effect]
 	if getFramesFunc != nil {
 		for index, _frame := range getFramesFunc(event) {
@@ -42,11 +71,13 @@ func (a *animatorImpl) ProcessEvent(event event.Event) {
 	}
 
 	for _, subAnimator := range a.subAnimators {
-		subAnimator.Animator().ProcessEvent(event)
+		subAnimator.Animator().processEvent(event)
 	}
 }
 
 func (a *animatorImpl) GetFrames() []frame {
+	a.pullNewEventFromStore()
+
 	frames := []frame{}
 	entityIDsWithEvent := []uuid.UUID{}
 

@@ -5,38 +5,39 @@ import (
 	"github.com/google/uuid"
 )
 
-type impl struct {
+type Store struct {
+	counter int
+
 	eventsSet map[uuid.UUID][]event.Event
-}
-type Store interface {
-	GetEventsByEntityID(id uuid.UUID) ([]event.Event, error)
-	// WARNING: action strictly used by AGGREGATOR ONLY
-	AppendEvent(event.Event) error
-	GetEvents() map[uuid.UUID][]event.Event
 }
 
 func NewStore() Store {
-	return impl{
+	return Store{
 		eventsSet: make(map[uuid.UUID][]event.Event),
 	}
 }
 
-func (i impl) GetEventsByEntityID(id uuid.UUID) ([]event.Event, error) {
+func (i Store) GetEventsByEntityID(id uuid.UUID) ([]event.Event, error) {
 	return i.eventsSet[id], nil
 }
 
-func (i impl) AppendEvent(e event.Event) error {
+// WARNING: action strictly used by AGGREGATOR ONLY
+func (i *Store) AppendEvent(e event.Event) error {
 	events := i.eventsSet[e.EntityID]
 	if events == nil {
 		events = []event.Event{}
 	}
 
 	i.eventsSet[e.EntityID] = append(events, e)
-
+	i.counter++
 	return nil
 }
 
-func (i impl) GetEvents() map[uuid.UUID][]event.Event {
+func (i Store) GetEvents() map[uuid.UUID][]event.Event {
 	events := i.eventsSet // Shallow clone
 	return events
+}
+
+func (i Store) GetCounter() int {
+	return i.counter
 }
