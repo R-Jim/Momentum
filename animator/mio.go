@@ -35,9 +35,9 @@ type mioAsset struct {
 	workSpriteSheet spriteSheet
 }
 
-func NewMioAnimator(store *store.Store) Animator {
+func NewMioAnimator(_store *store.Store) Animator {
 	mio := mioImpl{
-		mioStore: store,
+		mioStore: _store,
 
 		mioAsset: mioAsset{
 			idleSpriteSheet: newSpriteSheet(asset.Idle_24x24, asset.Idle_24x24_Size),
@@ -163,6 +163,7 @@ func NewMioAnimator(store *store.Store) Animator {
 		NewMioEffectAnimator(mio.mioStore),
 	}
 	mio.animatorImpl.defaultRenderLayer = MioRenderLayer
+	mio.animatorImpl.store = _store
 
 	return mio
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
+	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
 )
 
@@ -375,9 +376,9 @@ func GetMioActivityState(events []event.Event) (MioActivityState, error) {
 	return composeState(MioActivityState{}, events, func(state MioActivityState, e event.Event) (MioActivityState, error) {
 		switch e.Effect {
 		case event.MioInitEffect:
-			state.MaxMood = 100
-			state.MaxEnergy = 100
-			state.MaxDehydration = 100
+			state.MaxMood = system.STAT_CAP
+			state.MaxEnergy = system.STAT_CAP
+			state.MaxDehydration = system.STAT_CAP
 
 			state.Mood = 70
 			state.Energy = 70

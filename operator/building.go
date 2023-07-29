@@ -3,15 +3,12 @@ package operator
 import (
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/animator"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
 
 type BuildingOperator struct {
 	BuildingAggregator aggregator.Aggregator
-
-	BuildingAnimator animator.Animator
 }
 
 func (o BuildingOperator) Init(id uuid.UUID, buildingType event.BuildingType, pos math.Pos) error {
@@ -25,10 +22,6 @@ func (o BuildingOperator) Init(id uuid.UUID, buildingType event.BuildingType, po
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -48,11 +41,6 @@ func (o BuildingOperator) EntityEnter(id, entityID uuid.UUID) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(event)
-
 	}
 	return nil
 }
@@ -74,9 +62,6 @@ func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
 		return err
 	}
 
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -97,8 +82,5 @@ func (o BuildingOperator) EntityAct(id, entityID uuid.UUID) error {
 		return err
 	}
 
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
