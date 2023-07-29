@@ -25,11 +25,11 @@ type Game struct {
 	buildingID uuid.UUID
 
 	mioStore *store.Store
-
+	// operator
 	mioOperator *operator.MioOperator
-
+	// animator
 	mioAnimator *animator.Animator
-
+	// automaton
 	mioAutomaton *automaton.MioAutomaton
 
 	automationCounter int
@@ -58,7 +58,6 @@ func (g *Game) Init() {
 
 	mioOperator := operator.MioOperator{
 		MioAggregator: aggregator.NewMioAggregator(&mioStore),
-		MioAnimator:   mioAnimator,
 
 		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
 	}
@@ -96,7 +95,7 @@ func (g *Game) Init() {
 
 	streetStore := store.NewStore()
 
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore))
 
 	g.mioAutomaton = &automaton.MioAutomaton{
 		EntityID: mioID,

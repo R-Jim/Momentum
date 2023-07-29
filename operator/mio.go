@@ -3,7 +3,6 @@ package operator
 import (
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/animator"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
@@ -11,9 +10,6 @@ import (
 type MioOperator struct {
 	MioAggregator      aggregator.Aggregator
 	BuildingAggregator aggregator.Aggregator
-
-	MioAnimator      animator.Animator
-	BuildingAnimator animator.Animator
 }
 
 func (o MioOperator) Init(id uuid.UUID, position math.Pos) error {
@@ -26,10 +22,6 @@ func (o MioOperator) Init(id uuid.UUID, position math.Pos) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -50,10 +42,6 @@ func (o MioOperator) Walk(id uuid.UUID, posEnd math.Pos) error {
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -72,10 +60,6 @@ func (o MioOperator) Run(id uuid.UUID, posEnd math.Pos) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -96,10 +80,6 @@ func (o MioOperator) Idle(id uuid.UUID) error {
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -118,10 +98,6 @@ func (o MioOperator) EnterStreet(id uuid.UUID, streetID uuid.UUID) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -143,12 +119,6 @@ func (o MioOperator) SelectBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	if err := (*mioStore).AppendEvent(mioEnterBuildingEvent); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		if o.MioAnimator != nil {
-			o.MioAnimator.Animator().ProcessEvent(mioEnterBuildingEvent)
-		}
-	}
 	return nil
 }
 
@@ -169,11 +139,6 @@ func (o MioOperator) UnselectBuilding(id uuid.UUID, buildingID uuid.UUID) error 
 	if err := (*mioStore).AppendEvent(mioLeaveBuildingEvent); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(mioLeaveBuildingEvent)
-	}
-
 	return nil
 }
 
@@ -205,13 +170,6 @@ func (o MioOperator) EnterBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	}
 	if err := (*buildingStore).AppendEvent(buildingMioEnterEvent); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(mioEnterBuildingEvent)
-	}
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(buildingMioEnterEvent)
 	}
 	return nil
 }
@@ -245,13 +203,6 @@ func (o MioOperator) LeaveBuilding(id uuid.UUID, buildingID uuid.UUID) error {
 	if err := (*buildingStore).AppendEvent(buildingMioLeaveEvent); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(mioLeaveBuildingEvent)
-	}
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(buildingMioLeaveEvent)
-	}
 	return nil
 }
 
@@ -284,13 +235,6 @@ func (o MioOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
 	if err := (*buildingStore).AppendEvent(buildingMioActEvent); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(mioActEvent)
-	}
-	if o.BuildingAnimator != nil {
-		o.BuildingAnimator.Animator().ProcessEvent(buildingMioActEvent)
-	}
 	return nil
 }
 
@@ -309,10 +253,6 @@ func (o MioOperator) Stream(id uuid.UUID, value int) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -333,10 +273,6 @@ func (o MioOperator) Eat(id uuid.UUID, value int) error {
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -355,10 +291,6 @@ func (o MioOperator) Starve(id uuid.UUID, value int) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -379,10 +311,6 @@ func (o MioOperator) Drink(id uuid.UUID, value int) error {
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -402,10 +330,6 @@ func (o MioOperator) Sweat(id uuid.UUID, value int) error {
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -424,10 +348,6 @@ func (o MioOperator) ChangePlannedPoses(id uuid.UUID, value []math.Pos) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.MioAnimator != nil {
-		o.MioAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }

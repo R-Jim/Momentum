@@ -467,7 +467,7 @@ func Test_mioBuildingPathFinding_simple(t *testing.T) {
 	BuildingOperator := operator.BuildingOperator{
 		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
 	}
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore))
 
 	m := MioAutomaton{
 		EntityID: mioID,
@@ -581,7 +581,7 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 	buildingOperator := operator.BuildingOperator{
 		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
 	}
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore), nil)
+	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore))
 
 	m := MioAutomaton{
 		EntityID: mioID,

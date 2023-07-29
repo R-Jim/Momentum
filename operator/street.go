@@ -3,21 +3,17 @@ package operator
 import (
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/animator"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
 
 type StreetOperator struct {
 	streetAggregator aggregator.Aggregator
-
-	streetAnimator animator.Animator
 }
 
-func NewStreet(streetAggregator aggregator.Aggregator, streetAnimator animator.Animator) StreetOperator {
+func NewStreet(streetAggregator aggregator.Aggregator) StreetOperator {
 	return StreetOperator{
 		streetAggregator: streetAggregator,
-		streetAnimator:   streetAnimator,
 	}
 }
 
@@ -32,10 +28,6 @@ func (o StreetOperator) Init(id uuid.UUID, headA, headB math.Pos) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.streetAnimator != nil {
-		o.streetAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
@@ -56,10 +48,6 @@ func (o StreetOperator) EntityEnter(id, entityID uuid.UUID) error {
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
-
-	if o.streetAnimator != nil {
-		o.streetAnimator.Animator().ProcessEvent(event)
-	}
 	return nil
 }
 
@@ -78,10 +66,6 @@ func (o StreetOperator) EntityLeave(id, entityID uuid.UUID) error {
 
 	if err := (*store).AppendEvent(event); err != nil {
 		return err
-	}
-
-	if o.streetAnimator != nil {
-		o.streetAnimator.Animator().ProcessEvent(event)
 	}
 	return nil
 }
