@@ -1,6 +1,9 @@
 package event
 
-import "github.com/google/uuid"
+import (
+	"github.com/R-jim/Momentum/math"
+	"github.com/google/uuid"
+)
 
 const (
 	WorkerInitEffect Effect = "WORKER_INIT"
@@ -9,10 +12,12 @@ const (
 	WorkerUnassignEffect Effect = "WORKER_UNASSIGN"
 
 	WorkerActEffect Effect = "WORKER_ACT"
+
+	WorkerMoveEffect Effect = "WORKER_MOVE"
 )
 
-func NewWorkerInitEvent(entityID uuid.UUID) Event {
-	return newEvent(entityID, 1, WorkerInitEffect, nil)
+func NewWorkerInitEvent(entityID uuid.UUID, position math.Pos) Event {
+	return newEvent(entityID, 1, WorkerInitEffect, position)
 }
 
 func NewWorkerAssignEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
@@ -25,4 +30,8 @@ func NewWorkerUnassignEvent(entityID uuid.UUID, buildingID uuid.UUID, version in
 
 func NewWorkerActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
 	return newEvent(entityID, version, WorkerActEffect, buildingID)
+}
+
+func NewWorkerMoveEvent(entityID uuid.UUID, version int, position math.Pos) Event {
+	return newEvent(entityID, version, WorkerMoveEffect, position)
 }

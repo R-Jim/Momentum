@@ -3,12 +3,19 @@ package aggregator
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
+)
+
+const (
+	MAX_WORKER_MOVE_DISTANT = 2
 )
 
 type WorkerState struct {
 	ID         uuid.UUID
 	BuildingID uuid.UUID
+
+	Position math.Pos
 }
 
 func NewWorkerAggregator(store *store.Store) Aggregator {
@@ -24,6 +31,11 @@ func NewWorkerAggregator(store *store.Store) Aggregator {
 
 				if inputEvent.EntityID.String() == uuid.Nil.String() {
 					return ErrAggregateFail
+				}
+
+				_, err := event.ParseData[math.Pos](inputEvent)
+				if err != nil {
+					return err
 				}
 
 				return nil
@@ -95,6 +107,28 @@ func NewWorkerAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"WORKER_MOVE"
+			event.WorkerMoveEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetWorkerState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				destinationPosition, err := event.ParseData[math.Pos](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				_, _, distanceSqrt := math.GetDistances(state.Position, destinationPosition)
+				if distanceSqrt > MAX_WORKER_MOVE_DISTANT {
+					return ErrAggregateFail
+				}
+
+				return nil
+			},
 		},
 	}
 }
@@ -104,6 +138,11 @@ func GetWorkerState(events []event.Event) (WorkerState, error) {
 		switch e.Effect {
 		case event.WorkerInitEffect:
 			state.ID = e.EntityID
+			pos, err := event.ParseData[math.Pos](e)
+			if err != nil {
+				return state, err
+			}
+			state.Position = pos
 		case event.WorkerAssignEffect:
 			buildingID, err := event.ParseData[uuid.UUID](e)
 			if err != nil {
@@ -112,6 +151,12 @@ func GetWorkerState(events []event.Event) (WorkerState, error) {
 			state.BuildingID = buildingID
 		case event.WorkerUnassignEffect:
 			state.BuildingID = uuid.Nil
+		case event.WorkerMoveEffect:
+			pos, err := event.ParseData[math.Pos](e)
+			if err != nil {
+				return state, err
+			}
+			state.Position = pos
 		}
 		return state, nil
 	})
