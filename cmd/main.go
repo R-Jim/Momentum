@@ -85,8 +85,6 @@ func (g *Game) Init() {
 
 	g.gameMap = mapPaths
 
-	mapGraph := math.NewGraph(mapPaths)
-
 	street1ID := uuid.New()
 	street2ID := uuid.New()
 	street3ID := uuid.New()
@@ -100,7 +98,6 @@ func (g *Game) Init() {
 	g.mioAutomaton = &automaton.MioAutomaton{
 		EntityID: mioID,
 		MapPaths: mapPaths,
-		MapGraph: mapGraph,
 
 		MioStore:      &mioStore,
 		StreetStore:   &streetStore,
@@ -110,7 +107,7 @@ func (g *Game) Init() {
 		StreetOperator: streetOperator,
 	}
 
-	err := mioOperator.Init(mioID, buildingPos)
+	err := mioOperator.Init(mioID, posA)
 	if err != nil {
 		log.Fatal(err)
 	}

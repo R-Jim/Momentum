@@ -137,3 +137,22 @@ func (o WorkerOperator) Move(id uuid.UUID, position math.Pos) error {
 	}
 	return nil
 }
+
+func (o WorkerOperator) ChangePlannedPoses(id uuid.UUID, value []math.Pos) error {
+	store := o.WorkerAggregator.GetStore()
+	events, err := (*store).GetEventsByEntityID(id)
+	if err != nil {
+		return err
+	}
+
+	event := event.NewWorkerChangePlannedPoses(id, len(events)+1, value)
+
+	if err := o.WorkerAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
+		return err
+	}
+	return nil
+}
