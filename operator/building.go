@@ -9,6 +9,7 @@ import (
 
 type BuildingOperator struct {
 	BuildingAggregator aggregator.Aggregator
+	ProductAggregator  aggregator.Aggregator
 }
 
 func (o BuildingOperator) Init(id uuid.UUID, buildingType event.BuildingType, pos math.Pos) error {
@@ -65,20 +66,41 @@ func (o BuildingOperator) EntityLeave(id, entityID uuid.UUID) error {
 	return nil
 }
 
-func (o BuildingOperator) EntityAct(id, entityID uuid.UUID) error {
-	store := o.BuildingAggregator.GetStore()
-	events, err := (*store).GetEventsByEntityID(id)
+type ActProductProgress struct {
+	ProductID uuid.UUID
+	Value     float64
+}
+
+func (o BuildingOperator) EntityAct(id, entityID uuid.UUID, productProgress ActProductProgress) error {
+	buildingStore := o.BuildingAggregator.GetStore()
+	buildingEvents, err := (*buildingStore).GetEventsByEntityID(id)
 	if err != nil {
 		return err
 	}
 
-	event := event.NewBuildingEntityActEvent(id, entityID, len(events)+1)
+	actEvent := event.NewBuildingEntityActEvent(id, entityID, len(buildingEvents)+1)
 
-	if err := o.BuildingAggregator.Aggregate(event); err != nil {
+	if err := o.BuildingAggregator.Aggregate(actEvent); err != nil {
 		return err
 	}
 
-	if err := (*store).AppendEvent(event); err != nil {
+	if productProgress.ProductID != uuid.Nil {
+		productStore := o.ProductAggregator.GetStore()
+		productEvents, err := (*productStore).GetEventsByEntityID(productProgress.ProductID)
+		if err != nil {
+			return err
+		}
+
+		productProgressEvent := event.NewProductProgressEvent(productProgress.ProductID, len(productEvents)+1, productProgress.Value)
+
+		if err := o.ProductAggregator.Aggregate(productProgressEvent); err != nil {
+			return err
+		}
+		if err := (*productStore).AppendEvent(productProgressEvent); err != nil {
+			return err
+		}
+	}
+	if err := (*buildingStore).AppendEvent(actEvent); err != nil {
 		return err
 	}
 
