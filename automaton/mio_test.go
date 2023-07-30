@@ -438,7 +438,7 @@ func Test_MioMoodBehavior(t *testing.T) {
 	require.Equal(t, mioHouseID, mioState.SelectedBuildingID)
 }
 
-func Test_mioBuildingPathFinding_simple(t *testing.T) {
+func Test_Mio_PathFindingUpdate_simple(t *testing.T) {
 	posA := math.NewPos(0, 0)
 	posB := math.NewPos(5, 0)
 	posC := math.NewPos(8, 0)
@@ -451,8 +451,6 @@ func Test_mioBuildingPathFinding_simple(t *testing.T) {
 		{Start: posB, End: posC},           // street2
 		{Start: posC, End: buildingPos},    // building street
 	}
-
-	mapGraph := math.NewGraph(mapPaths)
 
 	mioID := uuid.New()
 	street1ID := uuid.New()
@@ -472,7 +470,6 @@ func Test_mioBuildingPathFinding_simple(t *testing.T) {
 	m := MioAutomaton{
 		EntityID: mioID,
 		MapPaths: mapPaths,
-		MapGraph: mapGraph,
 
 		MioStore:      &mioStore,
 		StreetStore:   &streetStore,
@@ -524,7 +521,7 @@ func Test_mioBuildingPathFinding_simple(t *testing.T) {
 	require.Equal(t, []math.Pos{posB, posC, buildingPos}, mioState.PlannedPoses)
 }
 
-func Test_mioBuildingPathFinding(t *testing.T) {
+func Test_Mio_PathFindingUpdate(t *testing.T) {
 	posA := math.NewPos(0, 0)
 	posB := math.NewPos(5, 0)
 	posC := math.NewPos(5, -2)
@@ -551,8 +548,6 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 
 		{Start: posE, End: building1Pos, Cost: 5},
 	}
-
-	mapGraph := math.NewGraph(mapPaths)
 
 	mioID := uuid.New()
 	streetAB_ID := uuid.New()
@@ -586,7 +581,6 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 	m := MioAutomaton{
 		EntityID: mioID,
 		MapPaths: mapPaths,
-		MapGraph: mapGraph,
 
 		MioStore:      &mioStore,
 		StreetStore:   &streetStore,
@@ -658,7 +652,7 @@ func Test_mioBuildingPathFinding(t *testing.T) {
 	require.Equal(t, []math.Pos{posA, posE, building1Pos}, mioState.PlannedPoses)
 }
 
-func Test_Move(t *testing.T) {
+func Test_Mio_Move(t *testing.T) {
 	posA := math.NewPos(0, 0)
 	posB := math.NewPos(5, 0)
 

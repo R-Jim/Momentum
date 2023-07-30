@@ -15,7 +15,8 @@ type WorkerState struct {
 	ID         uuid.UUID
 	BuildingID uuid.UUID
 
-	Position math.Pos
+	Position     math.Pos
+	PlannedPoses []math.Pos
 }
 
 func NewWorkerAggregator(store *store.Store) Aggregator {
@@ -129,6 +130,23 @@ func NewWorkerAggregator(store *store.Store) Aggregator {
 
 				return nil
 			},
+			//"WORKER_CHANGE_PLANNED_POSITIONS"
+			event.WorkerChangePlannedPoses: func(currentEvents []event.Event, inputEvent event.Event) error {
+				state, err := GetWorkerState(currentEvents)
+				if err != nil {
+					return err
+				}
+				if state.ID.String() == uuid.Nil.String() {
+					return ErrAggregateFail
+				}
+
+				_, err = event.ParseData[[]math.Pos](inputEvent)
+				if err != nil {
+					return err
+				}
+
+				return nil
+			},
 		},
 	}
 }
@@ -157,6 +175,12 @@ func GetWorkerState(events []event.Event) (WorkerState, error) {
 				return state, err
 			}
 			state.Position = pos
+		case event.WorkerChangePlannedPoses:
+			plannedPoses, err := event.ParseData[[]math.Pos](e)
+			if err != nil {
+				return state, err
+			}
+			state.PlannedPoses = plannedPoses
 		}
 		return state, nil
 	})

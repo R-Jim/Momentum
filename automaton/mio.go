@@ -2,7 +2,6 @@ package automaton
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
@@ -16,7 +15,6 @@ type MioAutomaton struct {
 	EntityID uuid.UUID
 
 	MapPaths []math.Path
-	MapGraph math.Graph
 
 	MioStore      *store.Store
 	StreetStore   *store.Store
@@ -40,28 +38,6 @@ func (m MioAutomaton) Automate() {
 	m.PathFindingUpdate()
 	m.Move()
 	m.HourlyExhaustion()
-}
-
-func (m MioAutomaton) getStreetIDsFromCurrentPosition() []uuid.UUID {
-	events := (*m.MioStore).GetEvents()[m.EntityID]
-	mioState, err := aggregator.GetMioState(events)
-	if err != nil {
-		fmt.Print(err)
-	}
-
-	matchedStreetIDs := []uuid.UUID{}
-
-	for streetID, streetEvents := range (*m.StreetStore).GetEvents() {
-		streetState, err := aggregator.GetStreetState(streetEvents)
-		if err != nil {
-			fmt.Print(err)
-		}
-		if math.IsBetweenAAndB(mioState.Position, streetState.HeadA, streetState.HeadB, 0.2) {
-			matchedStreetIDs = append(matchedStreetIDs, streetID)
-		}
-	}
-
-	return matchedStreetIDs
 }
 
 func (m *MioAutomaton) MioMoodBehavior() {
@@ -151,93 +127,24 @@ func (m MioAutomaton) PathFindingUpdate() {
 		return
 	}
 
-	getStreetShortestPath := func(streetID uuid.UUID) *pathWithCost {
-		var mioPos, streetHeadAPos, streetHeadBPos, buildingPos math.Pos
-
-		{
-			streetEvents := (*m.StreetStore).GetEvents()[streetID]
-			streetState, err := aggregator.GetStreetState(streetEvents)
-			if err != nil {
-				fmt.Print(err)
-			}
-
-			mioPos = mioState.Position
-			streetHeadAPos = streetState.HeadA
-			streetHeadBPos = streetState.HeadB
-			buildingPos = buildingState.Pos
-		}
-
-		streetPathCost := 0.0
-		for _, path := range m.MapPaths {
-			if (path.Start == streetHeadAPos && path.End == streetHeadBPos) || (path.Start == streetHeadBPos && path.End == streetHeadAPos) {
-				streetPathCost = path.Cost
-			}
-		}
-
-		_, _, distFromA := math.GetDistances(mioPos, streetHeadAPos)
-		_, _, distFromB := math.GetDistances(mioPos, streetHeadBPos)
-		totalDist := distFromA + distFromB
-
-		var shortestPathFromStreetA, shortestPathFromStreetB *pathWithCost
-		var shortestPathFromStreetACost, shortestPathFromStreetBCost float64
-		{
-			var wg sync.WaitGroup
-			wg.Add(2)
-
-			go func() {
-				defer wg.Done()
-				shortestPathFromStreetA = findShortestPath(m.MapGraph, m.MapPaths, streetHeadAPos, buildingPos)
-			}()
-			go func() {
-				defer wg.Done()
-				shortestPathFromStreetB = findShortestPath(m.MapGraph, m.MapPaths, streetHeadBPos, buildingPos)
-			}()
-
-			wg.Wait()
-			if shortestPathFromStreetA != nil {
-				shortestPathFromStreetACost = float64(streetPathCost)*distFromA/totalDist + float64(shortestPathFromStreetA.cost)
-			}
-			if shortestPathFromStreetB != nil {
-				shortestPathFromStreetBCost = float64(streetPathCost)*distFromB/totalDist + float64(shortestPathFromStreetB.cost)
-			}
-			if shortestPathFromStreetA == nil && shortestPathFromStreetB == nil {
-				return nil
-			} else if shortestPathFromStreetA == nil {
-				return &pathWithCost{
-					poses: append([]math.Pos{streetHeadBPos}, shortestPathFromStreetB.poses...),
-					cost:  shortestPathFromStreetBCost,
-				}
-			} else if shortestPathFromStreetB == nil {
-				return &pathWithCost{
-					poses: append([]math.Pos{streetHeadAPos}, shortestPathFromStreetA.poses...),
-					cost:  shortestPathFromStreetACost,
-				}
-			}
-		}
-		{
-			if shortestPathFromStreetACost <= shortestPathFromStreetBCost && len(shortestPathFromStreetA.poses) <= len(shortestPathFromStreetB.poses) {
-				return &pathWithCost{
-					poses: append([]math.Pos{streetHeadAPos}, shortestPathFromStreetA.poses...),
-					cost:  shortestPathFromStreetACost,
-				}
-			} else {
-				return &pathWithCost{
-					poses: append([]math.Pos{streetHeadBPos}, shortestPathFromStreetB.poses...),
-					cost:  shortestPathFromStreetBCost,
-				}
-			}
-		}
-	}
-
 	var plannedPath []math.Pos
 	var lastPathCost *float64
 
 	var testPath [][]math.Pos
 	var testCost []float64
 
-	matchedStreetIDs := m.getStreetIDsFromCurrentPosition()
+	matchedStreetIDs := getStreetIDsFromCurrentPosition(*m.StreetStore, mioState.Position)
 	for _, streetID := range matchedStreetIDs {
-		path := getStreetShortestPath(streetID)
+		var streetState aggregator.StreetState
+		{
+			streetEvents := (*m.StreetStore).GetEvents()[streetID]
+			streetState, err = aggregator.GetStreetState(streetEvents)
+			if err != nil {
+				fmt.Print(err)
+			}
+		}
+
+		path := getStreetShortestPath(m.MapPaths, mioState.Position, buildingState.Pos, streetState, streetID)
 		if lastPathCost == nil || *lastPathCost > path.cost {
 			lastPathCost = &path.cost
 			plannedPath = path.poses
@@ -277,54 +184,6 @@ func (m MioAutomaton) PathFindingUpdate() {
 	if err != nil {
 		fmt.Print(err)
 	}
-}
-
-func findShortestPath(mapGraph math.Graph, mapPaths []math.Path, start, end math.Pos) *pathWithCost {
-	if start == end {
-		return &pathWithCost{}
-	}
-
-	pathWithCosts := []pathWithCost{}
-
-	paths := mapGraph.FindPath(start, end)
-
-	// TODO: might use goroutine to optimize, make sure pathWithCosts doesn't overlap when append
-	for _, path := range paths {
-		lastPos := start
-		cost := 0.0
-
-		for _, pos := range path {
-			if len(pathWithCosts) != 0 && cost > pathWithCosts[0].cost {
-				continue
-			}
-
-			for _, mp := range mapPaths {
-				if (mp.Start == lastPos && mp.End == pos) || (mp.Start == pos && mp.End == lastPos) {
-					cost += mp.Cost
-					break
-				}
-			}
-
-			lastPos = pos
-		}
-
-		if len(pathWithCosts) != 0 && cost > pathWithCosts[0].cost {
-			continue
-		}
-		pathWithCosts = append(pathWithCosts, pathWithCost{
-			poses: path,
-			cost:  cost,
-		})
-	}
-
-	var shortestPath *pathWithCost
-	for _, path := range pathWithCosts {
-		if shortestPath == nil || *&shortestPath.cost > path.cost {
-			shortestPath = &path
-		}
-	}
-
-	return shortestPath
 }
 
 func isBuildingFitMood(buildingState aggregator.BuildingState, isBored, isHungry, isThirsty bool) bool {

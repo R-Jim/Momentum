@@ -14,6 +14,8 @@ const (
 	WorkerActEffect Effect = "WORKER_ACT"
 
 	WorkerMoveEffect Effect = "WORKER_MOVE"
+
+	WorkerChangePlannedPoses Effect = "WORKER_CHANGE_PLANNED_POSITIONS"
 )
 
 func NewWorkerInitEvent(entityID uuid.UUID, position math.Pos) Event {
@@ -34,4 +36,13 @@ func NewWorkerActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Ev
 
 func NewWorkerMoveEvent(entityID uuid.UUID, version int, position math.Pos) Event {
 	return newEvent(entityID, version, WorkerMoveEffect, position)
+}
+
+func NewWorkerChangePlannedPoses(entityID uuid.UUID, version int, value []math.Pos) Event {
+	return newEvent(
+		entityID,
+		version,
+		WorkerChangePlannedPoses,
+		value,
+	)
 }
