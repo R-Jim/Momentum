@@ -9,7 +9,6 @@ import (
 	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/asset"
 	"github.com/R-jim/Momentum/math"
-	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -59,16 +58,6 @@ func NewMioAnimator(_store *store.Store) Animator {
 			if err != nil {
 				return []frame{}
 			}
-			{
-				spriteMultiplier := int(system.AUTOMATION_TICK_PER_FPS / len(mioWalkSprites))
-				fillOutSprites := []*ebiten.Image{}
-				for _, sprite := range mioWalkSprites {
-					for i := 0; i < spriteMultiplier; i++ {
-						fillOutSprites = append(fillOutSprites, sprite)
-					}
-				}
-				mioWalkSprites = fillOutSprites
-			}
 
 			frames := []frame{}
 			currentPos := mio.getMioPos(e.EntityID)
@@ -93,16 +82,6 @@ func NewMioAnimator(_store *store.Store) Animator {
 			destinationPos, err := event.ParseData[math.Pos](e)
 			if err != nil {
 				return []frame{}
-			}
-			{
-				spriteMultiplier := int(system.AUTOMATION_TICK_PER_FPS / len(mioRunSprites))
-				fillOutSprites := []*ebiten.Image{}
-				for _, sprite := range mioRunSprites {
-					for i := 0; i < spriteMultiplier; i++ {
-						fillOutSprites = append(fillOutSprites, sprite)
-					}
-				}
-				mioRunSprites = fillOutSprites
 			}
 
 			frames := []frame{}
