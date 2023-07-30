@@ -3,6 +3,7 @@ package operator
 import (
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
+	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
 
@@ -11,9 +12,9 @@ type WorkerOperator struct {
 	BuildingAggregator aggregator.Aggregator
 }
 
-func (o WorkerOperator) Init(id uuid.UUID) error {
+func (o WorkerOperator) Init(id uuid.UUID, position math.Pos) error {
 	store := o.WorkerAggregator.GetStore()
-	event := event.NewWorkerInitEvent(id)
+	event := event.NewWorkerInitEvent(id, position)
 
 	if err := o.WorkerAggregator.Aggregate(event); err != nil {
 		return err
@@ -116,6 +117,22 @@ func (o WorkerOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
 		return err
 	}
 	if err := (*buildingStore).AppendEvent(buildingWorkerActEvent); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (o WorkerOperator) Move(id uuid.UUID, position math.Pos) error {
+	store := o.WorkerAggregator.GetStore()
+	events := store.GetEvents()[id]
+
+	event := event.NewWorkerMoveEvent(id, len(events)+1, position)
+
+	if err := o.WorkerAggregator.Aggregate(event); err != nil {
+		return err
+	}
+
+	if err := (*store).AppendEvent(event); err != nil {
 		return err
 	}
 	return nil
