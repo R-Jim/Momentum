@@ -79,3 +79,7 @@ func GetProductState(events []event.Event) (ProductState, error) {
 		return state, nil
 	})
 }
+
+func (s ProductState) IsFinish() bool {
+	return s.Progress >= 100
+}
