@@ -6,7 +6,6 @@ import (
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/asset"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
@@ -16,7 +15,7 @@ import (
 type mioEffectImpl struct {
 	animatorImpl *animatorImpl
 
-	mioStore *store.Store
+	mioStore *event.MioStore
 
 	mioEffectAsset mioEffectAsset
 }
@@ -25,7 +24,7 @@ type mioEffectAsset struct {
 	effectUpSpriteSheet spriteSheet
 }
 
-func NewMioEffectAnimator(store *store.Store) Animator {
+func NewMioEffectAnimator(store *event.MioStore) Animator {
 	mio := mioEffectImpl{
 		mioStore: store,
 
@@ -42,7 +41,8 @@ func NewMioEffectAnimator(store *store.Store) Animator {
 	mio.animatorImpl = newAnimatorImpl()
 	mio.animatorImpl.getEventFramesSet = animateEventSet
 	mio.animatorImpl.defaultRenderLayer = EffectRenderLayer
-	mio.animatorImpl.store = store
+	s := event.Store(*store)
+	mio.animatorImpl.store = &s
 
 	return mio
 }
@@ -70,7 +70,7 @@ func (i mioEffectImpl) Animator() *animatorImpl {
 }
 
 func (i mioEffectImpl) getMioPos(id uuid.UUID) math.Pos {
-	events, err := (*i.mioStore).GetEventsByEntityID(id)
+	events, err := event.Store(*i.mioStore).GetEventsByEntityID(id)
 	if err != nil {
 		log.Fatalln(err)
 	}

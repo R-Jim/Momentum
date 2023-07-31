@@ -35,9 +35,15 @@ type BuildingInitEventData struct {
 	Pos  math.Pos
 }
 
-func NewBuildingInitEvent(buildingID uuid.UUID, buildingType BuildingType, pos math.Pos) Event {
-	return newEvent(buildingID,
-		1,
+type BuildingStore Store
+
+func NewBuildingStore() BuildingStore {
+	return BuildingStore(newStore())
+}
+
+func (s BuildingStore) NewBuildingInitEvent(buildingID uuid.UUID, buildingType BuildingType, pos math.Pos) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingInitEffect,
 		BuildingInitEventData{
 			Type: buildingType,
@@ -45,49 +51,49 @@ func NewBuildingInitEvent(buildingID uuid.UUID, buildingType BuildingType, pos m
 		})
 }
 
-func NewBuildingEntityEnterEvent(buildingID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return newEvent(buildingID,
-		version,
+func (s BuildingStore) NewBuildingEntityEnterEvent(buildingID uuid.UUID, entityID uuid.UUID) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingEntityEnterEffect,
 		entityID,
 	)
 }
 
-func NewBuildingEntityLeaveEvent(buildingID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return newEvent(buildingID,
-		version,
+func (s BuildingStore) NewBuildingEntityLeaveEvent(buildingID uuid.UUID, entityID uuid.UUID) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingEntityLeaveEffect,
 		entityID,
 	)
 }
 
-func NewBuildingEntityActEvent(buildingID uuid.UUID, entityID uuid.UUID, version int) Event {
-	return newEvent(buildingID,
-		version,
+func (s BuildingStore) NewBuildingEntityActEvent(buildingID uuid.UUID, entityID uuid.UUID) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingEntityActEffect,
 		entityID,
 	)
 }
 
-func NewBuildingWorkerActEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
-	return newEvent(buildingID,
-		version,
+func (s BuildingStore) NewBuildingWorkerActEvent(buildingID uuid.UUID, workerID uuid.UUID) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingWorkerActEffect,
 		workerID,
 	)
 }
 
-func NewBuildingWorkerAssignEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
-	return newEvent(buildingID,
-		version,
+func (s BuildingStore) NewBuildingWorkerAssignEvent(buildingID uuid.UUID, workerID uuid.UUID) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingWorkerAssignEffect,
 		workerID,
 	)
 }
 
-func NewBuildingWorkerUnassignEvent(buildingID uuid.UUID, workerID uuid.UUID, version int) Event {
-	return newEvent(buildingID,
-		version,
+func (s BuildingStore) NewBuildingWorkerUnassignEvent(buildingID uuid.UUID, workerID uuid.UUID) Event {
+	return (Store(s)).newEvent(
+		buildingID,
 		BuildingWorkerUnassignEffect,
 		workerID,
 	)

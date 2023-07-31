@@ -6,9 +6,7 @@ import (
 
 	"image/color"
 
-	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/animator"
 	"github.com/R-jim/Momentum/automaton"
 	"github.com/R-jim/Momentum/math"
@@ -24,7 +22,7 @@ type Game struct {
 	mioID      uuid.UUID
 	buildingID uuid.UUID
 
-	mioStore *store.Store
+	mioStore *event.MioStore
 	// operator
 	mioOperator *operator.MioOperator
 	// animator
@@ -47,20 +45,15 @@ type Game struct {
 func (g *Game) Init() {
 	mioID := uuid.New()
 
-	mioStore := store.NewStore()
-	buildingStore := store.NewStore()
+	mioStore := event.NewMioStore()
+	streetStore := event.NewStreetStore()
+	buildingStore := event.NewBuildingStore()
 
 	mioAnimator := animator.NewMioAnimator(&mioStore)
 
-	buildingOperator := operator.BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
+	buildingOperator := operator.NewBuilding(&buildingStore, nil)
 
-	mioOperator := operator.MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
-
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
+	mioOperator := operator.NewMio(&mioStore, &buildingStore)
 
 	g.mioID = mioID
 	g.mioStore = &mioStore
@@ -91,9 +84,7 @@ func (g *Game) Init() {
 	buildingStreetID1 := uuid.New()
 	buildingStreetID2 := uuid.New()
 
-	streetStore := store.NewStore()
-
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore))
+	streetOperator := operator.NewStreet(&streetStore)
 
 	g.mioAutomaton = &automaton.MioAutomaton{
 		EntityID: mioID,

@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
@@ -19,10 +18,12 @@ type WorkerState struct {
 	PlannedPoses []math.Pos
 }
 
-func NewWorkerAggregator(store *store.Store) Aggregator {
+func NewWorkerAggregator(store *event.WorkerStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "WORKER",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"WORKER_INIT"
 			event.WorkerInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {

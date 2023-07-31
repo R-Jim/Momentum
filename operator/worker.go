@@ -8,150 +8,111 @@ import (
 )
 
 type WorkerOperator struct {
-	WorkerAggregator   aggregator.Aggregator
-	BuildingAggregator aggregator.Aggregator
+	workerStore   *event.WorkerStore
+	buildingStore *event.BuildingStore
+}
+
+func NewWorker(workerStore *event.WorkerStore, buildingStore *event.BuildingStore) WorkerOperator {
+	return WorkerOperator{
+		workerStore:   workerStore,
+		buildingStore: buildingStore,
+	}
 }
 
 func (o WorkerOperator) Init(id uuid.UUID, position math.Pos) error {
-	store := o.WorkerAggregator.GetStore()
-	event := event.NewWorkerInitEvent(id, position)
+	event := o.workerStore.NewWorkerInitEvent(id, position)
 
-	if err := o.WorkerAggregator.Aggregate(event); err != nil {
+	if err := aggregator.NewWorkerAggregator(o.workerStore).Aggregate(event); err != nil {
 		return err
 	}
 
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.workerStore, event); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o WorkerOperator) AssignBuilding(id uuid.UUID, buildingID uuid.UUID) error {
-	workerStore := o.WorkerAggregator.GetStore()
-	buildingStore := o.BuildingAggregator.GetStore()
+	workerAssignBuildingEvent := o.workerStore.NewWorkerAssignEvent(id, buildingID)
+	buildingWorkerAssignEvent := o.buildingStore.NewBuildingWorkerAssignEvent(buildingID, id)
 
-	workerEvents, err := (*workerStore).GetEventsByEntityID(id)
-	if err != nil {
+	if err := aggregator.NewWorkerAggregator(o.workerStore).Aggregate(workerAssignBuildingEvent); err != nil {
 		return err
 	}
-	buildingEvents, err := (*buildingStore).GetEventsByEntityID(id)
-	if err != nil {
+	if err := aggregator.NewBuildingAggregator(o.buildingStore).Aggregate(buildingWorkerAssignEvent); err != nil {
 		return err
 	}
 
-	workerAssignBuildingEvent := event.NewWorkerAssignEvent(id, buildingID, len(workerEvents)+1)
-	buildingWorkerAssignEvent := event.NewBuildingWorkerAssignEvent(buildingID, id, len(buildingEvents)+1)
-
-	if err := o.WorkerAggregator.Aggregate(workerAssignBuildingEvent); err != nil {
+	if err := appendEvent(o.workerStore, workerAssignBuildingEvent); err != nil {
 		return err
 	}
-	if err := o.BuildingAggregator.Aggregate(buildingWorkerAssignEvent); err != nil {
-		return err
-	}
-
-	if err := (*workerStore).AppendEvent(workerAssignBuildingEvent); err != nil {
-		return err
-	}
-	if err := (*buildingStore).AppendEvent(buildingWorkerAssignEvent); err != nil {
+	if err := appendEvent(o.buildingStore, buildingWorkerAssignEvent); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o WorkerOperator) UnassignBuilding(id uuid.UUID, buildingID uuid.UUID) error {
-	workerStore := o.WorkerAggregator.GetStore()
-	buildingStore := o.BuildingAggregator.GetStore()
+	buildingWorkerAssignEvent := o.buildingStore.NewBuildingWorkerUnassignEvent(buildingID, id)
+	workerAssignBuildingEvent := o.workerStore.NewWorkerUnassignEvent(id, buildingID)
 
-	workerEvents, err := (*workerStore).GetEventsByEntityID(id)
-	if err != nil {
+	if err := aggregator.NewWorkerAggregator(o.workerStore).Aggregate(workerAssignBuildingEvent); err != nil {
 		return err
 	}
-	buildingEvents, err := (*buildingStore).GetEventsByEntityID(id)
-	if err != nil {
+	if err := aggregator.NewBuildingAggregator(o.buildingStore).Aggregate(buildingWorkerAssignEvent); err != nil {
 		return err
 	}
 
-	workerAssignBuildingEvent := event.NewWorkerUnassignEvent(id, buildingID, len(workerEvents)+1)
-	buildingWorkerAssignEvent := event.NewBuildingWorkerUnassignEvent(buildingID, id, len(buildingEvents)+1)
-
-	if err := o.WorkerAggregator.Aggregate(workerAssignBuildingEvent); err != nil {
+	if err := appendEvent(o.workerStore, workerAssignBuildingEvent); err != nil {
 		return err
 	}
-	if err := o.BuildingAggregator.Aggregate(buildingWorkerAssignEvent); err != nil {
-		return err
-	}
-
-	if err := (*workerStore).AppendEvent(workerAssignBuildingEvent); err != nil {
-		return err
-	}
-	if err := (*buildingStore).AppendEvent(buildingWorkerAssignEvent); err != nil {
+	if err := appendEvent(o.buildingStore, buildingWorkerAssignEvent); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o WorkerOperator) Act(id uuid.UUID, buildingID uuid.UUID) error {
-	workerStore := o.WorkerAggregator.GetStore()
-	buildingStore := o.BuildingAggregator.GetStore()
+	workerActEvent := o.workerStore.NewWorkerActEvent(id, buildingID)
+	buildingWorkerActEvent := o.buildingStore.NewBuildingWorkerActEvent(buildingID, id)
 
-	workerEvents, err := (*workerStore).GetEventsByEntityID(id)
-	if err != nil {
+	if err := aggregator.NewWorkerAggregator(o.workerStore).Aggregate(workerActEvent); err != nil {
 		return err
 	}
-	buildingEvents, err := (*buildingStore).GetEventsByEntityID(id)
-	if err != nil {
+	if err := aggregator.NewBuildingAggregator(o.buildingStore).Aggregate(buildingWorkerActEvent); err != nil {
 		return err
 	}
 
-	workerActEvent := event.NewWorkerActEvent(id, buildingID, len(workerEvents)+1)
-	buildingWorkerActEvent := event.NewBuildingWorkerActEvent(buildingID, id, len(buildingEvents)+1)
-
-	if err := o.WorkerAggregator.Aggregate(workerActEvent); err != nil {
+	if err := appendEvent(o.workerStore, workerActEvent); err != nil {
 		return err
 	}
-	if err := o.BuildingAggregator.Aggregate(buildingWorkerActEvent); err != nil {
-		return err
-	}
-
-	if err := (*workerStore).AppendEvent(workerActEvent); err != nil {
-		return err
-	}
-	if err := (*buildingStore).AppendEvent(buildingWorkerActEvent); err != nil {
+	if err := appendEvent(o.buildingStore, buildingWorkerActEvent); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o WorkerOperator) Move(id uuid.UUID, position math.Pos) error {
-	store := o.WorkerAggregator.GetStore()
-	events := store.GetEvents()[id]
+	event := o.workerStore.NewWorkerMoveEvent(id, position)
 
-	event := event.NewWorkerMoveEvent(id, len(events)+1, position)
-
-	if err := o.WorkerAggregator.Aggregate(event); err != nil {
+	if err := aggregator.NewWorkerAggregator(o.workerStore).Aggregate(event); err != nil {
 		return err
 	}
 
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.workerStore, event); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o WorkerOperator) ChangePlannedPoses(id uuid.UUID, value []math.Pos) error {
-	store := o.WorkerAggregator.GetStore()
-	events, err := (*store).GetEventsByEntityID(id)
-	if err != nil {
+	event := o.workerStore.NewWorkerChangePlannedPoses(id, value)
+
+	if err := aggregator.NewWorkerAggregator(o.workerStore).Aggregate(event); err != nil {
 		return err
 	}
 
-	event := event.NewWorkerChangePlannedPoses(id, len(events)+1, value)
-
-	if err := o.WorkerAggregator.Aggregate(event); err != nil {
-		return err
-	}
-
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.workerStore, event); err != nil {
 		return err
 	}
 	return nil

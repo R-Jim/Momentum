@@ -5,7 +5,6 @@ import (
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/google/uuid"
@@ -31,18 +30,13 @@ func Test_Worker_PathFindingUpdate_simple(t *testing.T) {
 	street2ID := uuid.New()
 	buildingStreetID := uuid.New()
 
-	workerStore := store.NewStore()
-	buildingStore := store.NewStore()
-	streetStore := store.NewStore()
+	workerStore := event.NewWorkerStore()
+	streetStore := event.NewStreetStore()
+	buildingStore := event.NewBuildingStore()
 
-	workerOperator := operator.WorkerOperator{
-		WorkerAggregator:   aggregator.NewWorkerAggregator(&workerStore),
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
-	BuildingOperator := operator.BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore))
+	workerOperator := operator.NewWorker(&workerStore, &buildingStore)
+	BuildingOperator := operator.NewBuilding(&buildingStore, nil)
+	streetOperator := operator.NewStreet(&streetStore)
 
 	w := WorkerAutomaton{
 		EntityID: workerID,
@@ -59,7 +53,7 @@ func Test_Worker_PathFindingUpdate_simple(t *testing.T) {
 	err := workerOperator.Init(workerID, workerPos)
 	require.NoError(t, err)
 
-	events, err := workerStore.GetEventsByEntityID(workerID)
+	events, err := event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	mioState, err := aggregator.GetWorkerState(events)
@@ -77,7 +71,7 @@ func Test_Worker_PathFindingUpdate_simple(t *testing.T) {
 	drinkStoreID := uuid.New()
 	require.NoError(t, BuildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos))
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	mioState, err = aggregator.GetWorkerState(events)
@@ -87,7 +81,7 @@ func Test_Worker_PathFindingUpdate_simple(t *testing.T) {
 
 	w.PathFindingUpdate()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	mioState, err = aggregator.GetWorkerState(events)
@@ -143,18 +137,13 @@ func Test_Worker_PathFindingUpdate(t *testing.T) {
 	building1ID := uuid.New()
 	building2ID := uuid.New()
 
-	workerStore := store.NewStore()
-	buildingStore := store.NewStore()
-	streetStore := store.NewStore()
+	workerStore := event.NewWorkerStore()
+	streetStore := event.NewStreetStore()
+	buildingStore := event.NewBuildingStore()
 
-	workerOperator := operator.WorkerOperator{
-		WorkerAggregator:   aggregator.NewWorkerAggregator(&workerStore),
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
-	buildingOperator := operator.BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
-	streetOperator := operator.NewStreet(aggregator.NewStreetAggregator(&streetStore))
+	workerOperator := operator.NewWorker(&workerStore, &buildingStore)
+	buildingOperator := operator.NewBuilding(&buildingStore, nil)
+	streetOperator := operator.NewStreet(&streetStore)
 
 	w := WorkerAutomaton{
 		EntityID: workerID,
@@ -171,7 +160,7 @@ func Test_Worker_PathFindingUpdate(t *testing.T) {
 	err := workerOperator.Init(workerID, workerPos)
 	require.NoError(t, err)
 
-	events, err := workerStore.GetEventsByEntityID(workerID)
+	events, err := event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err := aggregator.GetWorkerState(events)
@@ -211,7 +200,7 @@ func Test_Worker_PathFindingUpdate(t *testing.T) {
 
 	require.NoError(t, workerOperator.AssignBuilding(workerID, building1ID))
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -219,7 +208,7 @@ func Test_Worker_PathFindingUpdate(t *testing.T) {
 
 	w.PathFindingUpdate()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -236,18 +225,15 @@ func Test_Worker_Move(t *testing.T) {
 
 	workerID := uuid.New()
 
-	workerStore := store.NewStore()
-	buildingStore := store.NewStore()
+	workerStore := event.NewWorkerStore()
+	buildingStore := event.NewBuildingStore()
 
-	workerOperator := operator.WorkerOperator{
-		WorkerAggregator:   aggregator.NewWorkerAggregator(&workerStore),
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
-	}
+	workerOperator := operator.NewWorker(&workerStore, &buildingStore)
 
 	err := workerOperator.Init(workerID, workerPos)
 	require.NoError(t, err)
 
-	events, err := workerStore.GetEventsByEntityID(workerID)
+	events, err := event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err := aggregator.GetWorkerState(events)
@@ -266,7 +252,7 @@ func Test_Worker_Move(t *testing.T) {
 
 	require.NoError(t, w.WorkerOperator.ChangePlannedPoses(workerID, []math.Pos{posA, posB}))
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -276,7 +262,7 @@ func Test_Worker_Move(t *testing.T) {
 
 	w.Move()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -287,7 +273,7 @@ func Test_Worker_Move(t *testing.T) {
 	require.NoError(t, w.WorkerOperator.ChangePlannedPoses(workerID, []math.Pos{posB}))
 	w.Move()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -297,7 +283,7 @@ func Test_Worker_Move(t *testing.T) {
 
 	w.Move()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -307,7 +293,7 @@ func Test_Worker_Move(t *testing.T) {
 
 	w.Move()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)
@@ -318,7 +304,7 @@ func Test_Worker_Move(t *testing.T) {
 	// No planned position left, stay in place
 	w.Move()
 
-	events, err = workerStore.GetEventsByEntityID(workerID)
+	events, err = event.Store(workerStore).GetEventsByEntityID(workerID)
 	require.NoError(t, err)
 
 	workerState, err = aggregator.GetWorkerState(events)

@@ -6,7 +6,6 @@ import (
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/asset"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
@@ -20,7 +19,7 @@ const (
 type mioImpl struct {
 	animatorImpl *animatorImpl
 
-	mioStore *store.Store
+	mioStore *event.MioStore
 
 	mioAsset mioAsset
 }
@@ -34,7 +33,7 @@ type mioAsset struct {
 	workSpriteSheet spriteSheet
 }
 
-func NewMioAnimator(_store *store.Store) Animator {
+func NewMioAnimator(_store *event.MioStore) Animator {
 	mio := mioImpl{
 		mioStore: _store,
 
@@ -142,7 +141,8 @@ func NewMioAnimator(_store *store.Store) Animator {
 		NewMioEffectAnimator(mio.mioStore),
 	}
 	mio.animatorImpl.defaultRenderLayer = MioRenderLayer
-	mio.animatorImpl.store = _store
+	s := event.Store(*_store)
+	mio.animatorImpl.store = &s
 
 	return mio
 }
@@ -153,7 +153,7 @@ func (i mioImpl) Animator() *animatorImpl {
 
 func (i mioImpl) getMioIdleFrames(entityIDsWithFrame []uuid.UUID) []frame {
 	entityWithoutEvent := map[uuid.UUID][]event.Event{}
-	for entityID, events := range (*i.mioStore).GetEvents() {
+	for entityID, events := range event.Store(*i.mioStore).GetEvents() {
 		isHasFrame := false
 		for _, entityIDWithFrame := range entityIDsWithFrame {
 			if entityID == entityIDWithFrame {
@@ -182,7 +182,7 @@ func (i mioImpl) getMioIdleFrames(entityIDsWithFrame []uuid.UUID) []frame {
 }
 
 func (i mioImpl) getMioPos(id uuid.UUID) math.Pos {
-	events, err := (*i.mioStore).GetEventsByEntityID(id)
+	events, err := event.Store(*i.mioStore).GetEventsByEntityID(id)
 	if err != nil {
 		log.Fatalln(err)
 	}

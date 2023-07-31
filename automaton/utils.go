@@ -5,7 +5,7 @@ import (
 	"sync"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
-	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
@@ -118,7 +118,7 @@ func findShortestPath(mapGraph math.Graph, mapPaths []math.Path, start, end math
 
 	var shortestPath *pathWithCost
 	for _, path := range pathWithCosts {
-		if shortestPath == nil || shortestPath.cost > path.cost {
+		if shortestPath == nil || *&shortestPath.cost > path.cost { // DO NOT REMOVE *&
 			shortestPath = &path
 		}
 	}
@@ -126,7 +126,7 @@ func findShortestPath(mapGraph math.Graph, mapPaths []math.Path, start, end math
 	return shortestPath
 }
 
-func getStreetIDsFromCurrentPosition(streetStore store.Store, entityPos math.Pos) []uuid.UUID {
+func getStreetIDsFromCurrentPosition(streetStore event.Store, entityPos math.Pos) []uuid.UUID {
 	matchedStreetIDs := []uuid.UUID{}
 
 	for streetID, streetEvents := range streetStore.GetEvents() {

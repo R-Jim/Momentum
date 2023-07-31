@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
-	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/google/uuid"
 )
 
@@ -13,11 +13,11 @@ type StageAutomaton struct {
 
 	ProductID uuid.UUID
 
-	ProductStore *store.Store
+	ProductStore *event.ProductStore
 }
 
 func (s StageAutomaton) IsProductFinished() bool {
-	events := s.ProductStore.GetEvents()[s.ProductID]
+	events := event.Store(*s.ProductStore).GetEvents()[s.ProductID]
 
 	productState, err := aggregator.GetProductState(events)
 	if err != nil {

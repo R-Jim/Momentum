@@ -31,135 +31,127 @@ const (
 	MioChangePlannedPoses Effect = "MIO_CHANGE_PLANNED_POSITIONS"
 )
 
-func NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
-	return newEvent(entityID, 1, MioInitEffect, position)
+type MioStore Store
+
+func NewMioStore() MioStore {
+	return MioStore(newStore())
 }
 
-func NewMioWalkEvent(entityID uuid.UUID, version int, newPosition math.Pos) Event {
-	return newEvent(entityID, version, MioWalkEffect, newPosition)
+func (s MioStore) NewMioInitEvent(entityID uuid.UUID, position math.Pos) Event {
+	return (Store(s)).newEvent(entityID, MioInitEffect, position)
 }
 
-func NewMioRunEvent(entityID uuid.UUID, version int, newPosition math.Pos) Event {
-	return newEvent(
+func (s MioStore) NewMioWalkEvent(entityID uuid.UUID, newPosition math.Pos) Event {
+	return (Store(s)).newEvent(entityID, MioWalkEffect, newPosition)
+}
+
+func (s MioStore) NewMioRunEvent(entityID uuid.UUID, newPosition math.Pos) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioRunEffect,
 		newPosition,
 	)
 }
 
-func NewMioIdleEvent(entityID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioIdleEvent(entityID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioIdleEffect,
 		nil,
 	)
 }
 
-func NewMioEnterStreetEvent(entityID uuid.UUID, streetID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioEnterStreetEvent(entityID uuid.UUID, streetID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioEnterStreetEffect,
 		streetID,
 	)
 }
 
-func NewMioSelectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioSelectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioSelectBuildingEffect,
 		buildingID,
 	)
 }
 
-func NewMioUnselectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioUnselectBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioUnselectBuildingEffect,
 		buildingID,
 	)
 }
 
-func NewMioEnterBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioEnterBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioEnterBuildingEffect,
 		buildingID,
 	)
 }
 
-func NewMioLeaveBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioLeaveBuildingEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioLeaveBuildingEffect,
 		buildingID,
 	)
 }
 
-func NewMioActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioActEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioActEffect,
 		buildingID,
 	)
 }
 
-func NewMioStreamEvent(entityID uuid.UUID, value, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioStreamEvent(entityID uuid.UUID, value int) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioStreamEffect,
 		value,
 	)
 }
 
-func NewMioEatEvent(entityID uuid.UUID, value, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioEatEvent(entityID uuid.UUID, value int) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioEatEffect,
 		value,
 	)
 }
 
-func NewMioStarveEvent(entityID uuid.UUID, value, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioStarveEvent(entityID uuid.UUID, value int) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioStarveEffect,
 		value,
 	)
 }
 
-func NewMioDrinkEvent(entityID uuid.UUID, value, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioDrinkEvent(entityID uuid.UUID, value int) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioDrinkEffect,
 		value,
 	)
 }
 
-func NewMioSweatEvent(entityID uuid.UUID, value, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioSweatEvent(entityID uuid.UUID, value int) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioSweatEffect,
 		value,
 	)
 }
 
-func NewMioChangePlannedPoses(entityID uuid.UUID, value []math.Pos, version int) Event {
-	return newEvent(
+func (s MioStore) NewMioChangePlannedPoses(entityID uuid.UUID, value []math.Pos) Event {
+	return (Store(s)).newEvent(
 		entityID,
-		version,
 		MioChangePlannedPoses,
 		value,
 	)

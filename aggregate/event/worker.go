@@ -18,30 +18,35 @@ const (
 	WorkerChangePlannedPoses Effect = "WORKER_CHANGE_PLANNED_POSITIONS"
 )
 
-func NewWorkerInitEvent(entityID uuid.UUID, position math.Pos) Event {
-	return newEvent(entityID, 1, WorkerInitEffect, position)
+type WorkerStore Store
+
+func NewWorkerStore() WorkerStore {
+	return WorkerStore(newStore())
 }
 
-func NewWorkerAssignEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(entityID, version, WorkerAssignEffect, buildingID)
+func (s WorkerStore) NewWorkerInitEvent(entityID uuid.UUID, position math.Pos) Event {
+	return Store(s).newEvent(entityID, WorkerInitEffect, position)
 }
 
-func NewWorkerUnassignEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(entityID, version, WorkerUnassignEffect, buildingID)
+func (s WorkerStore) NewWorkerAssignEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return Store(s).newEvent(entityID, WorkerAssignEffect, buildingID)
 }
 
-func NewWorkerActEvent(entityID uuid.UUID, buildingID uuid.UUID, version int) Event {
-	return newEvent(entityID, version, WorkerActEffect, buildingID)
+func (s WorkerStore) NewWorkerUnassignEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return Store(s).newEvent(entityID, WorkerUnassignEffect, buildingID)
 }
 
-func NewWorkerMoveEvent(entityID uuid.UUID, version int, position math.Pos) Event {
-	return newEvent(entityID, version, WorkerMoveEffect, position)
+func (s WorkerStore) NewWorkerActEvent(entityID uuid.UUID, buildingID uuid.UUID) Event {
+	return Store(s).newEvent(entityID, WorkerActEffect, buildingID)
 }
 
-func NewWorkerChangePlannedPoses(entityID uuid.UUID, version int, value []math.Pos) Event {
-	return newEvent(
+func (s WorkerStore) NewWorkerMoveEvent(entityID uuid.UUID, position math.Pos) Event {
+	return Store(s).newEvent(entityID, WorkerMoveEffect, position)
+}
+
+func (s WorkerStore) NewWorkerChangePlannedPoses(entityID uuid.UUID, value []math.Pos) Event {
+	return Store(s).newEvent(
 		entityID,
-		version,
 		WorkerChangePlannedPoses,
 		value,
 	)
