@@ -8,10 +8,16 @@ const (
 	ProductProgressEffect Effect = "PRODUCT_PROGRESS"
 )
 
-func NewProductInitEvent(entityID uuid.UUID, productType string) Event {
-	return newEvent(entityID, 1, ProductInitEffect, productType)
+type ProductStore Store
+
+func NewProductStore() ProductStore {
+	return ProductStore(newStore())
 }
 
-func NewProductProgressEvent(entityID uuid.UUID, version int, value float64) Event {
-	return newEvent(entityID, version, ProductProgressEffect, value)
+func (s ProductStore) NewProductInitEvent(entityID uuid.UUID, productType string) Event {
+	return Store(s).newEvent(entityID, ProductInitEffect, productType)
+}
+
+func (s ProductStore) NewProductProgressEvent(entityID uuid.UUID, value float64) Event {
+	return Store(s).newEvent(entityID, ProductProgressEffect, value)
 }

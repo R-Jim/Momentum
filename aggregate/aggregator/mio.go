@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
@@ -33,10 +32,12 @@ type MioActivityState struct {
 	Dehydration int
 }
 
-func NewMioAggregator(store *store.Store) Aggregator {
+func NewMioAggregator(store *event.MioStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "MIO",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"MIO_INIT"
 			event.MioInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {

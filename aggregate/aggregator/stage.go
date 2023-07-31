@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
 )
 
@@ -17,10 +16,12 @@ type StageState struct {
 	GoalProductIDs []uuid.UUID
 }
 
-func NewStageAggregator(store *store.Store) Aggregator {
+func NewStageAggregator(store *event.StageStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "STAGE",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"STAGE_INIT"
 			event.StageInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
-	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/google/uuid"
@@ -15,9 +15,9 @@ type WorkerAutomaton struct {
 
 	MapPaths []math.Path
 
-	WorkerStore   *store.Store
-	StreetStore   *store.Store
-	BuildingStore *store.Store
+	WorkerStore   *event.WorkerStore
+	StreetStore   *event.StreetStore
+	BuildingStore *event.BuildingStore
 
 	WorkerOperator operator.WorkerOperator
 	StreetOperator operator.StreetOperator
@@ -29,7 +29,7 @@ func (w WorkerAutomaton) Automate() {
 }
 
 func (w WorkerAutomaton) PathFindingUpdate() {
-	events := (*w.WorkerStore).GetEvents()[w.EntityID]
+	events := event.Store(*w.WorkerStore).GetEvents()[w.EntityID]
 	workerState, err := aggregator.GetWorkerState(events)
 	if err != nil {
 		fmt.Print(err)
@@ -39,7 +39,7 @@ func (w WorkerAutomaton) PathFindingUpdate() {
 		return
 	}
 
-	buildingEvents := (*w.BuildingStore).GetEvents()[workerState.BuildingID]
+	buildingEvents := event.Store(*w.BuildingStore).GetEvents()[workerState.BuildingID]
 	buildingState, err := aggregator.GetBuildingState(buildingEvents)
 	if err != nil {
 		fmt.Print(err)
@@ -59,11 +59,11 @@ func (w WorkerAutomaton) PathFindingUpdate() {
 	var testPath [][]math.Pos
 	var testCost []float64
 
-	matchedStreetIDs := getStreetIDsFromCurrentPosition(*w.StreetStore, workerState.Position)
+	matchedStreetIDs := getStreetIDsFromCurrentPosition(event.Store(*w.StreetStore), workerState.Position)
 	for _, streetID := range matchedStreetIDs {
 		var streetState aggregator.StreetState
 		{
-			streetEvents := (*w.StreetStore).GetEvents()[streetID]
+			streetEvents := event.Store(*w.StreetStore).GetEvents()[streetID]
 			streetState, err = aggregator.GetStreetState(streetEvents)
 			if err != nil {
 				fmt.Print(err)
@@ -113,7 +113,7 @@ func (w WorkerAutomaton) PathFindingUpdate() {
 }
 
 func (w WorkerAutomaton) Move() {
-	events := (*w.WorkerStore).GetEvents()[w.EntityID]
+	events := event.Store(*w.WorkerStore).GetEvents()[w.EntityID]
 	workerState, err := aggregator.GetWorkerState(events)
 	if err != nil {
 		fmt.Print(err)

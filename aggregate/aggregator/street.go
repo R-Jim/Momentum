@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
@@ -14,10 +13,12 @@ type StreetState struct {
 	HeadB     math.Pos
 }
 
-func NewStreetAggregator(store *store.Store) Aggregator {
+func NewStreetAggregator(store *event.StreetStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "STREET",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"STREET_INIT"
 			event.StreetInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {

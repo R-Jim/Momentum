@@ -12,14 +12,20 @@ const (
 	StreetEntityLeaveEffect Effect = "STREET_ENTITY_LEAVE"
 )
 
-func NewStreetInitEvent(streetID uuid.UUID, headA, headB math.Pos) Event {
-	return newEvent(streetID, 1, StreetInitEffect, []math.Pos{headA, headB})
+type StreetStore Store
+
+func NewStreetStore() StreetStore {
+	return StreetStore(newStore())
 }
 
-func NewStreetEntityEnterEvent(streetID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return newEvent(streetID, version, StreetEntityEnterEffect, entityID)
+func (s StreetStore) NewStreetInitEvent(streetID uuid.UUID, headA, headB math.Pos) Event {
+	return Store(s).newEvent(streetID, StreetInitEffect, []math.Pos{headA, headB})
 }
 
-func NewStreetEntityLeaveEvent(streetID uuid.UUID, version int, entityID uuid.UUID) Event {
-	return newEvent(streetID, version, StreetEntityLeaveEffect, entityID)
+func (s StreetStore) NewStreetEntityEnterEvent(streetID uuid.UUID, entityID uuid.UUID) Event {
+	return Store(s).newEvent(streetID, StreetEntityEnterEffect, entityID)
+}
+
+func (s StreetStore) NewStreetEntityLeaveEvent(streetID uuid.UUID, entityID uuid.UUID) Event {
+	return Store(s).newEvent(streetID, StreetEntityLeaveEffect, entityID)
 }

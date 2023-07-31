@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
 )
 
@@ -13,10 +12,12 @@ type ProductState struct {
 	Progress float64
 }
 
-func NewProductAggregator(store *store.Store) Aggregator {
+func NewProductAggregator(store *event.ProductStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "PRODUCT",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"PRODUCT_INIT"
 			event.ProductInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {

@@ -8,63 +8,49 @@ import (
 )
 
 type StreetOperator struct {
-	streetAggregator aggregator.Aggregator
+	streetStore *event.StreetStore
 }
 
-func NewStreet(streetAggregator aggregator.Aggregator) StreetOperator {
+func NewStreet(streetStore *event.StreetStore) StreetOperator {
 	return StreetOperator{
-		streetAggregator: streetAggregator,
+		streetStore: streetStore,
 	}
 }
 
 func (o StreetOperator) Init(id uuid.UUID, headA, headB math.Pos) error {
-	store := o.streetAggregator.GetStore()
+	initEvent := o.streetStore.NewStreetInitEvent(id, headA, headB)
 
-	event := event.NewStreetInitEvent(id, headA, headB)
-
-	if err := o.streetAggregator.Aggregate(event); err != nil {
+	if err := aggregator.NewStreetAggregator(o.streetStore).Aggregate(initEvent); err != nil {
 		return err
 	}
 
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.streetStore, initEvent); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o StreetOperator) EntityEnter(id, entityID uuid.UUID) error {
-	store := o.streetAggregator.GetStore()
-	events, err := (*store).GetEventsByEntityID(id)
-	if err != nil {
+	entityEnterEvent := o.streetStore.NewStreetEntityEnterEvent(id, entityID)
+
+	if err := aggregator.NewStreetAggregator(o.streetStore).Aggregate(entityEnterEvent); err != nil {
 		return err
 	}
 
-	event := event.NewStreetEntityEnterEvent(id, len(events)+1, entityID)
-
-	if err := o.streetAggregator.Aggregate(event); err != nil {
-		return err
-	}
-
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.streetStore, entityEnterEvent); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (o StreetOperator) EntityLeave(id, entityID uuid.UUID) error {
-	store := o.streetAggregator.GetStore()
-	events, err := (*store).GetEventsByEntityID(id)
-	if err != nil {
+	entityLeaveEvent := o.streetStore.NewStreetEntityLeaveEvent(id, entityID)
+
+	if err := aggregator.NewStreetAggregator(o.streetStore).Aggregate(entityLeaveEvent); err != nil {
 		return err
 	}
 
-	event := event.NewStreetEntityLeaveEvent(id, len(events)+1, entityID)
-
-	if err := o.streetAggregator.Aggregate(event); err != nil {
-		return err
-	}
-
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.streetStore, entityLeaveEvent); err != nil {
 		return err
 	}
 	return nil

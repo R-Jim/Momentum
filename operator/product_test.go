@@ -4,23 +4,23 @@ import (
 	"testing"
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
-	"github.com/R-jim/Momentum/aggregate/store"
+	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 )
 
 func Test_Product_Init(t *testing.T) {
 	productID := uuid.New()
-	store := store.NewStore()
+	productStore := event.NewProductStore()
 
 	productOperator := ProductOperator{
-		ProductAggregator: aggregator.NewProductAggregator(&store),
+		productStore: &productStore,
 	}
 
 	err := productOperator.Init(productID, "TEST")
 	require.NoError(t, err)
 
-	events, err := store.GetEventsByEntityID(productID)
+	events, err := event.Store(productStore).GetEventsByEntityID(productID)
 	require.NoError(t, err)
 
 	productState, err := aggregator.GetProductState(events)
@@ -31,15 +31,15 @@ func Test_Product_Init(t *testing.T) {
 
 func Test_Product_Progress(t *testing.T) {
 	productID := uuid.New()
-	store := store.NewStore()
+	productStore := event.NewProductStore()
 
 	productOperator := ProductOperator{
-		ProductAggregator: aggregator.NewProductAggregator(&store),
+		productStore: &productStore,
 	}
 
 	require.NoError(t, productOperator.Init(productID, "TEST"))
 
-	events, err := store.GetEventsByEntityID(productID)
+	events, err := event.Store(productStore).GetEventsByEntityID(productID)
 	require.NoError(t, err)
 
 	productState, err := aggregator.GetProductState(events)
@@ -49,7 +49,7 @@ func Test_Product_Progress(t *testing.T) {
 
 	require.NoError(t, productOperator.Progress(productID, 50))
 
-	events, err = store.GetEventsByEntityID(productID)
+	events, err = event.Store(productStore).GetEventsByEntityID(productID)
 	require.NoError(t, err)
 
 	productState, err = aggregator.GetProductState(events)

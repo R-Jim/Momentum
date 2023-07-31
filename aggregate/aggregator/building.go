@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 )
@@ -16,10 +15,12 @@ type BuildingState struct {
 	Type string
 }
 
-func NewBuildingAggregator(store *store.Store) Aggregator {
+func NewBuildingAggregator(store *event.BuildingStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "BUILDING",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"BUILDING_INIT"
 			event.BuildingInitEffect: func(currentEvents []event.Event, inputEvent event.Event) error {

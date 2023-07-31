@@ -5,7 +5,6 @@ import (
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/google/uuid"
@@ -16,9 +15,9 @@ type MioAutomaton struct {
 
 	MapPaths []math.Path
 
-	MioStore      *store.Store
-	StreetStore   *store.Store
-	BuildingStore *store.Store
+	MioStore      *event.MioStore
+	StreetStore   *event.StreetStore
+	BuildingStore *event.BuildingStore
 
 	MioOperator    operator.MioOperator
 	StreetOperator operator.StreetOperator
@@ -41,7 +40,7 @@ func (m MioAutomaton) Automate() {
 }
 
 func (m *MioAutomaton) MioMoodBehavior() {
-	events := (*m.MioStore).GetEvents()[m.EntityID]
+	events := event.Store(*m.MioStore).GetEvents()[m.EntityID]
 	mioActivityState, err := aggregator.GetMioActivityState(events)
 	if err != nil {
 		fmt.Print(err)
@@ -67,7 +66,7 @@ func (m *MioAutomaton) MioMoodBehavior() {
 	var selectedBuildingID uuid.UUID
 	var selectedBuildingDistance float64
 
-	for buildingID, buildingEvents := range (*m.BuildingStore).GetEvents() {
+	for buildingID, buildingEvents := range event.Store(*m.BuildingStore).GetEvents() {
 		buildingState, err := aggregator.GetBuildingState(buildingEvents)
 		if err != nil {
 			fmt.Print(err)
@@ -99,7 +98,7 @@ func (m *MioAutomaton) MioMoodBehavior() {
 }
 
 func (m MioAutomaton) PathFindingUpdate() {
-	events := (*m.MioStore).GetEvents()[m.EntityID]
+	events := event.Store(*m.MioStore).GetEvents()[m.EntityID]
 	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)
@@ -109,7 +108,7 @@ func (m MioAutomaton) PathFindingUpdate() {
 		return
 	}
 
-	buildingEvents := (*m.BuildingStore).GetEvents()[mioState.SelectedBuildingID]
+	buildingEvents := event.Store(*m.BuildingStore).GetEvents()[mioState.SelectedBuildingID]
 	buildingState, err := aggregator.GetBuildingState(buildingEvents)
 	if err != nil {
 		fmt.Print(err)
@@ -133,11 +132,11 @@ func (m MioAutomaton) PathFindingUpdate() {
 	var testPath [][]math.Pos
 	var testCost []float64
 
-	matchedStreetIDs := getStreetIDsFromCurrentPosition(*m.StreetStore, mioState.Position)
+	matchedStreetIDs := getStreetIDsFromCurrentPosition(event.Store(*m.StreetStore), mioState.Position)
 	for _, streetID := range matchedStreetIDs {
 		var streetState aggregator.StreetState
 		{
-			streetEvents := (*m.StreetStore).GetEvents()[streetID]
+			streetEvents := event.Store(*m.StreetStore).GetEvents()[streetID]
 			streetState, err = aggregator.GetStreetState(streetEvents)
 			if err != nil {
 				fmt.Print(err)
@@ -201,7 +200,7 @@ func isBuildingFitMood(buildingState aggregator.BuildingState, isBored, isHungry
 }
 
 func (m MioAutomaton) Move() {
-	events := (*m.MioStore).GetEvents()[m.EntityID]
+	events := event.Store(*m.MioStore).GetEvents()[m.EntityID]
 	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)
@@ -231,7 +230,7 @@ func (m MioAutomaton) Move() {
 }
 
 func (m MioAutomaton) HourlyExhaustion() {
-	events := (*m.MioStore).GetEvents()[m.EntityID]
+	events := event.Store(*m.MioStore).GetEvents()[m.EntityID]
 	mioState, err := aggregator.GetMioState(events)
 	if err != nil {
 		fmt.Print(err)

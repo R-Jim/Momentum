@@ -5,7 +5,6 @@ import (
 
 	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/math"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -13,16 +12,16 @@ import (
 
 func Test_Mio_Init(t *testing.T) {
 	mioID := uuid.New()
-	store := store.NewStore()
+	store := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&store),
+		mioStore: &store,
 	}
 
 	err := mioOperator.Init(mioID, math.NewPos(10, 5))
 	require.NoError(t, err)
 
-	events, err := store.GetEventsByEntityID(mioID)
+	events, err := event.Store(store).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	mioState, err := aggregator.GetMioState(events)
@@ -33,10 +32,10 @@ func Test_Mio_Init(t *testing.T) {
 
 func Test_Mio_Walk(t *testing.T) {
 	mioID := uuid.New()
-	store := store.NewStore()
+	store := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&store),
+		mioStore: &store,
 	}
 
 	err := mioOperator.Init(mioID, math.NewPos(2, 2))
@@ -45,7 +44,7 @@ func Test_Mio_Walk(t *testing.T) {
 	err = mioOperator.Walk(mioID, math.NewPos(3, 2))
 	require.NoError(t, err)
 
-	events, err := store.GetEventsByEntityID(mioID)
+	events, err := event.Store(store).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	mioState, err := aggregator.GetMioState(events)
@@ -60,10 +59,10 @@ func Test_Mio_Walk(t *testing.T) {
 
 func Test_Mio_Run(t *testing.T) {
 	mioID := uuid.New()
-	store := store.NewStore()
+	store := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&store),
+		mioStore: &store,
 	}
 
 	err := mioOperator.Init(mioID, math.NewPos(2, 2))
@@ -72,7 +71,7 @@ func Test_Mio_Run(t *testing.T) {
 	err = mioOperator.Run(mioID, math.NewPos(2, 4))
 	require.NoError(t, err)
 
-	events, err := store.GetEventsByEntityID(mioID)
+	events, err := event.Store(store).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	mioState, err := aggregator.GetMioState(events)
@@ -91,10 +90,10 @@ func Test_Mio_Run(t *testing.T) {
 
 func Test_Mio_Idle(t *testing.T) {
 	mioID := uuid.New()
-	store := store.NewStore()
+	store := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&store),
+		mioStore: &store,
 	}
 
 	err := mioOperator.Init(mioID, math.NewPos(2, 2))
@@ -105,16 +104,17 @@ func Test_Mio_Idle(t *testing.T) {
 }
 
 func Test_Mio_EnterBuilding(t *testing.T) {
-	mioStore := store.NewStore()
-	buildingStore := store.NewStore()
+	mioStore := event.NewMioStore()
+	buildingStore := event.NewBuildingStore()
 
 	mioOperator := MioOperator{
-		MioAggregator:      aggregator.NewMioAggregator(&mioStore),
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+		&mioStore,
+		&buildingStore,
 	}
 
 	BuildingOperator := BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+		&buildingStore,
+		nil,
 	}
 
 	mioID := uuid.New()
@@ -125,13 +125,13 @@ func Test_Mio_EnterBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
 	require.Equal(t, buildingID, mioState.BuildingID)
 
-	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	events, err = event.Store(buildingStore).GetEventsByEntityID(buildingID)
 	require.NoError(t, err)
 	buildingState, err := aggregator.GetBuildingState(events)
 	require.NoError(t, err)
@@ -141,10 +141,11 @@ func Test_Mio_EnterBuilding(t *testing.T) {
 }
 
 func Test_Mio_SelectBuilding(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
@@ -154,7 +155,7 @@ func Test_Mio_SelectBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.SelectBuilding(mioID, buildingID))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -162,7 +163,7 @@ func Test_Mio_SelectBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.SelectBuilding(mioID, buildingID))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err = aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -170,10 +171,11 @@ func Test_Mio_SelectBuilding(t *testing.T) {
 }
 
 func Test_Mio_UnselectBuilding(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
@@ -183,7 +185,7 @@ func Test_Mio_UnselectBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.SelectBuilding(mioID, buildingID))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -191,7 +193,7 @@ func Test_Mio_UnselectBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.UnselectBuilding(mioID, buildingID))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err = aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -199,7 +201,7 @@ func Test_Mio_UnselectBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.UnselectBuilding(mioID, buildingID))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err = aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -207,16 +209,17 @@ func Test_Mio_UnselectBuilding(t *testing.T) {
 }
 
 func Test_Mio_LeaveBuilding(t *testing.T) {
-	mioStore := store.NewStore()
-	buildingStore := store.NewStore()
+	mioStore := event.NewMioStore()
+	buildingStore := event.NewBuildingStore()
 
 	mioOperator := MioOperator{
-		MioAggregator:      aggregator.NewMioAggregator(&mioStore),
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+		&mioStore,
+		&buildingStore,
 	}
 
 	BuildingOperator := BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+		&buildingStore,
+		nil,
 	}
 
 	mioID := uuid.New()
@@ -227,13 +230,13 @@ func Test_Mio_LeaveBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
 	require.Equal(t, buildingID, mioState.BuildingID)
 
-	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	events, err = event.Store(buildingStore).GetEventsByEntityID(buildingID)
 	require.NoError(t, err)
 	buildingState, err := aggregator.GetBuildingState(events)
 	require.NoError(t, err)
@@ -241,13 +244,13 @@ func Test_Mio_LeaveBuilding(t *testing.T) {
 
 	require.NoError(t, mioOperator.LeaveBuilding(mioID, buildingID))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err = aggregator.GetMioState(events)
 	require.NoError(t, err)
 	require.Equal(t, uuid.Nil, mioState.BuildingID)
 
-	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	events, err = event.Store(buildingStore).GetEventsByEntityID(buildingID)
 	require.NoError(t, err)
 	buildingState, err = aggregator.GetBuildingState(events)
 	require.NoError(t, err)
@@ -257,16 +260,17 @@ func Test_Mio_LeaveBuilding(t *testing.T) {
 }
 
 func Test_Mio_Act(t *testing.T) {
-	mioStore := store.NewStore()
-	buildingStore := store.NewStore()
+	mioStore := event.NewMioStore()
+	buildingStore := event.NewBuildingStore()
 
 	mioOperator := MioOperator{
-		MioAggregator:      aggregator.NewMioAggregator(&mioStore),
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+		&mioStore,
+		&buildingStore,
 	}
 
 	BuildingOperator := BuildingOperator{
-		BuildingAggregator: aggregator.NewBuildingAggregator(&buildingStore),
+		&buildingStore,
+		nil,
 	}
 
 	mioID := uuid.New()
@@ -277,13 +281,13 @@ func Test_Mio_Act(t *testing.T) {
 
 	require.NoError(t, mioOperator.EnterBuilding(mioID, buildingID))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
 	require.Equal(t, buildingID, mioState.BuildingID)
 
-	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	events, err = event.Store(buildingStore).GetEventsByEntityID(buildingID)
 	require.NoError(t, err)
 	buildingState, err := aggregator.GetBuildingState(events)
 	require.NoError(t, err)
@@ -291,29 +295,30 @@ func Test_Mio_Act(t *testing.T) {
 
 	require.NoError(t, mioOperator.Act(mioID, buildingID))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	require.Equal(t, event.MioActEffect, events[len(events)-1].Effect)
 
-	events, err = buildingStore.GetEventsByEntityID(buildingID)
+	events, err = event.Store(buildingStore).GetEventsByEntityID(buildingID)
 	require.NoError(t, err)
 
 	require.Equal(t, event.BuildingEntityActEffect, events[len(events)-1].Effect)
 }
 
 func Test_Mio_Stream(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -327,7 +332,7 @@ func Test_Mio_Stream(t *testing.T) {
 
 	require.NoError(t, mioOperator.Stream(mioID, 12))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -336,7 +341,7 @@ func Test_Mio_Stream(t *testing.T) {
 
 	require.NoError(t, mioOperator.Stream(mioID, 60))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -345,17 +350,18 @@ func Test_Mio_Stream(t *testing.T) {
 }
 
 func Test_Mio_Eat(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -369,7 +375,7 @@ func Test_Mio_Eat(t *testing.T) {
 
 	require.NoError(t, mioOperator.Eat(mioID, 12))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -379,7 +385,7 @@ func Test_Mio_Eat(t *testing.T) {
 
 	require.NoError(t, mioOperator.Eat(mioID, 60))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -389,17 +395,18 @@ func Test_Mio_Eat(t *testing.T) {
 }
 
 func Test_Mio_Starve(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -413,7 +420,7 @@ func Test_Mio_Starve(t *testing.T) {
 
 	require.NoError(t, mioOperator.Starve(mioID, 12))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -422,7 +429,7 @@ func Test_Mio_Starve(t *testing.T) {
 
 	require.NoError(t, mioOperator.Starve(mioID, 60))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -431,17 +438,18 @@ func Test_Mio_Starve(t *testing.T) {
 }
 
 func Test_Mio_Drink(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -455,7 +463,7 @@ func Test_Mio_Drink(t *testing.T) {
 
 	require.NoError(t, mioOperator.Drink(mioID, 12))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -465,7 +473,7 @@ func Test_Mio_Drink(t *testing.T) {
 
 	require.NoError(t, mioOperator.Drink(mioID, 60))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -475,17 +483,18 @@ func Test_Mio_Drink(t *testing.T) {
 }
 
 func Test_Mio_Sweat(t *testing.T) {
-	mioStore := store.NewStore()
+	mioStore := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&mioStore),
+		&mioStore,
+		nil,
 	}
 
 	mioID := uuid.New()
 
 	require.NoError(t, mioOperator.Init(mioID, math.NewPos(2, 2)))
 
-	events, err := mioStore.GetEventsByEntityID(mioID)
+	events, err := event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioState, err := aggregator.GetMioState(events)
 	require.NoError(t, err)
@@ -499,7 +508,7 @@ func Test_Mio_Sweat(t *testing.T) {
 
 	require.NoError(t, mioOperator.Sweat(mioID, 12))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -508,7 +517,7 @@ func Test_Mio_Sweat(t *testing.T) {
 
 	require.NoError(t, mioOperator.Sweat(mioID, 60))
 
-	events, err = mioStore.GetEventsByEntityID(mioID)
+	events, err = event.Store(mioStore).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 	mioActivityState, err = aggregator.GetMioActivityState(events)
 	require.NoError(t, err)
@@ -518,10 +527,10 @@ func Test_Mio_Sweat(t *testing.T) {
 
 func Test_Mio_ChangePlannedPoses(t *testing.T) {
 	mioID := uuid.New()
-	store := store.NewStore()
+	store := event.NewMioStore()
 
 	mioOperator := MioOperator{
-		MioAggregator: aggregator.NewMioAggregator(&store),
+		mioStore: &store,
 	}
 
 	err := mioOperator.Init(mioID, math.NewPos(10, 5))
@@ -533,7 +542,7 @@ func Test_Mio_ChangePlannedPoses(t *testing.T) {
 	}
 	mioOperator.ChangePlannedPoses(mioID, plannedPos)
 
-	events, err := store.GetEventsByEntityID(mioID)
+	events, err := event.Store(store).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	mioState, err := aggregator.GetMioState(events)
@@ -547,7 +556,7 @@ func Test_Mio_ChangePlannedPoses(t *testing.T) {
 	}
 	mioOperator.ChangePlannedPoses(mioID, plannedPos)
 
-	events, err = store.GetEventsByEntityID(mioID)
+	events, err = event.Store(store).GetEventsByEntityID(mioID)
 	require.NoError(t, err)
 
 	mioState, err = aggregator.GetMioState(events)
