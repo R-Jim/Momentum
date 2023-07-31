@@ -2,7 +2,6 @@ package aggregator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
 )
 
@@ -14,10 +13,12 @@ type SampleState struct {
 	ID uuid.UUID
 }
 
-func NewSampleAggregator(store *store.Store) Aggregator {
+func NewSampleAggregator(store *event.SampleStore) Aggregator {
+	s := event.Store(*store)
+
 	return aggregateImpl{
 		name:  "SAMPLE",
-		store: store,
+		store: &s,
 		aggregateSet: map[event.Effect]func([]event.Event, event.Event) error{
 			//"SAMPLE_EFFECTED"
 			SampleEffect: func(currentEvents []event.Event, inputEvent event.Event) error {
