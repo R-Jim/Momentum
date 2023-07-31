@@ -8,6 +8,12 @@ const (
 	SampleEffect Effect = "SAMPLE_EFFECT"
 )
 
-func NewSampleEvent(id uuid.UUID) Event {
-	return newEvent(id, 0, SampleEffect, "SAMPLE_DATA")
+type SampleStore Store
+
+func NewSampleStore() SampleStore {
+	return SampleStore(newStore())
+}
+
+func (s SampleStore) NewSampleEvent(id uuid.UUID) Event {
+	return Store(s).newEvent(id, SampleEffect, "SAMPLE_DATA")
 }
