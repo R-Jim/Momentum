@@ -23,11 +23,11 @@ type Event struct {
 	CreatedAt time.Time
 }
 
-func newEvent(entityID uuid.UUID, version int, effect Effect, data data) Event {
+func (s Store) newEvent(entityID uuid.UUID, effect Effect, data data) Event {
 	return Event{
 		ID:       uuid.New(),
 		EntityID: entityID,
-		Version:  version,
+		Version:  len(s.GetEvents()[entityID]) + 1,
 		Effect:   effect,
 		Data:     data,
 

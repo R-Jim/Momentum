@@ -7,24 +7,24 @@ import (
 )
 
 type sampleOperator struct {
-	sampleAggregator aggregator.Aggregator
+	sampleStore *event.SampleStore
 }
 
-func NewSample(sampleAggregator aggregator.Aggregator) sampleOperator {
+func NewSample(sampleStore *event.SampleStore) sampleOperator {
 	return sampleOperator{
-		sampleAggregator: sampleAggregator,
+		sampleStore: sampleStore,
 	}
 }
 
 func (o sampleOperator) SampleOperate(id uuid.UUID) error {
-	event := event.NewSampleEvent(id)
+	sampleEvent := o.sampleStore.NewSampleEvent(id)
 
-	if err := o.sampleAggregator.Aggregate(event); err != nil {
+	sampleAggregator := aggregator.NewSampleAggregator(o.sampleStore)
+	if err := sampleAggregator.Aggregate(sampleEvent); err != nil {
 		return err
 	}
 
-	store := o.sampleAggregator.GetStore()
-	if err := (*store).AppendEvent(event); err != nil {
+	if err := appendEvent(o.sampleStore, sampleEvent); err != nil {
 		return err
 	}
 	return nil

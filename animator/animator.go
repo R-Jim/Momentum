@@ -2,13 +2,12 @@ package animator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
 )
 
 type animatorImpl struct {
-	store *store.Store
+	store *event.Store
 
 	defaultRenderLayer RenderLayer
 
