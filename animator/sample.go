@@ -2,7 +2,6 @@ package animator
 
 import (
 	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/aggregate/store"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 )
@@ -11,10 +10,10 @@ type sampleImpl struct {
 	animatorImpl *animatorImpl
 
 	screen      *ebiten.Image
-	sampleStore *store.Store
+	sampleStore *event.SampleStore
 }
 
-func NewSampleAnimator(store *store.Store) Animator {
+func NewSampleAnimator(store *event.SampleStore) Animator {
 	animateEventSet := map[event.Effect]func(event event.Event) []frame{
 		event.SampleEffect: func(e event.Event) []frame {
 			return nil
