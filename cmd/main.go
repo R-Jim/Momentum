@@ -21,14 +21,19 @@ import (
 type Game struct {
 	mioID      uuid.UUID
 	buildingID uuid.UUID
+	workerID   uuid.UUID
 
-	mioStore *event.MioStore
+	mioStore    *event.MioStore
+	workerStore *event.WorkerStore
 	// operator
-	mioOperator *operator.MioOperator
+	mioOperator    *operator.MioOperator
+	workerOperator *operator.WorkerOperator
 	// animator
-	mioAnimator *animator.Animator
+	mioAnimator    *animator.Animator
+	workerAnimator *animator.Animator
 	// automaton
-	mioAutomaton *automaton.MioAutomaton
+	mioAutomaton    *automaton.MioAutomaton
+	workerAutomaton *automaton.WorkerAutomaton
 
 	automationCounter int
 
@@ -37,6 +42,7 @@ type Game struct {
 
 	defaultLayer *ebiten.Image
 	mioLayer     *ebiten.Image
+	workerLayer  *ebiten.Image
 	effectLayer  *ebiten.Image
 
 	count int
@@ -48,10 +54,12 @@ func (g *Game) Init() {
 	mioStore := event.NewMioStore()
 	streetStore := event.NewStreetStore()
 	buildingStore := event.NewBuildingStore()
+	workerStore := event.NewWorkerStore()
 
 	mioAnimator := animator.NewMioAnimator(&mioStore)
 
 	buildingOperator := operator.NewBuilding(&buildingStore, nil)
+	workerOperator := operator.NewWorker(&workerStore, &buildingStore)
 
 	mioOperator := operator.NewMio(&mioStore, &buildingStore)
 
@@ -131,8 +139,32 @@ func (g *Game) Init() {
 	}
 	g.buildingID = drinkStoreID
 
+	workerID := uuid.New()
+
+	g.workerID = workerID
+	err = workerOperator.Init(workerID, posB)
+	if err != nil {
+		log.Fatal(err)
+	}
+	g.workerStore = &workerStore
+	g.workerOperator = &workerOperator
+	g.workerAutomaton = &automaton.WorkerAutomaton{
+		EntityID: workerID,
+		MapPaths: mapPaths,
+
+		WorkerStore:   &workerStore,
+		StreetStore:   &streetStore,
+		BuildingStore: &buildingStore,
+
+		WorkerOperator: workerOperator,
+		StreetOperator: streetOperator,
+	}
+	workerAnimator := animator.NewWorkerAnimator(&workerStore)
+	g.workerAnimator = &workerAnimator
+
 	g.effectLayer = ebiten.NewImage(800, 600)
 	g.mioLayer = ebiten.NewImage(800, 600)
+	g.workerLayer = ebiten.NewImage(800, 600)
 	g.defaultLayer = ebiten.NewImage(800, 600)
 }
 
@@ -162,11 +194,20 @@ func (g *Game) Update() error {
 			// return err
 		}
 	}
+	if inpututil.IsKeyJustPressed(ebiten.Key1) {
+		if err := g.workerOperator.AssignBuilding(g.workerID, g.buildingID); err != nil {
+			// return err
+		}
+	}
 
 	g.automationCounter++
 	if g.automationCounter >= int(system.AUTOMATION_TICK_PER_FPS) {
 		g.mioAutomaton.PathFindingUpdate()
 		g.mioAutomaton.Move()
+
+		g.workerAutomaton.PathFindingUpdate()
+		g.workerAutomaton.Move()
+
 		g.automationCounter = 0
 	}
 	return nil
@@ -179,9 +220,11 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.count == int(60/system.DEFAULT_FPS) {
 		g.effectLayer.Clear()
 		g.mioLayer.Clear()
+		g.workerLayer.Clear()
 		g.defaultLayer.Clear()
 
 		frames := (*g.mioAnimator).Animator().GetFrames()
+		frames = append(frames, (*g.workerAnimator).Animator().GetFrames()...)
 
 		for _, frame := range frames {
 			switch frame.RenderLayer {
@@ -189,6 +232,8 @@ func (g *Game) Draw(screen *ebiten.Image) {
 				g.effectLayer.DrawImage(frame.Image, frame.Option)
 			case animator.MioRenderLayer:
 				g.mioLayer.DrawImage(frame.Image, frame.Option)
+			case animator.WorkerRenderLayer:
+				g.workerLayer.DrawImage(frame.Image, frame.Option)
 			default:
 				g.defaultLayer.DrawImage(frame.Image, frame.Option)
 			}
@@ -199,6 +244,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	screen.DrawImage(g.effectLayer, &ebiten.DrawImageOptions{})
 	screen.DrawImage(g.mioLayer, &ebiten.DrawImageOptions{})
+	screen.DrawImage(g.workerLayer, &ebiten.DrawImageOptions{})
 	screen.DrawImage(g.defaultLayer, &ebiten.DrawImageOptions{})
 
 	g.count++

@@ -14,6 +14,7 @@ type RenderLayer string
 const (
 	EffectRenderLayer RenderLayer = "EFFECT_LAYER"
 	MioRenderLayer    RenderLayer = "MIO_LAYER"
+	WorkerRenderLayer RenderLayer = "WORKER_LAYER"
 )
 
 func (rl RenderLayer) String() string {

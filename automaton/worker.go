@@ -46,6 +46,9 @@ func (w WorkerAutomaton) PathFindingUpdate() {
 	}
 
 	if workerState.Position == buildingState.Pos {
+		if len(workerState.PlannedPoses) == 0 {
+			return
+		}
 		err = w.WorkerOperator.ChangePlannedPoses(w.EntityID, nil)
 		if err != nil {
 			fmt.Print(err)
