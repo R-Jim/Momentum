@@ -5,14 +5,16 @@ import (
 )
 
 type Store struct {
-	counter int
+	counter *int
 
 	eventsSet map[uuid.UUID][]Event
 }
 
 func newStore() Store {
+	defaultCounter := 0
 	return Store{
 		eventsSet: make(map[uuid.UUID][]Event),
+		counter:   &defaultCounter,
 	}
 }
 
@@ -28,7 +30,7 @@ func (i *Store) AppendEvent(e Event) error {
 	}
 
 	i.eventsSet[e.EntityID] = append(events, e)
-	i.counter++
+	(*i.counter)++
 	return nil
 }
 
@@ -37,6 +39,6 @@ func (i Store) GetEvents() map[uuid.UUID][]Event {
 	return events
 }
 
-func (i Store) GetCounter() int {
-	return i.counter
+func (i *Store) GetCounter() int {
+	return *i.counter
 }
