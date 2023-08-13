@@ -6,12 +6,15 @@ import (
 
 	"image/color"
 
+	"github.com/R-jim/Momentum/aggregate/aggregator"
 	"github.com/R-jim/Momentum/aggregate/event"
 	"github.com/R-jim/Momentum/animator"
 	"github.com/R-jim/Momentum/automaton"
+	"github.com/R-jim/Momentum/cmd/element"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/operator"
 	"github.com/R-jim/Momentum/system"
+	"github.com/R-jim/Momentum/ui"
 	"github.com/google/uuid"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
@@ -19,62 +22,111 @@ import (
 )
 
 type Game struct {
-	mioID      uuid.UUID
-	buildingID uuid.UUID
-	workerID   uuid.UUID
+	// entities
+	mioID       uuid.UUID
+	buildingIDs []uuid.UUID
+	workerIDs   []uuid.UUID
 
-	mioStore    *event.MioStore
-	workerStore *event.WorkerStore
-	// operator
-	mioOperator    *operator.MioOperator
-	workerOperator *operator.WorkerOperator
-	// animator
+	gameMap []math.Path
+
+	// stores
+	mioStore      *event.MioStore
+	workerStore   *event.WorkerStore
+	streetStore   *event.StreetStore
+	buildingStore *event.BuildingStore
+
+	// operators
+	mioOperator      operator.MioOperator
+	workerOperator   operator.WorkerOperator
+	streetOperator   operator.StreetOperator
+	buildingOperator operator.BuildingOperator
+
+	// animators
 	mioAnimator    *animator.Animator
 	workerAnimator *animator.Animator
-	// automaton
-	mioAutomaton    *automaton.MioAutomaton
-	workerAutomaton *automaton.WorkerAutomaton
+
+	// automatons
+	mioAutomaton     *automaton.MioAutomaton
+	workerAutomatons []*automaton.WorkerAutomaton
 
 	automationCounter int
 
-	gameMap       []math.Path
-	buildingPoses []math.Pos // TODO: should get building pos from building store
-
+	// ui
 	defaultLayer *ebiten.Image
 	mioLayer     *ebiten.Image
 	workerLayer  *ebiten.Image
 	effectLayer  *ebiten.Image
 
-	count int
+	uiLayer            *ebiten.Image
+	workerCommandLayer *ebiten.Image
+
+	clickAbleWorkerCardElements []element.WorkerCardClickableElement
+
+	screenWidth  float64
+	screenHeight float64
+
+	workerLayerX      float64
+	workerLayerY      float64
+	workerLayerWidth  float64
+	workerLayerHeight float64
+
+	uiLayerPadding float64
+
+	// game state
+	count              int
+	selectedBuildingID uuid.UUID
 }
 
 func (g *Game) Init() {
-	mioID := uuid.New()
+	g.initStore()
+	g.initOperator()
 
-	mioStore := event.NewMioStore()
-	streetStore := event.NewStreetStore()
-	buildingStore := event.NewBuildingStore()
-	workerStore := event.NewWorkerStore()
+	g.initEntities()
+	g.initAutomaton()
 
-	mioAnimator := animator.NewMioAnimator(&mioStore)
+	g.initAnimator()
 
-	buildingOperator := operator.NewBuilding(&buildingStore, nil)
-	workerOperator := operator.NewWorker(&workerStore, &buildingStore)
+	g.initUI()
 
-	mioOperator := operator.NewMio(&mioStore, &buildingStore)
+	g.selectedBuildingID = g.buildingIDs[0]
+}
 
-	g.mioID = mioID
-	g.mioStore = &mioStore
-	g.mioAnimator = &mioAnimator
-	g.mioOperator = &mioOperator
+func (g *Game) initUI() {
+	g.screenWidth = 800
+	g.screenHeight = 600
+
+	g.effectLayer = ebiten.NewImage(int(g.screenWidth), int(g.screenHeight))
+	g.mioLayer = ebiten.NewImage(int(g.screenWidth), int(g.screenHeight))
+	g.workerLayer = ebiten.NewImage(int(g.screenWidth), int(g.screenHeight))
+	g.defaultLayer = ebiten.NewImage(int(g.screenWidth), int(g.screenHeight))
+	g.uiLayer = ebiten.NewImage(int(g.screenWidth), int(g.screenHeight))
+
+	g.workerLayerWidth = 400
+	g.workerLayerHeight = 150
+
+	g.workerCommandLayer = ebiten.NewImage(int(g.workerLayerWidth), int(g.workerLayerHeight))
+
+	g.uiLayerPadding = 20
+
+	g.workerLayerX = (g.screenWidth - g.workerLayerWidth) / 2
+	g.workerLayerY = g.screenHeight - g.workerLayerHeight - g.uiLayerPadding
+}
+
+func (g *Game) initEntities() {
+	g.mioID = uuid.New()
+
+	street1ID := uuid.New()
+	street2ID := uuid.New()
+	street3ID := uuid.New()
+
+	buildingStreetID1 := uuid.New()
+	buildingStreetID2 := uuid.New()
 
 	posA := math.NewPos(200, 200)
 	posB := math.NewPos(300, 200)
 	posC := math.NewPos(500, 200)
 	posD := math.NewPos(400, 300)
 	buildingPos := math.NewPos(600, 400)
-
-	g.buildingPoses = []math.Pos{buildingPos}
 
 	mapPaths := []math.Path{
 		{Start: posA, End: posB, Cost: 10},        // street1
@@ -86,101 +138,115 @@ func (g *Game) Init() {
 
 	g.gameMap = mapPaths
 
-	street1ID := uuid.New()
-	street2ID := uuid.New()
-	street3ID := uuid.New()
-	buildingStreetID1 := uuid.New()
-	buildingStreetID2 := uuid.New()
-
-	streetOperator := operator.NewStreet(&streetStore)
-
-	g.mioAutomaton = &automaton.MioAutomaton{
-		EntityID: mioID,
-		MapPaths: mapPaths,
-
-		MioStore:      &mioStore,
-		StreetStore:   &streetStore,
-		BuildingStore: &buildingStore,
-
-		MioOperator:    mioOperator,
-		StreetOperator: streetOperator,
-	}
-
-	err := mioOperator.Init(mioID, posA)
+	err := g.mioOperator.Init(g.mioID, posA)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	err = streetOperator.Init(street1ID, posA, posB)
+	err = g.streetOperator.Init(street1ID, posA, posB)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = streetOperator.Init(street2ID, posB, posC)
+	err = g.streetOperator.Init(street2ID, posB, posC)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = streetOperator.Init(street3ID, posB, posD)
+	err = g.streetOperator.Init(street3ID, posB, posD)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = streetOperator.Init(buildingStreetID1, posC, buildingPos)
+	err = g.streetOperator.Init(buildingStreetID1, posC, buildingPos)
 	if err != nil {
 		log.Fatal(err)
 	}
-	err = streetOperator.Init(buildingStreetID2, posD, buildingPos)
+	err = g.streetOperator.Init(buildingStreetID2, posD, buildingPos)
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	drinkStoreID := uuid.New()
-	err = buildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos)
+	err = g.buildingOperator.Init(drinkStoreID, event.BuildingTypeDrinkStore, buildingPos)
 	if err != nil {
 		log.Fatal(err)
 	}
-	g.buildingID = drinkStoreID
+	g.buildingIDs = []uuid.UUID{drinkStoreID}
 
-	workerID := uuid.New()
-
-	g.workerID = workerID
-	err = workerOperator.Init(workerID, posB)
+	worker1ID := uuid.New()
+	g.workerIDs = []uuid.UUID{worker1ID}
+	err = g.workerOperator.Init(worker1ID, posB)
 	if err != nil {
 		log.Fatal(err)
 	}
-	g.workerStore = &workerStore
-	g.workerOperator = &workerOperator
-	g.workerAutomaton = &automaton.WorkerAutomaton{
-		EntityID: workerID,
-		MapPaths: mapPaths,
+}
 
-		WorkerStore:   &workerStore,
-		StreetStore:   &streetStore,
-		BuildingStore: &buildingStore,
+func (g *Game) initAnimator() {
+	mioAnimator := animator.NewMioAnimator(g.mioStore)
+	workerAnimator := animator.NewWorkerAnimator(g.workerStore)
 
-		WorkerOperator: workerOperator,
-		StreetOperator: streetOperator,
-	}
-	workerAnimator := animator.NewWorkerAnimator(&workerStore)
+	g.mioAnimator = &mioAnimator
 	g.workerAnimator = &workerAnimator
+}
 
-	g.effectLayer = ebiten.NewImage(800, 600)
-	g.mioLayer = ebiten.NewImage(800, 600)
-	g.workerLayer = ebiten.NewImage(800, 600)
-	g.defaultLayer = ebiten.NewImage(800, 600)
+func (g *Game) initAutomaton() {
+	g.mioAutomaton = &automaton.MioAutomaton{
+		EntityID: g.mioID,
+		MapPaths: g.gameMap,
+
+		MioStore:      g.mioStore,
+		StreetStore:   g.streetStore,
+		BuildingStore: g.buildingStore,
+
+		MioOperator:    g.mioOperator,
+		StreetOperator: g.streetOperator,
+	}
+
+	for _, workerID := range g.workerIDs {
+		g.workerAutomatons = append(g.workerAutomatons, &automaton.WorkerAutomaton{
+			EntityID: workerID,
+			MapPaths: g.gameMap,
+
+			WorkerStore:   g.workerStore,
+			StreetStore:   g.streetStore,
+			BuildingStore: g.buildingStore,
+
+			WorkerOperator: g.workerOperator,
+			StreetOperator: g.streetOperator,
+		})
+	}
+}
+
+func (g *Game) initOperator() {
+	g.streetOperator = operator.NewStreet(g.streetStore)
+	g.buildingOperator = operator.NewBuilding(g.buildingStore, nil)
+	g.workerOperator = operator.NewWorker(g.workerStore, g.buildingStore)
+	g.mioOperator = operator.NewMio(g.mioStore, g.buildingStore)
+}
+
+func (g *Game) initStore() {
+	mioStore := event.NewMioStore()
+	streetStore := event.NewStreetStore()
+	buildingStore := event.NewBuildingStore()
+	workerStore := event.NewWorkerStore()
+
+	g.mioStore = &mioStore
+	g.workerStore = &workerStore
+	g.streetStore = &streetStore
+	g.buildingStore = &buildingStore
 }
 
 func (g *Game) Update() error {
 	if inpututil.IsKeyJustPressed(ebiten.KeyM) {
-		if err := g.mioOperator.SelectBuilding(g.mioID, g.buildingID); err != nil {
+		if err := g.mioOperator.SelectBuilding(g.mioID, g.selectedBuildingID); err != nil {
 			return err
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyK) {
-		if err := g.mioOperator.Act(g.mioID, g.buildingID); err != nil {
+		if err := g.mioOperator.Act(g.mioID, g.selectedBuildingID); err != nil {
 			// return err
 		}
 	}
 	if inpututil.IsKeyJustPressed(ebiten.KeyL) {
-		if err := g.mioOperator.EnterBuilding(g.mioID, g.buildingID); err != nil {
+		if err := g.mioOperator.EnterBuilding(g.mioID, g.selectedBuildingID); err != nil {
 			// return err
 		}
 	}
@@ -194,9 +260,27 @@ func (g *Game) Update() error {
 			// return err
 		}
 	}
-	if inpututil.IsKeyJustPressed(ebiten.Key1) {
-		if err := g.workerOperator.AssignBuilding(g.workerID, g.buildingID); err != nil {
-			// return err
+
+	isCursorPointer := false
+	for _, element := range g.clickAbleWorkerCardElements {
+		if element.ClickAbleImage.In(ebiten.CursorPosition()) {
+			isCursorPointer = true
+			break
+		}
+	}
+
+	if isCursorPointer {
+		ebiten.SetCursorShape(ebiten.CursorShapePointer)
+	} else {
+		ebiten.SetCursorShape(ebiten.CursorShapeDefault)
+	}
+
+	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		for _, element := range g.clickAbleWorkerCardElements {
+			if element.ClickAbleImage.In(ebiten.CursorPosition()) {
+				element.OnClick(g.selectedBuildingID)
+				break
+			}
 		}
 	}
 
@@ -205,8 +289,10 @@ func (g *Game) Update() error {
 		g.mioAutomaton.PathFindingUpdate()
 		g.mioAutomaton.Move()
 
-		g.workerAutomaton.PathFindingUpdate()
-		g.workerAutomaton.Move()
+		for _, workerAutomaton := range g.workerAutomatons {
+			workerAutomaton.PathFindingUpdate()
+			workerAutomaton.Move()
+		}
 
 		g.automationCounter = 0
 	}
@@ -242,10 +328,13 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.count = 0
 	}
 
+	g.DrawWorkerCommandPanel()
+
 	screen.DrawImage(g.effectLayer, &ebiten.DrawImageOptions{})
 	screen.DrawImage(g.mioLayer, &ebiten.DrawImageOptions{})
 	screen.DrawImage(g.workerLayer, &ebiten.DrawImageOptions{})
 	screen.DrawImage(g.defaultLayer, &ebiten.DrawImageOptions{})
+	screen.DrawImage(g.uiLayer, &ebiten.DrawImageOptions{})
 
 	g.count++
 }
@@ -284,9 +373,65 @@ func (g *Game) DrawBuilding(screen *ebiten.Image) {
 		ebitenutil.DrawRect(screen, pos.X-pointRadius/2, pos.Y-pointRadius/2, pointRadius, pointRadius, color.RGBA{0x0, 0xff, 0xff, 0xff})
 	}
 
-	for _, pos := range g.buildingPoses {
-		drawBuilding(pos)
+	for _, buildingID := range g.buildingIDs {
+		events, err := event.Store(*g.buildingStore).GetEventsByEntityID(buildingID)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		building, err := aggregator.GetBuildingState(events)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		drawBuilding(building.Pos)
 	}
+}
+
+func (g *Game) DrawWorkerCommandPanel() {
+	numberOfWorkers := len(g.workerIDs)
+
+	clickAbleWorkerCardElements := []element.WorkerCardClickableElement{}
+
+	ebitenutil.DrawRect(g.workerCommandLayer, 0, 0, g.workerLayerWidth, g.workerLayerHeight, color.RGBA{0xff, 0xff, 0x0, 0xff})
+	padding := float64(10)
+	cardWidth := float64(100)
+	cardHeight := g.workerLayerHeight - padding*2
+
+	holderWidth := cardWidth*float64(numberOfWorkers) + padding*float64(numberOfWorkers-1)
+	holderX := (g.workerLayerWidth - holderWidth) / 2
+	workerCardHolder := ebiten.NewImage(int(holderWidth), int(g.workerLayerHeight-padding))
+
+	for i := 0; i < numberOfWorkers; i++ {
+		x := float64(i) * cardWidth
+		if i != 0 {
+			x += padding
+		}
+
+		workerCard := ebiten.NewImage(int(cardWidth), int(cardHeight))
+		ebitenutil.DrawRect(workerCard, 0, 0, cardWidth, cardHeight, color.RGBA{0x0, 0xff, 0xff, 0xff})
+
+		clickAbleImage := ui.NewClickAbleImage(workerCard, int(g.workerLayerX+holderX+x), int(g.workerLayerY))
+		clickAbleWorkerCardElements = append(clickAbleWorkerCardElements, element.NewWorkerCardClickableElement(
+			g.workerOperator, g.workerIDs[i], clickAbleImage,
+		))
+
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(x, 0)
+
+		workerCardHolder.DrawImage(workerCard, op)
+	}
+
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(holderX, padding)
+
+	g.workerCommandLayer.DrawImage(workerCardHolder, op)
+
+	op = &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(g.workerLayerX, g.workerLayerY)
+	g.uiLayer.DrawImage(g.workerCommandLayer, op)
+
+	g.clickAbleWorkerCardElements = clickAbleWorkerCardElements
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
