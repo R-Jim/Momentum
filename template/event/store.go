@@ -22,7 +22,6 @@ func (i Store) GetEventsByEntityID(id uuid.UUID) ([]Event, error) {
 	return i.eventsSet[id], nil
 }
 
-// WARNING: action strictly used by AGGREGATOR ONLY
 func (i *Store) AppendEvent(e Event) error {
 	events := i.eventsSet[e.EntityID]
 	if events == nil {

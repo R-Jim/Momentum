@@ -1,11 +1,16 @@
 package animator
 
 import (
-	"github.com/R-jim/Momentum/aggregate/event"
-	"github.com/R-jim/Momentum/system"
 	"github.com/google/uuid"
+
+	"github.com/R-jim/Momentum/system"
+	"github.com/R-jim/Momentum/template/event"
 )
 
+/*
+An animator produces animation Frame based on the newest event after checking cache counter from store.
+If no new Frames for the entity, animator can choose to produce Idle Frames for that entity.
+*/
 type animatorImpl struct {
 	store *event.Store
 
@@ -13,24 +18,23 @@ type animatorImpl struct {
 
 	counterSet map[uuid.UUID]int
 
-	framesToRender []map[uuid.UUID][]frame
+	framesToRender []map[uuid.UUID][]Frame
 
-	getEventFramesSet map[event.Effect]func(event event.Event) []frame
-	getIdleFramesFunc func(entityIDsWithEvent []uuid.UUID) []frame
-
-	subAnimators []Animator
+	eventFramesSet    map[event.Effect]func(event event.Event) []Frame
+	getIdleFramesFunc func(entityIDsWithEvent []uuid.UUID) []Frame
 }
 
-func newAnimatorImpl() *animatorImpl {
+func NewAnimator(eventFramesSet map[event.Effect]func(event event.Event) []Frame) Animator {
 	return &animatorImpl{
 		counterSet: map[uuid.UUID]int{},
 
-		framesToRender: make([]map[uuid.UUID][]frame, system.DEFAULT_FPS),
+		eventFramesSet: eventFramesSet,
+		framesToRender: make([]map[uuid.UUID][]Frame, system.DEFAULT_FPS),
 	}
+
 }
 
 type Animator interface {
-	Animator() *animatorImpl
 }
 
 func (a *animatorImpl) pullNewEventFromStore() {
@@ -56,28 +60,24 @@ func (a *animatorImpl) pullNewEventFromStore() {
 }
 
 func (a *animatorImpl) processEvent(event event.Event) {
-	getFramesFunc := a.getEventFramesSet[event.Effect]
+	getFramesFunc := a.eventFramesSet[event.Effect]
 	if getFramesFunc != nil {
 		for index, _frame := range getFramesFunc(event) {
 			if len(a.framesToRender) == index {
 				a.framesToRender = append(
 					a.framesToRender,
-					map[uuid.UUID][]frame{event.EntityID: {_frame}})
+					map[uuid.UUID][]Frame{event.EntityID: {_frame}})
 			} else {
 				a.framesToRender[index][event.EntityID] = append(a.framesToRender[index][event.EntityID], _frame)
 			}
 		}
 	}
-
-	for _, subAnimator := range a.subAnimators {
-		subAnimator.Animator().processEvent(event)
-	}
 }
 
-func (a *animatorImpl) GetFrames() []frame {
+func (a *animatorImpl) GetFrames() []Frame {
 	a.pullNewEventFromStore()
 
-	frames := []frame{}
+	frames := []Frame{}
 	entityIDsWithEvent := []uuid.UUID{}
 
 	if len(a.framesToRender) > 0 {
@@ -98,10 +98,6 @@ func (a *animatorImpl) GetFrames() []frame {
 			_frame.RenderLayer = a.defaultRenderLayer
 			frames[i] = _frame
 		}
-	}
-
-	for _, subAnimator := range a.subAnimators {
-		frames = append(frames, subAnimator.Animator().GetFrames()...)
 	}
 
 	return frames
