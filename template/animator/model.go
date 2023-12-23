@@ -10,11 +10,12 @@ import (
 )
 
 type RenderLayer string
+
 func (rl RenderLayer) String() string {
 	return string(rl)
 }
 
-type frame struct {
+type Frame struct {
 	Image       *ebiten.Image
 	Option      *ebiten.DrawImageOptions
 	RenderLayer RenderLayer
