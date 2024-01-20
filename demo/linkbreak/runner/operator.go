@@ -24,7 +24,7 @@ func (o Operator) NewRunner(healthBaseValue int, factionValue int, positionValue
 	}
 
 	initRunnerEvent := NewInitEvent(o.RunnerStore, runner.id, runner)
-	initHealthEvent := health.NewInitEvent(o.RunnerStore, runner.healthID, healthBaseValue)
+	initHealthEvent := health.NewInitEvent(o.RunnerStore, runner.healthID, runner.id, healthBaseValue)
 	initPositionEvent := position.NewInitEvent(o.PositionStore, runner.positionID, positionValue)
 
 	if err := NewAggregator().Aggregate(o.RunnerStore, initRunnerEvent); err != nil {
@@ -70,5 +70,50 @@ func (o Operator) MoveRunner(id uuid.UUID, positionValue math.Pos) error {
 		return err
 	}
 	o.PositionStore.AppendEvent(movePositionEvent)
+	return nil
+}
+
+func (o Operator) DestroyRunner(id uuid.UUID) error {
+	var positionID, healthID uuid.UUID
+	if events, err := o.RunnerStore.GetEventsByEntityID(id); err == nil {
+		for _, e := range events {
+			switch e.Effect {
+			case InitEffect:
+				runner, err := event.ParseData[Runner](e)
+				if err != nil {
+					return err
+				}
+				positionID = runner.positionID
+				healthID = runner.healthID
+			}
+		}
+	} else {
+		return err
+	}
+
+	if positionID.String() == "" {
+		return ErrPositionIDRequired
+	}
+	if healthID.String() == "" {
+		return ErrHealthIDRequired
+	}
+
+	destroyPositionEvent := position.NewDestroyEvent(o.PositionStore, positionID)
+	destroyHealthEvent := health.NewDestroyEvent(o.HealthStore, healthID)
+	destroyRunnerEvent := NewDestroyEvent(o.RunnerStore, id)
+
+	if err := position.NewAggregator().Aggregate(o.PositionStore, destroyPositionEvent); err != nil {
+		return err
+	}
+	if err := health.NewAggregator().Aggregate(o.HealthStore, destroyHealthEvent); err != nil {
+		return err
+	}
+	if err := NewAggregator().Aggregate(o.RunnerStore, destroyRunnerEvent); err != nil {
+		return err
+	}
+
+	o.PositionStore.AppendEvent(destroyPositionEvent)
+	o.HealthStore.AppendEvent(destroyHealthEvent)
+	o.RunnerStore.AppendEvent(destroyRunnerEvent)
 	return nil
 }

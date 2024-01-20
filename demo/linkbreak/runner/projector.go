@@ -24,6 +24,7 @@ type RunnerProjection struct {
 	BaseHealthValue    int
 	CurrentHealthValue int
 	Position           math.Pos
+	IsDestroyed        bool
 }
 
 type Projector struct {
@@ -31,6 +32,21 @@ type Projector struct {
 	HealthStore   *event.Store
 	PositionStore *event.Store
 	LinkStore     *event.Store
+}
+
+func (p Projector) GetRunnerProjections() ([]RunnerProjection, error) {
+	projections := []RunnerProjection{}
+
+	for runnerID := range p.RunnerStore.GetEvents() {
+		projection, err := p.GetRunnerProjection(runnerID)
+		if err != nil {
+			return nil, err
+		}
+
+		projections = append(projections, projection)
+	}
+
+	return projections, nil
 }
 
 func (p Projector) GetRunnerProjection(id uuid.UUID) (RunnerProjection, error) {
@@ -50,6 +66,9 @@ func (p Projector) GetRunnerProjection(id uuid.UUID) (RunnerProjection, error) {
 				healthID = runner.healthID
 				positionID = runner.positionID
 				projection.Faction = runner.faction
+
+			case DestroyEffect:
+				projection.IsDestroyed = true
 			}
 		}
 	} else {
@@ -60,12 +79,12 @@ func (p Projector) GetRunnerProjection(id uuid.UUID) (RunnerProjection, error) {
 		for _, e := range events {
 			switch e.Effect {
 			case health.InitEffect:
-				healthValue, err := event.ParseData[int](e)
+				health, err := event.ParseData[health.Health](e)
 				if err != nil {
 					return RunnerProjection{}, err
 				}
-				projection.BaseHealthValue = healthValue
-				projection.CurrentHealthValue = healthValue
+				projection.BaseHealthValue = health.BaseValue()
+				projection.CurrentHealthValue = health.BaseValue()
 			}
 		}
 	} else {

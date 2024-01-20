@@ -32,7 +32,7 @@ func (b BreakAutomaton) BreakLinkedRunners(requiredLinkStrength int) error {
 	for _, linkEvents := range b.linkStore.GetEvents() {
 		if linkProjection, err := link.GetLinkProjection(linkEvents); err != nil {
 			return err
-		} else if linkProjection.Strength >= requiredLinkStrength {
+		} else if !linkProjection.IsDestroyed && linkProjection.Strength >= requiredLinkStrength {
 			breakableLinks = append(breakableLinks, linkProjection)
 		}
 	}

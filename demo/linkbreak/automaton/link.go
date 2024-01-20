@@ -86,7 +86,7 @@ func createOrStrengthenLink(linkOperator link.Operator, activeLinkProjections []
 func (l LinkAutomaton) getLinkableRunner(linkRange float64) ([]uuid.UUID, error) {
 	result := []uuid.UUID{}
 
-	runnerWithPositionSet, err := l.getRunnerAndPositionSet()
+	runnerWithPositionSet, err := getRunnerAndPositionSet(*l.runnerStore, *l.positionStore)
 	if err != nil {
 		return nil, err
 	}
@@ -103,17 +103,21 @@ func (l LinkAutomaton) getLinkableRunner(linkRange float64) ([]uuid.UUID, error)
 	return result, nil
 }
 
-func (l LinkAutomaton) getRunnerAndPositionSet() (map[uuid.UUID]math.Pos, error) {
+func getRunnerAndPositionSet(runnerStore, positionStore event.Store) (map[uuid.UUID]math.Pos, error) {
 	result := map[uuid.UUID]math.Pos{}
 
-	runnerEventMap := l.runnerStore.GetEvents()
+	runnerEventMap := runnerStore.GetEvents()
 	for runnerID, runnerEvents := range runnerEventMap {
+		if isRunnerDestroyed(runnerEvents) {
+			continue
+		}
+
 		positionID, err := runner.GetRunnerPositionID(runnerEvents)
 		if err != nil {
 			return nil, err
 		}
 
-		positionEvents, err := l.positionStore.GetEventsByEntityID(positionID)
+		positionEvents, err := positionStore.GetEventsByEntityID(positionID)
 		if err != nil {
 			return nil, err
 		}
@@ -173,4 +177,63 @@ func (l LinkAutomaton) DeleteLinks(linkRange float64) error {
 		}
 	}
 	return nil
+}
+
+type DestroyLinkAutomaton struct {
+	runnerStore *event.Store
+	linkStore   *event.Store
+
+	linkOperator link.Operator
+}
+
+func NewDestroyLinkAutomaton(runnerStore, linkStore *event.Store) DestroyLinkAutomaton {
+	return DestroyLinkAutomaton{
+		runnerStore: runnerStore,
+		linkStore:   linkStore,
+
+		linkOperator: link.Operator{
+			LinkStore: linkStore,
+		},
+	}
+}
+
+func (d DestroyLinkAutomaton) DestroyLinkWithDestroyedRunner() error {
+	activeLinks := []link.LinkProjection{}
+
+	for _, linkEvents := range d.linkStore.GetEvents() {
+		if linkProjection, err := link.GetLinkProjection(linkEvents); err != nil {
+			return err
+		} else if !linkProjection.IsDestroyed {
+			activeLinks = append(activeLinks, linkProjection)
+		}
+	}
+
+	for _, link := range activeLinks {
+		sourceEvents, err := d.runnerStore.GetEventsByEntityID(link.SourceID)
+		if err != nil {
+			return err
+		}
+		targetEvents, err := d.runnerStore.GetEventsByEntityID(link.TargetID)
+		if err != nil {
+			return err
+		}
+
+		if isRunnerDestroyed(sourceEvents) || isRunnerDestroyed(targetEvents) {
+			if err := d.linkOperator.Destroy(link.ID); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func isRunnerDestroyed(runnerEvents []event.Event) bool {
+	for i := len(runnerEvents) - 1; i >= 0; i-- {
+		if runnerEvents[i].Effect == runner.DestroyEffect {
+			return true
+		}
+	}
+
+	return false
 }
