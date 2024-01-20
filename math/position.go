@@ -100,9 +100,9 @@ func GetDistances(posStart Pos, posEnd Pos) (distanceX, distanceY, distanceSqrt 
 	return distanceX, distanceY, distanceSqrt
 }
 
-func GetDegree(posStart, posEnd Pos) float64 {
-	x := posEnd.X - posStart.X
-	y := posEnd.Y - posStart.Y
+func (p Pos) GetDegree(end Pos) float64 {
+	x := end.X - p.X
+	y := end.Y - p.Y
 
 	deg := math.RoundToEven(math.Atan(y/x) * 180 / math.Pi)
 	if x < 0 && y < 0 {
@@ -130,4 +130,11 @@ func IsBetweenAAndB(currentPos, a, b Pos, buffer float64) bool {
 	fixedBuffer := 0.02
 
 	return (distFromA+distFromB-distAB)-((buffer+fixedBuffer)*2) <= 0
+}
+
+func (p Pos) IsEqualRound(input Pos) bool {
+	xDiff := p.X - input.X
+	yDiff := p.Y - input.Y
+
+	return xDiff+yDiff > -1 && xDiff+yDiff < 1
 }
