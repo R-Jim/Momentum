@@ -10,7 +10,7 @@ import (
 	"github.com/R-jim/Momentum/template/event"
 )
 
-type LinkProjection struct {
+type RunnerLinkProjection struct {
 	Owner  uuid.UUID
 	Target uuid.UUID
 
@@ -96,8 +96,8 @@ func (p Projector) GetRunnerProjection(id uuid.UUID) (RunnerProjection, error) {
 	return projection, nil
 }
 
-func (p Projector) GetLinkProjections() ([]LinkProjection, error) {
-	projections := []LinkProjection{}
+func (p Projector) GetLinkProjections() ([]RunnerLinkProjection, error) {
+	projections := []RunnerLinkProjection{}
 
 	aliveLinkSet, err := getLinkSet(*p.LinkStore)
 	if err != nil {
@@ -116,7 +116,7 @@ func (p Projector) GetLinkProjections() ([]LinkProjection, error) {
 				return nil, err
 			}
 
-			projections = append(projections, LinkProjection{
+			projections = append(projections, RunnerLinkProjection{
 				Owner:  sourceID,
 				Target: targetID,
 
