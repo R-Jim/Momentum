@@ -17,6 +17,13 @@
             "request": "launch",
             "mode": "auto",
             "program": "./cmd/server/main.go"
+        },
+        {
+            "name": "Launch link break",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "./demo/linkbreak/cmd/main.go"
         }
     ]
 }
