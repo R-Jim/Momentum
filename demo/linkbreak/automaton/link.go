@@ -37,42 +37,50 @@ func NewLinkAutomaton(playerID uuid.UUID, runnerStore, positionStore, linkStore 
 	}
 }
 
-func (l *LinkAutomaton) CreateLinks(linkRange float64) error {
+func (l *LinkAutomaton) CreateOrStrengthenLinks(linkRange float64) error {
 	linkableRunners, err := l.getLinkableRunner(linkRange)
 	if err != nil {
 		return err
 	}
 
-	result := map[uuid.UUID][]uuid.UUID{}
+	activeLinkProjections := []link.LinkProjection{}
+	for _, linkEvents := range l.linkStore.GetEvents() {
+		linkProjection, err := link.GetLinkProjection(linkEvents)
+		if err != nil {
+			return err
+		}
+
+		if !linkProjection.IsDestroyed {
+			activeLinkProjections = append(activeLinkProjections, linkProjection)
+		}
+	}
+
 	for _, targetID := range linkableRunners {
 		sourceID := l.playerID
 
-		if l.isLinkExist(sourceID, targetID) {
-			result[sourceID] = append(result[sourceID], targetID)
-			continue
-		}
-
-		if err := l.linkOperator.NewLink(uuid.New(), sourceID, targetID); err != nil {
+		if err := createOrStrengthenLink(l.linkOperator, activeLinkProjections, sourceID, targetID); err != nil {
 			return err
 		}
-		result[sourceID] = append(result[sourceID], targetID)
+
 	}
 
-	l.createdLinks = result
 	return nil
 }
 
-func (l *LinkAutomaton) isLinkExist(sourceID, targetID uuid.UUID) bool {
-	for existedSourceID, existedTargetIDs := range l.createdLinks {
-		if existedSourceID == l.playerID {
-			for _, existedTargetID := range existedTargetIDs {
-				if existedTargetID == targetID {
-					return true
-				}
+func createOrStrengthenLink(linkOperator link.Operator, activeLinkProjections []link.LinkProjection, sourceID, targetID uuid.UUID) error {
+	for _, linkProjection := range activeLinkProjections {
+		if linkProjection.SourceID == sourceID && linkProjection.TargetID == targetID {
+			if err := linkOperator.Strengthen(linkProjection.ID); err != nil {
+				return err
 			}
+			return nil
 		}
 	}
-	return false
+
+	if err := linkOperator.New(uuid.New(), sourceID, targetID); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (l LinkAutomaton) getLinkableRunner(linkRange float64) ([]uuid.UUID, error) {

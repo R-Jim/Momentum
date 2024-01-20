@@ -9,7 +9,7 @@ type Operator struct {
 	LinkStore *event.Store
 }
 
-func (o Operator) NewLink(id, source, target uuid.UUID) error {
+func (o Operator) New(id, source, target uuid.UUID) error {
 	initEvent := NewInitEvent(o.LinkStore, id, Link{
 		source: source,
 		target: target,
@@ -32,6 +32,18 @@ func (o Operator) Destroy(id uuid.UUID) error {
 	}
 
 	o.LinkStore.AppendEvent(destroyEvent)
+
+	return nil
+}
+
+func (o Operator) Strengthen(id uuid.UUID) error {
+	strengthenEvent := NewStrengthenEvent(o.LinkStore, id)
+
+	if err := NewAggregator().Aggregate(o.LinkStore, strengthenEvent); err != nil {
+		return err
+	}
+
+	o.LinkStore.AppendEvent(strengthenEvent)
 
 	return nil
 }

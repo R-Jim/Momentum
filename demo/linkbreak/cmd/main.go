@@ -52,7 +52,7 @@ func (g *Game) Update() error {
 		g.RunnerOperator.MoveRunner(runner.ID, g.ObjectPos)
 	}
 
-	if err := g.LinkAutomaton.CreateLinks(50); err != nil {
+	if err := g.LinkAutomaton.CreateOrStrengthenLinks(50); err != nil {
 		return err
 	}
 	if err := g.LinkAutomaton.DeleteLinks(50); err != nil {
