@@ -22,3 +22,7 @@ func (r Runner) Faction() int {
 func (r Runner) PositionID() uuid.UUID {
 	return r.positionID
 }
+
+func (r Runner) HealthID() uuid.UUID {
+	return r.healthID
+}

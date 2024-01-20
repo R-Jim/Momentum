@@ -13,7 +13,12 @@ func NewAggregator() aggregate.Aggregator {
 				"": "INIT",
 			},
 			DestroyEffect: {
-				"INIT": "DESTROY",
+				"INIT":   "DESTROY",
+				"MODIFY": "DESTROY",
+			},
+			ModifyEffect: {
+				"INIT":   "MODIFY",
+				"MODIFY": "MODIFY",
 			},
 		},
 	)
