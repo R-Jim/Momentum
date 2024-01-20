@@ -10,7 +10,7 @@ type Store struct {
 	eventsSet map[uuid.UUID][]Event
 }
 
-func newStore() Store {
+func NewStore() Store {
 	defaultCounter := 0
 	return Store{
 		eventsSet: make(map[uuid.UUID][]Event),
