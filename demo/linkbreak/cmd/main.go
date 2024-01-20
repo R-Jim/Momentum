@@ -30,8 +30,10 @@ type Game struct {
 
 	RunnerProjector runner.Projector
 
-	LinkAutomaton  automaton.LinkAutomaton
-	BreakAutomaton automaton.BreakAutomaton
+	LinkAutomaton          automaton.LinkAutomaton
+	BreakAutomaton         automaton.BreakAutomaton
+	DestroyRunnerAutomaton automaton.DestroyRunnerAutomaton
+	DestroyLinkAutomaton   automaton.DestroyLinkAutomaton
 
 	PlayerID  uuid.UUID
 	EntityIDs []uuid.UUID
@@ -56,6 +58,9 @@ func (g *Game) Update() error {
 	}
 
 	if g.Counter%60 == 0 {
+		if err := g.DestroyLinkAutomaton.DestroyLinkWithDestroyedRunner(); err != nil {
+			return err
+		}
 		if err := g.LinkAutomaton.CreateOrStrengthenLinks(50); err != nil {
 			return err
 		}
@@ -63,6 +68,9 @@ func (g *Game) Update() error {
 			return err
 		}
 		if err := g.BreakAutomaton.BreakLinkedRunners(3); err != nil {
+			return err
+		}
+		if err := g.DestroyRunnerAutomaton.DestroyEmptyHealthRunner(); err != nil {
 			return err
 		}
 	}
@@ -82,15 +90,18 @@ func (g *Game) SpawnEntity(factionValue int, position math.Pos) (uuid.UUID, erro
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
-	for _, id := range g.EntityIDs {
-		runner, err := g.RunnerProjector.GetRunnerProjection(id)
-		if err != nil {
-			log.Fatal(err)
+	runnerProjections, err := g.RunnerProjector.GetRunnerProjections()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, runnerProjection := range runnerProjections {
+		if runnerProjection.IsDestroyed {
 			continue
 		}
 
 		var clr color.Color
-		switch runner.Faction {
+		switch runnerProjection.Faction {
 		case 1:
 			clr = color.RGBA{0x0, 0xff, 0x0, 0xff}
 		case 2:
@@ -99,7 +110,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 			clr = color.White
 		}
 
-		ebitenutil.DrawRect(screen, runner.Position.X-POINT_WIDTH/2, runner.Position.Y-POINT_HEIGHT/2, POINT_WIDTH, POINT_HEIGHT, clr)
+		ebitenutil.DrawRect(screen, runnerProjection.Position.X-POINT_WIDTH/2, runnerProjection.Position.Y-POINT_HEIGHT/2, POINT_WIDTH, POINT_HEIGHT, clr)
 	}
 
 	linkProjections, err := g.RunnerProjector.GetLinkProjections()
@@ -158,6 +169,8 @@ func (g *Game) Init() {
 
 	g.LinkAutomaton = automaton.NewLinkAutomaton(playerID, &runnerStore, &positionStore, &linkStore)
 	g.BreakAutomaton = automaton.NewBreakAutomaton(&linkStore, &runnerStore, &healthStore)
+	g.DestroyRunnerAutomaton = automaton.NewDestroyRunnerAutomaton(&runnerStore, &positionStore, &healthStore)
+	g.DestroyLinkAutomaton = automaton.NewDestroyLinkAutomaton(&runnerStore, &linkStore)
 
 	_, err = g.SpawnEntity(2, math.NewPos(WINDOW_X/4, WINDOW_Y/4))
 	if err != nil {

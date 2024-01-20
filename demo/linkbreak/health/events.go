@@ -12,8 +12,11 @@ const (
 	DestroyEffect event.Effect = "DESTROY_EFFECT"
 )
 
-func NewInitEvent(s *event.Store, id uuid.UUID, baseValue int) event.Event {
-	return s.NewEvent(id, InitEffect, baseValue)
+func NewInitEvent(s *event.Store, id uuid.UUID, ownerID uuid.UUID, baseValue int) event.Event {
+	return s.NewEvent(id, InitEffect, Health{
+		ownerID:   ownerID,
+		baseValue: baseValue,
+	})
 }
 
 func NewDestroyEvent(s *event.Store, id uuid.UUID) event.Event {
