@@ -30,10 +30,13 @@ type Game struct {
 
 	RunnerProjector runner.Projector
 
-	LinkAutomaton automaton.LinkAutomaton
+	LinkAutomaton  automaton.LinkAutomaton
+	BreakAutomaton automaton.BreakAutomaton
 
 	PlayerID  uuid.UUID
 	EntityIDs []uuid.UUID
+
+	Counter int
 }
 
 func (g *Game) Update() error {
@@ -52,12 +55,19 @@ func (g *Game) Update() error {
 		g.RunnerOperator.MoveRunner(runner.ID, g.ObjectPos)
 	}
 
-	if err := g.LinkAutomaton.CreateOrStrengthenLinks(50); err != nil {
-		return err
+	if g.Counter%60 == 0 {
+		if err := g.LinkAutomaton.CreateOrStrengthenLinks(50); err != nil {
+			return err
+		}
+		if err := g.LinkAutomaton.DeleteLinks(50); err != nil {
+			return err
+		}
+		if err := g.BreakAutomaton.BreakLinkedRunners(3); err != nil {
+			return err
+		}
 	}
-	if err := g.LinkAutomaton.DeleteLinks(50); err != nil {
-		return err
-	}
+
+	g.Counter++
 
 	return nil
 }
@@ -147,6 +157,7 @@ func (g *Game) Init() {
 	g.PlayerID = playerID
 
 	g.LinkAutomaton = automaton.NewLinkAutomaton(playerID, &runnerStore, &positionStore, &linkStore)
+	g.BreakAutomaton = automaton.NewBreakAutomaton(&linkStore, &runnerStore, &healthStore)
 
 	_, err = g.SpawnEntity(2, math.NewPos(WINDOW_X/4, WINDOW_Y/4))
 	if err != nil {
