@@ -1,17 +1,22 @@
 package main
 
 import (
+	"fmt"
 	"image/color"
 	"log"
 
-	"github.com/R-jim/Momentum/demo/linkbreak/automaton"
-	"github.com/R-jim/Momentum/demo/linkbreak/runner"
-	"github.com/R-jim/Momentum/math"
-	"github.com/R-jim/Momentum/template/event"
 	"github.com/google/uuid"
+	"github.com/hajimehoshi/bitmapfont/v3"
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/text"
+
+	"github.com/R-jim/Momentum/demo/linkbreak/automaton"
+	"github.com/R-jim/Momentum/demo/linkbreak/runner"
+	"github.com/R-jim/Momentum/demo/linkbreak/spawner"
+	"github.com/R-jim/Momentum/math"
+	"github.com/R-jim/Momentum/template/event"
 )
 
 const (
@@ -28,7 +33,8 @@ type Game struct {
 
 	RunnerOperator runner.Operator
 
-	RunnerProjector runner.Projector
+	RunnerProjector  runner.Projector
+	SpawnerProjector spawner.Projector
 
 	LinkAutomaton          automaton.LinkAutomaton
 	BreakAutomaton         automaton.BreakAutomaton
@@ -128,6 +134,33 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		clr := color.RGBA{0x0, 0xff, 0x0, 0xff}
 		ebitenutil.DrawLine(screen, linkProjection.OwnerPosition.X, linkProjection.OwnerPosition.Y, linkProjection.TargetPosition.X, linkProjection.TargetPosition.Y, clr)
 	}
+
+	spawnProjections, err := g.SpawnerProjector.SpawnerProjections()
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, spawnProjection := range spawnProjections {
+		if spawnProjection.IsSpawned {
+			continue
+		}
+
+		var clr color.Color
+		switch spawnProjection.Faction {
+		case 1:
+			clr = color.RGBA{0x0, 0xff, 0x0, 0xff}
+		case 2:
+			clr = color.RGBA{0xff, 0x0, 0x0, 0xff}
+		default:
+			clr = color.White
+		}
+
+		op := &ebiten.DrawImageOptions{}
+		op.GeoM.Translate(spawnProjection.Position.X, spawnProjection.Position.Y)
+
+		spawnImage := ebiten.NewImage(50, 50)
+		text.Draw(spawnImage, fmt.Sprintf("%d", spawnProjection.Counter+1), bitmapfont.Face, 4, 12, clr)
+		screen.DrawImage(spawnImage, op)
+	}
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
@@ -164,6 +197,9 @@ func (g *Game) Init() {
 		HealthStore:   &healthStore,
 		PositionStore: &positionStore,
 		LinkStore:     &linkStore,
+	}
+	g.SpawnerProjector = spawner.Projector{
+		SpawnerStore: &spawnerStore,
 	}
 
 	g.ObjectPos = math.NewPos(WINDOW_X/2, WINDOW_Y/2)
