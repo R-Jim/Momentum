@@ -34,6 +34,7 @@ type Game struct {
 	BreakAutomaton         automaton.BreakAutomaton
 	DestroyRunnerAutomaton automaton.DestroyRunnerAutomaton
 	DestroyLinkAutomaton   automaton.DestroyLinkAutomaton
+	SpawnerAutomaton       automaton.SpawnerAutomaton
 
 	PlayerID uuid.UUID
 
@@ -73,6 +74,14 @@ func (g *Game) Update() error {
 			return err
 		}
 	}
+
+	if g.Counter%180 == 0 {
+		if err := g.SpawnerAutomaton.NewSpawner(math.NewPos(50, 50), math.NewPos(WINDOW_X-50, WINDOW_Y-50)); err != nil {
+			return err
+		}
+		if err := g.SpawnerAutomaton.SpawnOrCountDown(); err != nil {
+			return err
+		}
 	}
 
 	g.Counter++
@@ -142,6 +151,7 @@ func (g *Game) Init() {
 	healthStore := event.NewStore()
 	positionStore := event.NewStore()
 	linkStore := event.NewStore()
+	spawnerStore := event.NewStore()
 
 	g.RunnerOperator = runner.Operator{
 		RunnerStore:   &runnerStore,
@@ -167,11 +177,7 @@ func (g *Game) Init() {
 	g.BreakAutomaton = automaton.NewBreakAutomaton(&linkStore, &runnerStore, &healthStore)
 	g.DestroyRunnerAutomaton = automaton.NewDestroyRunnerAutomaton(&runnerStore, &positionStore, &healthStore)
 	g.DestroyLinkAutomaton = automaton.NewDestroyLinkAutomaton(&runnerStore, &linkStore)
-
-	_, err = g.SpawnEntity(2, math.NewPos(WINDOW_X/4, WINDOW_Y/4))
-	if err != nil {
-		log.Fatal(err)
-	}
+	g.SpawnerAutomaton = automaton.NewSpawnerAutomaton(&spawnerStore, &runnerStore, &positionStore, &healthStore)
 
 	g.TargetPos = g.ObjectPos
 }
