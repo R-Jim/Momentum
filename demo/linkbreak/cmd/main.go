@@ -35,8 +35,7 @@ type Game struct {
 	DestroyRunnerAutomaton automaton.DestroyRunnerAutomaton
 	DestroyLinkAutomaton   automaton.DestroyLinkAutomaton
 
-	PlayerID  uuid.UUID
-	EntityIDs []uuid.UUID
+	PlayerID uuid.UUID
 
 	Counter int
 }
@@ -58,9 +57,6 @@ func (g *Game) Update() error {
 	}
 
 	if g.Counter%60 == 0 {
-		if err := g.DestroyLinkAutomaton.DestroyLinkWithDestroyedRunner(); err != nil {
-			return err
-		}
 		if err := g.LinkAutomaton.CreateOrStrengthenLinks(50); err != nil {
 			return err
 		}
@@ -73,6 +69,10 @@ func (g *Game) Update() error {
 		if err := g.DestroyRunnerAutomaton.DestroyEmptyHealthRunner(); err != nil {
 			return err
 		}
+		if err := g.DestroyLinkAutomaton.DestroyLinkWithDestroyedRunner(); err != nil {
+			return err
+		}
+	}
 	}
 
 	g.Counter++
@@ -80,13 +80,11 @@ func (g *Game) Update() error {
 	return nil
 }
 
-func (g *Game) SpawnEntity(factionValue int, position math.Pos) (uuid.UUID, error) {
-	runner, err := g.RunnerOperator.NewRunner(5, factionValue, position)
-	if err != nil {
-		return uuid.UUID{}, err
+func (g *Game) SpawnEntity(id uuid.UUID, factionValue int, position math.Pos) error {
+	if err := g.RunnerOperator.NewRunner(id, 5, factionValue, position); err != nil {
+		return err
 	}
-	g.EntityIDs = append(g.EntityIDs, runner.ID())
-	return runner.ID(), nil
+	return nil
 }
 
 func (g *Game) Draw(screen *ebiten.Image) {
@@ -140,8 +138,6 @@ func main() {
 }
 
 func (g *Game) Init() {
-	g.EntityIDs = []uuid.UUID{}
-
 	runnerStore := event.NewStore()
 	healthStore := event.NewStore()
 	positionStore := event.NewStore()
@@ -161,8 +157,8 @@ func (g *Game) Init() {
 	}
 
 	g.ObjectPos = math.NewPos(WINDOW_X/2, WINDOW_Y/2)
-	playerID, err := g.SpawnEntity(1, g.ObjectPos)
-	if err != nil {
+	playerID := uuid.New()
+	if err := g.SpawnEntity(playerID, 1, g.ObjectPos); err != nil {
 		log.Fatal(err)
 	}
 	g.PlayerID = playerID

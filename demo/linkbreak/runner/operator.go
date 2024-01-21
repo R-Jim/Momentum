@@ -15,9 +15,9 @@ type Operator struct {
 	PositionStore *event.Store
 }
 
-func (o Operator) NewRunner(healthBaseValue int, factionValue int, positionValue math.Pos) (Runner, error) {
+func (o Operator) NewRunner(id uuid.UUID, healthBaseValue int, factionValue int, positionValue math.Pos) error {
 	runner := Runner{
-		id:         uuid.New(),
+		id:         id,
 		faction:    factionValue,
 		healthID:   uuid.New(),
 		positionID: uuid.New(),
@@ -28,20 +28,20 @@ func (o Operator) NewRunner(healthBaseValue int, factionValue int, positionValue
 	initPositionEvent := position.NewInitEvent(o.PositionStore, runner.positionID, positionValue)
 
 	if err := NewAggregator().Aggregate(o.RunnerStore, initRunnerEvent); err != nil {
-		return Runner{}, err
+		return err
 	}
 	if err := health.NewAggregator().Aggregate(o.HealthStore, initHealthEvent); err != nil {
-		return Runner{}, err
+		return err
 	}
 	if err := position.NewAggregator().Aggregate(o.PositionStore, initPositionEvent); err != nil {
-		return Runner{}, err
+		return err
 	}
 
 	o.RunnerStore.AppendEvent(initRunnerEvent)
 	o.HealthStore.AppendEvent(initHealthEvent)
 	o.PositionStore.AppendEvent(initPositionEvent)
 
-	return runner, nil
+	return nil
 }
 
 func (o Operator) MoveRunner(id uuid.UUID, positionValue math.Pos) error {
