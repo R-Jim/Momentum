@@ -1,11 +1,12 @@
 package automaton
 
 import (
+	"github.com/google/uuid"
+
 	"github.com/R-jim/Momentum/demo/linkbreak/health"
 	"github.com/R-jim/Momentum/demo/linkbreak/link"
 	"github.com/R-jim/Momentum/demo/linkbreak/runner"
 	"github.com/R-jim/Momentum/template/event"
-	"github.com/google/uuid"
 )
 
 type BreakAutomaton struct {

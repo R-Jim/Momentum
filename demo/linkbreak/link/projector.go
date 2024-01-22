@@ -1,8 +1,9 @@
 package link
 
 import (
-	"github.com/R-jim/Momentum/template/event"
 	"github.com/google/uuid"
+
+	"github.com/R-jim/Momentum/template/event"
 )
 
 type LinkProjection struct {
