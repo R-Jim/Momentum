@@ -16,7 +16,7 @@ type SpawnerAutomaton struct {
 	spawnerStore *event.Store
 
 	spawnerOperator spawner.Operator
-	runnerOperator  runner.Operator
+	runnerOperator  runner.OperatorV2
 }
 
 func NewSpawnerAutomaton(spawnerStore, runnerStore, positionStore, healthStore *event.Store) SpawnerAutomaton {
@@ -26,11 +26,7 @@ func NewSpawnerAutomaton(spawnerStore, runnerStore, positionStore, healthStore *
 		spawnerOperator: spawner.Operator{
 			SpawnerStore: spawnerStore,
 		},
-		runnerOperator: runner.Operator{
-			RunnerStore:   runnerStore,
-			PositionStore: positionStore,
-			HealthStore:   healthStore,
-		},
+		runnerOperator: runner.NewOperatorV2(runnerStore, healthStore, positionStore),
 	}
 }
 
@@ -51,7 +47,7 @@ func (s SpawnerAutomaton) SpawnOrCountDown() error {
 	return nil
 }
 
-func spawnOrCountDown(events []event.Event, spawnerOperator spawner.Operator, runnerOperator runner.Operator) error {
+func spawnOrCountDown(events []event.Event, spawnerOperator spawner.Operator, runnerOperator runner.OperatorV2) error {
 	var counter int
 	var spawnerID uuid.UUID
 	var spawnerData spawner.Spawner
@@ -80,7 +76,7 @@ func spawnOrCountDown(events []event.Event, spawnerOperator spawner.Operator, ru
 	}
 }
 
-func spawnRunner(spawnerOperator spawner.Operator, runnerOperator runner.Operator, spawnerID uuid.UUID, spawnerData spawner.Spawner) error {
+func spawnRunner(spawnerOperator spawner.Operator, runnerOperator runner.OperatorV2, spawnerID uuid.UUID, spawnerData spawner.Spawner) error {
 	data, ok := spawnerData.SpawnTypeData().(spawner.SpawnRunnerData)
 	if !ok {
 		return errors.New("failed to parse spawn runner data")

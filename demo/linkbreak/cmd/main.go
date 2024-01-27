@@ -54,7 +54,8 @@ type Game struct {
 	ObjectPos math.Pos
 	TargetPos math.Pos
 
-	RunnerOperator runner.Operator
+	RunnerOperator   runner.Operator
+	RunnerOperatorV2 runner.OperatorV2
 
 	RunnerProjector  runner.Projector
 	SpawnerProjector spawner.Projector
@@ -307,6 +308,11 @@ func (g *Game) Init() {
 		HealthStore:   &healthStore,
 		PositionStore: &positionStore,
 	}
+	g.RunnerOperatorV2 = runner.NewOperatorV2(
+		&runnerStore,
+		&healthStore,
+		&positionStore,
+	)
 
 	g.RunnerProjector = runner.Projector{
 		RunnerStore:   &runnerStore,

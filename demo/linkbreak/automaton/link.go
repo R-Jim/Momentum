@@ -30,9 +30,7 @@ func NewLinkAutomaton(playerID uuid.UUID, runnerStore, positionStore, linkStore 
 		positionStore: positionStore,
 		linkStore:     linkStore,
 
-		linkOperator: link.Operator{
-			LinkStore: linkStore,
-		},
+		linkOperator: link.NewOperator(linkStore),
 
 		createdLinks: map[uuid.UUID][]uuid.UUID{},
 	}
@@ -192,9 +190,7 @@ func NewDestroyLinkAutomaton(runnerStore, linkStore *event.Store) DestroyLinkAut
 		runnerStore: runnerStore,
 		linkStore:   linkStore,
 
-		linkOperator: link.Operator{
-			LinkStore: linkStore,
-		},
+		linkOperator: link.NewOperator(linkStore),
 	}
 }
 
