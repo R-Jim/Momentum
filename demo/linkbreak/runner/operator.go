@@ -7,6 +7,7 @@ import (
 	"github.com/R-jim/Momentum/demo/linkbreak/position"
 	"github.com/R-jim/Momentum/math"
 	"github.com/R-jim/Momentum/template/event"
+	"github.com/R-jim/Momentum/template/operator"
 )
 
 type Operator struct {
@@ -116,4 +117,33 @@ func (o Operator) DestroyRunner(id uuid.UUID) error {
 	o.HealthStore.AppendEvent(destroyHealthEvent)
 	o.RunnerStore.AppendEvent(destroyRunnerEvent)
 	return nil
+}
+
+type OperatorV2 struct {
+	runnerAggregationSet   operator.AggregationSet
+	healthAggregationSet   operator.AggregationSet
+	positionAggregationSet operator.AggregationSet
+}
+
+func NewOperatorV2(runnerStore, healthStore, positionStore *event.Store) OperatorV2 {
+	return OperatorV2{
+		runnerAggregationSet:   operator.NewAggregationSet(runnerStore, NewAggregator()),
+		healthAggregationSet:   operator.NewAggregationSet(healthStore, health.NewAggregator()),
+		positionAggregationSet: operator.NewAggregationSet(positionStore, position.NewAggregator()),
+	}
+}
+
+func (o OperatorV2) NewRunner(id uuid.UUID, healthBaseValue int, factionValue int, positionValue math.Pos) error {
+	runner := Runner{
+		id:         id,
+		faction:    factionValue,
+		healthID:   uuid.New(),
+		positionID: uuid.New(),
+	}
+
+	return operator.EffectOperationSets{
+		operator.NewEffectOperationSet(id, InitEffect, runner, o.runnerAggregationSet),
+		operator.NewEffectOperationSet(runner.healthID, health.InitEffect, health.NewHealth(id, healthBaseValue), o.healthAggregationSet),
+		operator.NewEffectOperationSet(runner.positionID, position.InitEffect, positionValue, o.positionAggregationSet),
+	}.PerformTxn()
 }

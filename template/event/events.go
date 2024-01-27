@@ -9,7 +9,7 @@ import (
 	pkgerrors "github.com/pkg/errors"
 )
 
-type data interface{}
+type Data interface{}
 
 type Effect string
 
@@ -18,12 +18,12 @@ type Event struct {
 	EntityID uuid.UUID
 	Version  int
 	Effect   Effect
-	Data     data
+	Data     Data
 
 	CreatedAt time.Time
 }
 
-func (s *Store) NewEvent(entityID uuid.UUID, effect Effect, data data) Event {
+func (s *Store) NewEvent(entityID uuid.UUID, effect Effect, data Data) Event {
 	return Event{
 		ID:       uuid.New(),
 		EntityID: entityID,
@@ -35,7 +35,7 @@ func (s *Store) NewEvent(entityID uuid.UUID, effect Effect, data data) Event {
 	}
 }
 
-func ParseData[T data](e Event) (T, error) {
+func ParseData[T Data](e Event) (T, error) {
 	data, ok := e.Data.(T)
 	if !ok {
 		return data, pkgerrors.WithStack(fmt.Errorf("failed to parse data for effect: %s", reflect.TypeOf(data)))

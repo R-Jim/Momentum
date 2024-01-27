@@ -7,6 +7,12 @@ type Health struct {
 	baseValue int
 }
 
+func NewHealth(ownerID uuid.UUID, baseValue int) Health {
+	return Health{
+		ownerID, baseValue,
+	}
+}
+
 func (h Health) OwnerID() uuid.UUID {
 	return h.ownerID
 }

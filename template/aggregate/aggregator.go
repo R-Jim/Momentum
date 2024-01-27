@@ -6,6 +6,8 @@ import (
 	"github.com/R-jim/Momentum/template/event"
 )
 
+const DEBUG_MODE = false
+
 type aggregateImpl struct {
 	name         string
 	aggregateSet map[event.Effect]map[string]string
@@ -26,7 +28,9 @@ func (i aggregateImpl) Aggregate(store *event.Store, inputEvent event.Event) err
 	if err := i.aggregate(store, inputEvent); err != nil {
 		return fmt.Errorf("[%s][%v][%v][%v] %v", i.name, inputEvent.EntityID, inputEvent.Version, inputEvent.Effect, err)
 	}
-	fmt.Printf("[%s][%v][%v][%v] aggregated. %v\n", i.name, inputEvent.EntityID, inputEvent.Version, inputEvent.Effect, inputEvent.Data)
+	if DEBUG_MODE {
+		fmt.Printf("[%s][%v][%v][%v] aggregated. %v\n", i.name, inputEvent.EntityID, inputEvent.Version, inputEvent.Effect, inputEvent.Data)
+	}
 	return nil
 }
 
